@@ -2,6 +2,7 @@ import { ThemeSettings } from './theme/Theme';
 import router from './routes/Router';
 import { RouterProvider } from 'react-router';
 import { CssBaseline, ThemeProvider } from '@mui/material';
+import { AuthProvider } from './context/AuthContext';
 
 
 function App() {
@@ -11,7 +12,9 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
         <CssBaseline />
-        <RouterProvider router={router} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
     </ThemeProvider>
   );
 }

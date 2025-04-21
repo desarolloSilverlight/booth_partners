@@ -4,8 +4,8 @@ import { Box, Menu, Avatar, Typography, IconButton, Button } from '@mui/material
 import * as dropdownData from './data';
 import ProfileImg from 'src/assets/images/profile/userBooth.png';
 import { Icon } from '@iconify/react';
-
-
+import { useAuth } from 'src/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
 
@@ -16,6 +16,14 @@ const Profile = () => {
   const handleClose2 = () => {
     setAnchorEl2(null);
   };
+
+  const { setToken } = useAuth(); // Obtener la función setToken del contexto de autenticación
+  const navigate = useNavigate(); // Hook para la navegación
+
+  const handleLogout = () => {
+    setToken(null); // Limpiar el token en el contexto de autenticación
+    navigate('/auth/login'); // Redirigir a la página de inicio de sesión
+  };    
 
   return (
     <Box>
@@ -88,7 +96,14 @@ const Profile = () => {
               >
                 <Link to={profile.href} style={{ textDecoration: 'none' }}>
                   <Box color="secondary.main" display="flex" alignItems="center">
-                    {profile.icon}
+                    <Icon
+                      icon={profile.iconName}
+                      height={50}
+                      color="#b81f3c"
+                      style={{
+                        marginRight: '8px',
+                      }}
+                    />
                     <Typography
                       variant="subtitle2"
                       fontWeight={500}
@@ -120,7 +135,12 @@ const Profile = () => {
             }}
             className="hover-text-primary"
           >
-            <Button variant="outlined" component={Link} color="error" sx={{ width: "100%" }} to="/auth/login">
+            <Button
+              variant="outlined"
+              color="error"
+              sx={{ width: '100%' }}
+              onClick={handleLogout}
+            >
               Salir
             </Button>
           </Box>
