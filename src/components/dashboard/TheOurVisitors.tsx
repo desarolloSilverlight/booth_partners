@@ -15,7 +15,7 @@ const OurVisitors = () => {
 
   // chart
   const optionscolumnchart: any = {
-    labels: ["Mobile", "tablet", "Other", "Desktop"],
+    labels: ["Happiness", "Stress", "Others", "Sadness"],
     chart: {
       height: 250,
       type: "donut",
@@ -42,7 +42,7 @@ const OurVisitors = () => {
               show: true,
               color: "#a1aab2",
               fontSize: "13px",
-              label: "Our Visitor",
+              label: "Porcentaje %",
             },
           },
         },
@@ -60,8 +60,8 @@ const OurVisitors = () => {
     <>
 
       <DashboardCard
-        title="Our Visitors"
-        subtitle="Different Devices Used to Visit"
+        title="Chart No. 2"
+        subtitle="Distribution of Emotions"
         footer={
           <>
             <Divider />
@@ -80,7 +80,7 @@ const OurVisitors = () => {
                   variant="subtitle2"
                   color="primary.main"
                 >
-                  Mobile
+                  Happiness
                 </Typography>
               </Stack>
 
@@ -97,7 +97,7 @@ const OurVisitors = () => {
                   variant="subtitle2"
                   color="info.main"
                 >
-                  Desktop
+                  Sadness
                 </Typography>
               </Stack>
 
@@ -114,7 +114,7 @@ const OurVisitors = () => {
                   variant="subtitle2"
                   color="secondary.main"
                 >
-                  Tablet
+                  Stress
                 </Typography>
               </Stack>
             </Stack>

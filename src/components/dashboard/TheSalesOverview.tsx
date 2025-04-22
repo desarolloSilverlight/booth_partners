@@ -40,7 +40,7 @@ const SalesOverview = () => {
     },
     xaxis: {
       type: "category",
-      categories: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      categories: ["Customer 1", "Customer 2", "Customer 3", "Customer 4", "Customer 5", "Customer 6", "Customer 7"],
       axisTicks: {
         show: false,
       },
@@ -64,8 +64,8 @@ const SalesOverview = () => {
     },
   };
   const seriescolumnchart = [
-    { name: "Ample", data: [355, 390, 300, 350, 390, 180, 250] },
-    { name: "Pixel", data: [280, 250, 325, 215, 250, 310, 170] },
+    { name: "Employe", data: [10, 15, 5, 2, 4, 12, 1] },
+    //{ name: "Pixel", data: [280, 250, 325, 215, 250, 310, 170] },
   ];
 
 
@@ -73,8 +73,8 @@ const SalesOverview = () => {
     <>
 
       <DashboardCard
-        title="Sales Overview"
-        subtitle="Ample Admin Vs Pixel Admin"
+        title="Chart No. 1"
+        subtitle="Chart of Clients by Number of Employees"
         action={
           <Stack spacing={3} mt={5} direction="row">
             <Stack direction="row" spacing={1} alignItems="center">
@@ -87,9 +87,10 @@ const SalesOverview = () => {
                 }}
               ></Avatar>
               <Typography variant="subtitle2" color="primary.main">
-                Ample
+                Employe
               </Typography>
             </Stack>
+            {/*
             <Stack direction="row" spacing={1} alignItems="center">
               <Avatar
                 sx={{
@@ -100,9 +101,10 @@ const SalesOverview = () => {
                 }}
               ></Avatar>
               <Typography variant="subtitle2" color="secondary.main">
-                Pixel
+                Empleado
               </Typography>
             </Stack>
+            */}
           </Stack>
         }
       >
