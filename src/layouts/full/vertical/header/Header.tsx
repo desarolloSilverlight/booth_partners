@@ -36,6 +36,7 @@ const Header = () => {
       top: "134px"
     },
   }));
+
   const ToolbarStyled = styled(Toolbar)(({ theme }) => ({
     width: '100%',
     color: theme.palette.warning.contrastText,

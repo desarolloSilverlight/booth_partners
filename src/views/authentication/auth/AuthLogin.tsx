@@ -16,7 +16,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
 
         //console.log('Username:', username);
         //console.log('Password:', password);
-        
+
         if (username && password) {
             fetch(`${rutaApi}login`, {
                 method: 'POST',
@@ -28,20 +28,20 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                     password,
                 }),
             })
-            .then((res) => res.json())
-            .then((data) => {
-                console.log(data);
-                if (data.status === 'success') {
-                    setToken(data.token); 
-                    navigate('/dashboard');
-                } else {
-                    alert('Usuario o contraseña incorrectos');
-                }
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                alert('Error al iniciar sesión. Por favor, Inténtalo de nuevo más tarde.');
-            });         
+                .then((res) => res.json())
+                .then((data) => {
+                    console.log(data);
+                    if (data.status === 'success') {
+                        setToken(data.token);
+                        navigate('/dashboard');
+                    } else {
+                        alert('Usuario o contraseña incorrectos');
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    alert('Error al iniciar sesión. Por favor, Inténtalo de nuevo más tarde.');
+                });
 
         } else {
             alert('Por favor completa Ingrese su usuario y contraseña');
@@ -94,7 +94,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                     fullWidth
                     type="submit"
                 >
-                    Ingresar
+                    Get In
                 </Button>
             </Box>
 
