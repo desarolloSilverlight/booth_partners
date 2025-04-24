@@ -81,7 +81,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                         variant="outlined"
                         fullWidth
                         value={password}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                     />
                 </Box>
             </Stack>
