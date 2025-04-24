@@ -45,7 +45,7 @@ const ListUsers = () => {
         const myHeaders = new Headers();
         myHeaders.append("authToken", token);
 
-        const requestOptions = {
+        const requestOptions: RequestInit = {
             method: "GET",
             headers: myHeaders,
             redirect: "follow",

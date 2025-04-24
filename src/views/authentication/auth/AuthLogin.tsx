@@ -68,7 +68,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                         variant="outlined"
                         fullWidth
                         value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                     />
                 </Box>
                 <Box mt="25px">
@@ -81,7 +81,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                         variant="outlined"
                         fullWidth
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
                     />
                 </Box>
             </Stack>

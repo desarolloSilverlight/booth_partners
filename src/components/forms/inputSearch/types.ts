@@ -3,5 +3,9 @@ export interface SearchBarProps {
     onSearchChange: (term: string) => void;
     onClearSearch: () => void;
     placeholder?: string;
-    width?: number | string;
+    width?: number | string | {
+        xs?: number | string;
+        sm?: number | string;
+        md?: number | string;       
+    };
 }
