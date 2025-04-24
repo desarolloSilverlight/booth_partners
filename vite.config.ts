@@ -5,7 +5,7 @@ import fs from 'fs/promises';
 import svgr from '@svgr/rollup';
 
 export default defineConfig({
-  base: '/booth_partners/', // Base URL for the project
+  base: '/', // Base URL for the project
   resolve: {
     alias: {
       src: resolve(__dirname, 'src'),
