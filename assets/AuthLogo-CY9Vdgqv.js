@@ -1,0 +1,1 @@
+import{j as t,L as o}from"./index-B4q2Fog_.js";import{s}from"./Box-C_oGmZsB.js";const e="/booth_partners/assets/booth_logo-Df5-8_K4.png",i=s(o)(()=>({height:"64px",width:"180px",overflow:"hidden",display:"block"})),n=()=>t.jsx(i,{to:"/",style:{display:"flex",alignItems:"center"},children:t.jsx("img",{src:e,alt:"logo",style:{width:"174px",height:"64px"}})});export{n as A,e as L};
