@@ -40,7 +40,7 @@ const SalesOverview = () => {
     },
     xaxis: {
       type: "category",
-      categories: ["Customer 1", "Customer 2", "Customer 3", "Customer 4", "Customer 5", "Customer 6", "Customer 7"],
+      categories: ["Client 1", "Client 2", "Client 3", "Client 4", "Client 5", "Client 6", "Client 7"],
       axisTicks: {
         show: false,
       },
@@ -74,7 +74,7 @@ const SalesOverview = () => {
 
       <DashboardCard
         title="Chart No. 1"
-        subtitle="Chart of Clients by Number of Employees"
+        subtitle="Top Clients by Attritions Rate"
         action={
           <Stack spacing={3} mt={5} direction="row">
             <Stack direction="row" spacing={1} alignItems="center">

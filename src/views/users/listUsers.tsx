@@ -60,13 +60,13 @@ const ListUsers = () => {
                         let status, pbg;
 
                         if (statusValue === 1) {
-                            status = "Activo";
+                            status = "Active";
                             pbg = "success.main";
                         } else if (statusValue === 2) {
-                            status = "No Activo";
+                            status = "Not Active";
                             pbg = "error.main";
                         } else {
-                            status = "Desconocido";
+                            status = "A stranger";
                             pbg = "warning.main";
                         }
 
@@ -76,7 +76,7 @@ const ListUsers = () => {
                             lastName: user[2],
                             status: status,
                             pbg: pbg,
-                            href: "Editar",
+                            href: "Edit",
                             pbg_href: "primary.main"
                         };
                     });

@@ -12,22 +12,15 @@ import {
   MenuItem,
 } from "@mui/material";
 import BaseCard from "../../../components/BaseCard/BaseCard";
+
 const numbers = [
   {
-    value: "one",
-    label: "One",
+    value: "1",
+    label: "Enable",
   },
   {
-    value: "two",
-    label: "Two",
-  },
-  {
-    value: "three",
-    label: "Three",
-  },
-  {
-    value: "four",
-    label: "Four",
+    value: "2",
+    label: "Disable",
   },
 ];
 
@@ -63,9 +56,9 @@ const FbDefaultForm = () => {
         <form>
           <TextField
             id="default-value"
-            label="Default Text"
+            label="Full Name"
             variant="outlined"
-            defaultValue="George deo"
+            defaultValue="Andres Felipe Criales Cortes"
             fullWidth
             sx={{
               mb: 2,
@@ -93,6 +86,35 @@ const FbDefaultForm = () => {
             }}
           />
           <TextField
+            id="profile-text"
+            label="Profile"
+            type="outlined"
+            variant="outlined"
+            fullWidth
+            sx={{
+              mb: 2,
+            }}
+          />
+          <TextField
+            fullWidth
+            id="standard-select-number"
+            variant="outlined"
+            select
+            label="User Status"
+            value={number}
+            onChange={handleChange3}
+            sx={{
+              mb: 2,
+            }}
+          >
+            {numbers.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
+          {/*
+          <TextField
             id="outlined-multiline-static"
             label="Textarea"
             multiline
@@ -102,7 +124,7 @@ const FbDefaultForm = () => {
             sx={{
               mb: 2,
             }}
-          />
+          />          
           <TextField
             id="readonly-text"
             label="Read Only"
@@ -118,6 +140,7 @@ const FbDefaultForm = () => {
               mb: 2,
             }}
           />
+          */}
           <Grid
             container
             spacing={0}
@@ -135,7 +158,7 @@ const FbDefaultForm = () => {
                     color="primary"
                   />
                 }
-                label="Check this custom checkbox"
+                label="Full Access"
               />
               <FormControlLabel
                 control={
@@ -146,8 +169,9 @@ const FbDefaultForm = () => {
                     color="primary"
                   />
                 }
-                label="Check this custom checkbox"
+                label="Read"
               />
+              {/*
               <FormControlLabel
                 control={
                   <Checkbox
@@ -159,7 +183,9 @@ const FbDefaultForm = () => {
                 }
                 label="Check this custom checkbox"
               />
+              */}
             </Grid>
+            {/*       
             <Grid size={{ lg: 4, md: 6, sm: 12 }}>
               <FormControl component="fieldset">
                 <RadioGroup
@@ -186,28 +212,11 @@ const FbDefaultForm = () => {
                 </RadioGroup>
               </FormControl>
             </Grid>
+            */}
           </Grid>
-          <TextField
-            fullWidth
-            id="standard-select-number"
-            variant="outlined"
-            select
-            label="Select"
-            value={number}
-            onChange={handleChange3}
-            sx={{
-              mb: 2,
-            }}
-          >
-            {numbers.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
           <div>
-            <Button color="primary" variant="contained">
-              Submit
+            <Button color="error" variant="contained">
+              Save
             </Button>
           </div>
         </form>

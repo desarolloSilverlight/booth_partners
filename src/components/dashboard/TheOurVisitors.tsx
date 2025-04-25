@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { useTheme } from "@mui/material/styles";
 import { Stack, Typography, Avatar, Box, Divider } from "@mui/material";
 import DashboardCard from '../shared/DashboardCard';
@@ -6,23 +6,22 @@ import DashboardCard from '../shared/DashboardCard';
 const Chart = React.lazy(() => import('react-apexcharts'));
 
 const OurVisitors = () => {
-  // chart color
   const theme = useTheme();
   const primary = theme.palette.primary.main;
   const secondary = theme.palette.secondary.main;
   const info = theme.palette.info.main;
-  const grey = theme.palette.grey[100];
+  const warning = theme.palette.warning.main;
+  const error = theme.palette.error.main;
 
-  // chart
   const optionscolumnchart: any = {
-    labels: ["Happiness", "Stress", "Others", "Sadness"],
+    labels: ["Very Satisfied", "Satisfied", "Neutral", "Dissatisfied", "Very Dissatisfied"],
     chart: {
       height: 250,
       type: "donut",
       foreColor: "#adb0bb",
       fontFamily: `inherit`,
     },
-    colors: [primary, secondary, grey, info],
+    colors: [primary, secondary, info, warning, error],
     dataLabels: { enabled: false },
     legend: { show: false },
     stroke: { colors: ["transparent"] },
@@ -54,87 +53,54 @@ const OurVisitors = () => {
       fillSeriesColor: false,
     },
   };
-  const seriescolumnchart = [25, 35, 35, 15];
+
+  const seriescolumnchart = [30, 25, 20, 15, 10]; // 5 valores
 
   return (
-    <>
-
-      <DashboardCard
-        title="Chart No. 2"
-        subtitle="Distribution of Emotions"
-        footer={
-          <>
-            <Divider />
-            {/* points */}
-            <Stack spacing={3} p={3} direction="row" justifyContent="center">
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Avatar
-                  sx={{
-                    width: 9,
-                    height: 9,
-                    bgcolor: primary,
-                    svg: { display: "none" },
-                  }}
-                ></Avatar>
-                <Typography
-                  variant="subtitle2"
-                  color="primary.main"
-                >
-                  Happiness
-                </Typography>
-              </Stack>
-
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Avatar
-                  sx={{
-                    width: 9,
-                    height: 9,
-                    bgcolor: info,
-                    svg: { display: "none" },
-                  }}
-                ></Avatar>
-                <Typography
-                  variant="subtitle2"
-                  color="info.main"
-                >
-                  Sadness
-                </Typography>
-              </Stack>
-
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Avatar
-                  sx={{
-                    width: 9,
-                    height: 9,
-                    bgcolor: secondary,
-                    svg: { display: "none" },
-                  }}
-                ></Avatar>
-                <Typography
-                  variant="subtitle2"
-                  color="secondary.main"
-                >
-                  Stress
-                </Typography>
-              </Stack>
-            </Stack>
-          </>
-        }
-      >
+    <DashboardCard
+      title="Chart No. 2"
+      subtitle="Job Satisfaction"
+      footer={
         <>
-          <Box height="220px">
-            <Chart
-              options={optionscolumnchart}
-              series={seriescolumnchart}
-              type="donut"
-              height={250}
-              width={"100%"}
-            />
-          </Box>
+          <Divider />
+          <Stack spacing={2} p={3} direction="row" justifyContent="center" flexWrap="wrap">
+            {[
+              { label: "Very Satisfied", color: primary },
+              { label: "Satisfied", color: secondary },
+              { label: "Neutral", color: info },
+              { label: "Dissatisfied", color: warning },
+              { label: "Very Dissatisfied", color: error },
+            ].map((item, index) => (
+              <Stack key={index} direction="row" spacing={1} alignItems="center" sx={{ m: 0.5 }}>
+                <Avatar
+                  sx={{
+                    width: 9,
+                    height: 9,
+                    bgcolor: item.color,
+                    svg: { display: "none" },
+                  }}
+                />
+                <Typography variant="subtitle2" sx={{ color: item.color }}>
+                  {item.label}
+                </Typography>
+              </Stack>
+            ))}
+          </Stack>
         </>
-      </DashboardCard>
-
-    </>
+      }
+    >
+      <Box height="220px">
+        <Suspense fallback={<div>Cargando gráfico...</div>}>
+          <Chart
+            options={optionscolumnchart}
+            series={seriescolumnchart}
+            type="donut"
+            height={250}
+            width="100%"
+          />
+        </Suspense>
+      </Box>
+    </DashboardCard>
   );
 };
 

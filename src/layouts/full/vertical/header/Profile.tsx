@@ -23,7 +23,7 @@ const Profile = () => {
   const handleLogout = () => {
     setToken(null); // Limpiar el token en el contexto de autenticación
     navigate('/auth/login'); // Redirigir a la página de inicio de sesión
-  };    
+  };
 
   return (
     <Box>
@@ -141,7 +141,7 @@ const Profile = () => {
               sx={{ width: '100%' }}
               onClick={handleLogout}
             >
-              Salir
+              Log Out
             </Button>
           </Box>
 

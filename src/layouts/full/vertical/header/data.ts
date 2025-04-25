@@ -6,13 +6,15 @@ interface ProfileType {
 const profile: ProfileType[] = [
   {
     href: '/form-layouts',
-    title: 'Perfil',
+    title: 'Profile',
     iconName: 'solar:user-circle-line-duotone',
   },
+  /*
   {
     href: '/tables/basic-table',
     title: 'Notas',
     iconName: 'solar:notes-line-duotone',
   },
+  */
 ];
 export { profile };
