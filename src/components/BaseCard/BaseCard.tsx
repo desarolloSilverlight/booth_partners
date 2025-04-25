@@ -6,6 +6,7 @@ import {
   Typography,
   Chip,
 } from "@mui/material";
+import { ReactNode } from "react";
 import { shadows } from "src/theme/Shadows";
 
 type Props = {

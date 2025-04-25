@@ -64,8 +64,8 @@ const SalesOverview = () => {
     },
   };
   const seriescolumnchart = [
-    { name: "Ample", data: [355, 390, 300, 350, 390, 180, 250] },
-    { name: "Pixel", data: [280, 250, 325, 215, 250, 310, 170] },
+    { name: "Employe", data: [10, 15, 5, 2, 4, 12, 1] },
+    //{ name: "Pixel", data: [280, 250, 325, 215, 250, 310, 170] },
   ];
 
 
@@ -87,9 +87,10 @@ const SalesOverview = () => {
                 }}
               ></Avatar>
               <Typography variant="subtitle2" color="primary.main">
-                Ample
+                Employe
               </Typography>
             </Stack>
+            {/*
             <Stack direction="row" spacing={1} alignItems="center">
               <Avatar
                 sx={{
@@ -100,9 +101,10 @@ const SalesOverview = () => {
                 }}
               ></Avatar>
               <Typography variant="subtitle2" color="secondary.main">
-                Pixel
+                Empleado
               </Typography>
             </Stack>
+            */}
           </Stack>
         }
       >

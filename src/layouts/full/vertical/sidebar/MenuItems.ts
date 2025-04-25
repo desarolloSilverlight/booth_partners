@@ -18,15 +18,117 @@ interface MenuitemsType {
 const Menuitems: MenuitemsType[] = [
   {
     navlabel: true,
-    subheader: 'Inicio',
+    subheader: 'Home Pages',
   },
-
   {
     id: uniqueId(),
-    title: 'Inicio',
+    title: 'Home',
     icon: 'layers-minimalistic-line-duotone',
     href: '/dashboard',
   },
+  {
+    navlabel: true,
+    subheader: 'Analysis',
+  },
+  {
+    id: uniqueId(),
+    title: 'Users',
+    icon: 'user-bold',
+    href: '/users/listUsers',
+  },
+  {
+    id: uniqueId(),
+    title: 'Profiles',
+    icon: 'user-id-bold',
+    href: '/profiles/listProfiles',
+  },
+  {
+    id: uniqueId(),
+    title: 'Employees',
+    icon: 'users-group-two-rounded-outline',
+    href: '/employees/listEmployes',
+  },
+  {
+    id: uniqueId(),
+    title: 'Data Upload',
+    icon: 'cloud-upload-bold',
+    href: '/data_upload/uploadFile',
+  },
+  {
+    id: uniqueId(),
+    title: 'Predictive Attrition Analysis',
+    icon: 'chart-broken',
+    href: '/predictive_analysis/predictive_analysis',
+  },
+  {
+    id: uniqueId(),
+    title: 'Reports',
+    icon: 'download-square-bold-duotone',
+    href: '/reports/reportsPage',
+  },
+  /*
+  {
+    id: uniqueId(),
+    title: 'Autocomplete',
+    icon: "sort-by-alphabet-outline",
+    href: '/form-elements/autocomplete',
+  },
+  {
+    id: uniqueId(),
+    title: 'Buttons',
+    icon: "menu-dots-circle-line-duotone",
+    href: '/form-elements/button',
+  },
+  {
+    id: uniqueId(),
+    title: 'Checkbox',
+    icon: "check-square-linear",
+    href: '/form-elements/checkbox',
+  },
+  {
+    id: uniqueId(),
+    title: 'Radio',
+    icon: "radar-outline",
+    href: '/form-elements/radio',
+  },
+  {
+    id: uniqueId(),
+    title: 'Slider',
+    icon: "slider-vertical-minimalistic-outline",
+    href: '/form-elements/slider',
+  },
+  {
+    id: uniqueId(),
+    title: 'Switch',
+    icon: "shield-minimalistic-outline",
+    href: '/form-elements/switch',
+  },  
+  {
+    id: uniqueId(),
+    title: 'Form Layouts',
+    icon: "window-frame-linear",
+    href: '/form-layouts',
+  },
+  {
+    id: uniqueId(),
+    title: 'Typography',
+    icon: "text-bold",
+    href: '/ui/typography',
+  },
+  {
+    id: uniqueId(),
+    title: 'Shadow',
+    icon: "box-minimalistic-bold-duotone",
+    href: '/ui/shadow',
+  },
+  {
+    id: uniqueId(),
+    title: 'Sample Page',
+    icon: "window-frame-broken",
+    href: '/sample-page',
+  },
+  */
+
   /*
   {
     id: uniqueId(),
@@ -87,78 +189,6 @@ const Menuitems: MenuitemsType[] = [
     ],
   },
   */
-  {
-    navlabel: true,
-    subheader: 'Análisis',
-  },
-  {
-    id: uniqueId(),
-    title: 'Autocomplete',
-    icon: "sort-by-alphabet-outline",
-    href: '/form-elements/autocomplete',
-  },
-  {
-    id: uniqueId(),
-    title: 'Buttons',
-    icon: "menu-dots-circle-line-duotone",
-    href: '/form-elements/button',
-  },
-  {
-    id: uniqueId(),
-    title: 'Checkbox',
-    icon: "check-square-linear",
-    href: '/form-elements/checkbox',
-  },
-  {
-    id: uniqueId(),
-    title: 'Radio',
-    icon: "radar-outline",
-    href: '/form-elements/radio',
-  },
-  {
-    id: uniqueId(),
-    title: 'Slider',
-    icon: "slider-vertical-minimalistic-outline",
-    href: '/form-elements/slider',
-  },
-  {
-    id: uniqueId(),
-    title: 'Switch',
-    icon: "shield-minimalistic-outline",
-    href: '/form-elements/switch',
-  },
-  {
-    id: uniqueId(),
-    title: 'Tables',
-    icon: "menu-dots-square-line-duotone",
-    href: '/tables/basic-table',
-  },
-  {
-    id: uniqueId(),
-    title: 'Form Layouts',
-    icon: "window-frame-linear",
-    href: '/form-layouts',
-  },
-  {
-    id: uniqueId(),
-    title: 'Typography',
-    icon: "text-bold",
-    href: '/ui/typography',
-  },
-  {
-    id: uniqueId(),
-    title: 'Shadow',
-    icon: "box-minimalistic-bold-duotone",
-    href: '/ui/shadow',
-  },
-  {
-    id: uniqueId(),
-    title: 'Sample Page',
-    icon: "window-frame-broken",
-    href: '/sample-page',
-  },
-
-
   /*
   {
     navlabel: true,

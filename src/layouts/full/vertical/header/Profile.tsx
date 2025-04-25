@@ -4,8 +4,8 @@ import { Box, Menu, Avatar, Typography, IconButton, Button } from '@mui/material
 import * as dropdownData from './data';
 import ProfileImg from 'src/assets/images/profile/userBooth.png';
 import { Icon } from '@iconify/react';
-
-
+import { useAuth } from 'src/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
 
@@ -96,7 +96,14 @@ const Profile = () => {
               >
                 <Link to={profile.href} style={{ textDecoration: 'none' }}>
                   <Box color="secondary.main" display="flex" alignItems="center">
-                    {profile.icon}
+                    <Icon
+                      icon={profile.iconName}
+                      height={50}
+                      color="#b81f3c"
+                      style={{
+                        marginRight: '8px',
+                      }}
+                    />
                     <Typography
                       variant="subtitle2"
                       fontWeight={500}
@@ -134,7 +141,11 @@ const Profile = () => {
               sx={{ width: '100%' }}
               onClick={handleLogout}
             >
+<<<<<<< HEAD
               Salir
+=======
+              Log Out
+>>>>>>> rescate
             </Button>
           </Box>
 

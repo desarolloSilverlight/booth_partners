@@ -11,10 +11,10 @@ const Sidebar = () => {
   const theme = useTheme();
 
 
-  const {isMobileSidebar , setIsMobileSidebar} = useContext(DashboardContext);
+  const { isMobileSidebar, setIsMobileSidebar } = useContext(DashboardContext);
 
 
-  const toggleWidth ='256px';
+  const toggleWidth = '256px';
 
 
 
@@ -45,7 +45,7 @@ const Sidebar = () => {
                 border: "0",
                 top: '127px',
                 boxShadow: "1px 0 20px #00000014",
-              }, 
+              },
             }}
           >
             {/* ------------------------------------------- */}
@@ -57,8 +57,7 @@ const Sidebar = () => {
                 height: "100%",
               }}
             >
-              <Profile />
-               
+
               <Scrollbar sx={{ height: "calc(100% - 270px)" }}>
 
                 {/* ------------------------------------------- */}
@@ -67,7 +66,7 @@ const Sidebar = () => {
                 <SidebarItems />
               </Scrollbar>
             </Box>
-            
+
           </Drawer>
         </Box>
       ) : (
@@ -90,7 +89,6 @@ const Sidebar = () => {
           <Box px={2}>
             <AuthLogo />
           </Box>
-          <Profile />
           {/* ------------------------------------------- */}
           {/* Sidebar For Mobile */}
           {/* ------------------------------------------- */}

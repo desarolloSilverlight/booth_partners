@@ -41,7 +41,7 @@ const OurVisitors = () => {
               show: true,
               color: "#a1aab2",
               fontSize: "13px",
-              label: "Our Visitor",
+              label: "Porcentaje %",
             },
           },
         },

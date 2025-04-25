@@ -16,32 +16,32 @@ import BaseCard from "src/components/BaseCard/BaseCard";
 const products = [
   {
     id: "1",
-    name: "Sunil Joshi",
-    post: "Web Designer",
-    pname: "Elite Admin",
-    priority: "Low",
-    pbg: "primary.main",
+    name: "Andres Criales",
+    post: "Engineer Web Designer",
+    pname: "Silverlight Colombia S.A.S",
+    priority: "Activo",
+    pbg: "success.main",
     budget: "3.9",
   },
   {
     id: "2",
-    name: "Andrew McDownland",
-    post: "Project Manager",
-    pname: "Real Homes WP Theme",
-    priority: "Medium",
-    pbg: "secondary.main",
+    name: "Rodrigo Quintero",
+    post: "Manager",
+    pname: "Silverlight Colombia S.A.S",
+    priority: "Activo",
+    pbg: "success.main",
     budget: "24.5",
   },
   {
     id: "3",
-    name: "Christopher Jamil",
-    post: "Project Manager",
-    pname: "MedicalPro WP Theme",
-    priority: "High",
+    name: "Juan Chaparro",
+    post: "Human Resources",
+    pname: "Silverlight Colombia S.A.S",
+    priority: "No Activo",
     pbg: "error.main",
     budget: "12.8",
   },
-  {
+  /*{
     id: "4",
     name: "Nirav Joshi",
     post: "Frontend Engineer",
@@ -49,12 +49,12 @@ const products = [
     priority: "Critical",
     pbg: "success.main",
     budget: "2.4",
-  },
+  },*/
 ];
 
 const BasicTable = () => {
   return (
-    <BaseCard title="Basic Table">
+    <BaseCard title="Empleados y Clientes">
 
       <TableContainer
         sx={{
@@ -74,29 +74,31 @@ const BasicTable = () => {
             <TableRow>
               <TableCell>
                 <Typography variant="subtitle1">
-                  Id
+                  No.
                 </Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="subtitle1">
-                  Assigned
+                  Job position and Name Employe
                 </Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="subtitle1">
-                  Name
+                  Customer
                 </Typography>
               </TableCell>
               <TableCell>
                 <Typography variant="subtitle1">
-                  Priority
+                  Status
                 </Typography>
               </TableCell>
+              {/*
               <TableCell align="right">
                 <Typography variant="subtitle1">
                   Budget
                 </Typography>
               </TableCell>
+              */}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -136,9 +138,11 @@ const BasicTable = () => {
                     label={product.priority}
                   ></Chip>
                 </TableCell>
+                {/*
                 <TableCell align="right">
                   <Typography fontSize="14px">${product.budget}k</Typography>
                 </TableCell>
+                */}
               </TableRow>
             ))}
           </TableBody>
