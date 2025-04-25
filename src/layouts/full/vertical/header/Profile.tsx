@@ -141,14 +141,9 @@ const Profile = () => {
               sx={{ width: '100%' }}
               onClick={handleLogout}
             >
-<<<<<<< HEAD
-              Salir
-=======
               Log Out
->>>>>>> rescate
             </Button>
           </Box>
-
         </Box>
       </Menu>
     </Box>
