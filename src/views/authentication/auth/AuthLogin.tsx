@@ -94,7 +94,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                     fullWidth
                     type="submit"
                 >
-                    Get In
+                    Log In
                 </Button>
             </Box>
 

@@ -74,7 +74,7 @@ const SalesOverview = () => {
 
       <DashboardCard
         title="Chart No. 1"
-        subtitle="Top Clients by Attritions Rate"
+        subtitle="Top Clients by Attrition Rate"
         action={
           <Stack spacing={3} mt={5} direction="row">
             <Stack direction="row" spacing={1} alignItems="center">
@@ -87,7 +87,7 @@ const SalesOverview = () => {
                 }}
               ></Avatar>
               <Typography variant="subtitle2" color="primary.main">
-                Employe
+                Attritions
               </Typography>
             </Stack>
             {/*

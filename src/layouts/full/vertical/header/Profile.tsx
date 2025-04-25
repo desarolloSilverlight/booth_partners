@@ -60,7 +60,7 @@ const Profile = () => {
             ml: 1,
           }}
         >
-          Ingenieria
+          User Name
         </Typography>
       </IconButton>
       {/* ------------------------------------------- */}

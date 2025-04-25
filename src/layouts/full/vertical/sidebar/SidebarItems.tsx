@@ -71,7 +71,9 @@ const renderMenuItems = (items: any[], pathDirect: string) => {
         badgeTextColor="#1b84ff"
         disabled={item.disabled}
       >
-        {item.title}
+        <Box sx={{ whiteSpace: 'pre-line' }}>
+          {item.title}
+        </Box>
       </MenuItem>
 
 
