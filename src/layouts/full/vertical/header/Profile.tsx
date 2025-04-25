@@ -17,6 +17,14 @@ const Profile = () => {
     setAnchorEl2(null);
   };
 
+  const { setToken } = useAuth(); // Obtener la función setToken del contexto de autenticación
+  const navigate = useNavigate(); // Hook para la navegación
+
+  const handleLogout = () => {
+    setToken(null); // Limpiar el token en el contexto de autenticación
+    navigate('/auth/login'); // Redirigir a la página de inicio de sesión
+  };
+
   return (
     <Box>
       <IconButton
@@ -120,7 +128,12 @@ const Profile = () => {
             }}
             className="hover-text-primary"
           >
-            <Button variant="outlined" component={Link} color="error" sx={{ width: "100%" }} to="/auth/login">
+            <Button
+              variant="outlined"
+              color="error"
+              sx={{ width: '100%' }}
+              onClick={handleLogout}
+            >
               Salir
             </Button>
           </Box>

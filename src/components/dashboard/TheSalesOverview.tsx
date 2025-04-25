@@ -40,7 +40,7 @@ const SalesOverview = () => {
     },
     xaxis: {
       type: "category",
-      categories: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+      categories: ["Client 1", "Client 2", "Client 3", "Client 4", "Client 5", "Client 6", "Client 7"],
       axisTicks: {
         show: false,
       },
@@ -73,8 +73,8 @@ const SalesOverview = () => {
     <>
 
       <DashboardCard
-        title="Sales Overview"
-        subtitle="Ample Admin Vs Pixel Admin"
+        title="Chart No. 1"
+        subtitle="Top Clients by Attritions Rate"
         action={
           <Stack spacing={3} mt={5} direction="row">
             <Stack direction="row" spacing={1} alignItems="center">

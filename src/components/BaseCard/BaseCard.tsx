@@ -10,14 +10,14 @@ import { shadows } from "src/theme/Shadows";
 
 type Props = {
   chiptitle?: string;
-  title?: string;
-  children?: any;
+  title?: ReactNode;
+  children?: ReactNode;
 };
 
 const BaseCard = (props: Props) => {
   return (
     <Card
-      variant="elevation" 
+      variant="elevation"
       sx={{
         p: 0,
         width: "100%",
