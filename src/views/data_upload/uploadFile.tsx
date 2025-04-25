@@ -15,7 +15,7 @@ import BaseCard from "src/components/BaseCard/BaseCard";
 
 const ListEmployes = () => {
     return (
-        <BaseCard title="Employees">
+        <BaseCard title="Data Upload">
             <TableContainer>
 
             </TableContainer>

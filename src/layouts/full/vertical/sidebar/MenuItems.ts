@@ -36,6 +36,36 @@ const Menuitems: MenuitemsType[] = [
     icon: 'user-bold',
     href: '/users/listUsers',
   },
+  {
+    id: uniqueId(),
+    title: 'Profiles',
+    icon: 'user-id-bold',
+    href: '/profiles/listProfiles',
+  },
+  {
+    id: uniqueId(),
+    title: 'Employees',
+    icon: 'users-group-two-rounded-outline',
+    href: '/employees/listEmployes',
+  },
+  {
+    id: uniqueId(),
+    title: 'Data Upload',
+    icon: 'cloud-upload-bold',
+    href: '/data_upload/uploadFile',
+  },
+  {
+    id: uniqueId(),
+    title: 'Predictive Attrition Analysis',
+    icon: 'chart-broken',
+    href: '/predictive_analysis/predictive_analysis',
+  },
+  {
+    id: uniqueId(),
+    title: 'Reports',
+    icon: 'download-square-bold-duotone',
+    href: '/reports/reportsPage',
+  },
   /*
   {
     id: uniqueId(),
@@ -98,7 +128,7 @@ const Menuitems: MenuitemsType[] = [
     href: '/sample-page',
   },
   */
-  
+
   /*
   {
     id: uniqueId(),

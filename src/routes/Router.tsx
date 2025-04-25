@@ -12,8 +12,12 @@ const BlankLayout = lazy(() => import('../layouts/blank/BlankLayout'));
 
 /* ****Pages Proyecto Booths***** */
 const Dashboard = lazy(() => import("../views/dashboard/page"));
-const ListEmployes = lazy(() => import("../views/employees/listEmployes"));
 const ListUsers = lazy(() => import("../views/users/listUsers"));
+const ListProfiles = lazy(() => import("../views/profiles/listProfiles"));
+const ListEmployes = lazy(() => import("../views/employees/listEmployes"));
+const DataUpload = lazy(() => import("../views/data_upload/uploadFile"));
+const PredictiveAnalysis = lazy(() => import("../views/predictive_analysis/predictive_analysis"));
+const Reports = lazy(() => import("../views/reports/reportsPage"));
 const PrivateRoute = lazy(() => import("./PrivateRoute"));
 /*Pages Proeyecto Booths*/
 
@@ -48,9 +52,13 @@ const Router = [
         children: [
           /*Rutas Proyecto*/
           { path: '/dashboard', exact: true, element: <Dashboard /> },
-          { path: '/employees/listEmploy', exact: true, element: <ListEmployes /> },
           { path: '/users/listUsers', exact: true, element: <ListUsers /> },
-          /*Fin Rutas Proyecto*/          
+          { path: '/profiles/listProfiles', exact: true, element: <ListProfiles /> },
+          { path: '/employees/listEmployes', exact: true, element: <ListEmployes /> },
+          { path: '/data_upload/uploadFile', exact: true, element: <DataUpload /> },
+          { path: '/predictive_analysis/predictive_analysis', exact: true, element: <PredictiveAnalysis /> },
+          { path: '/reports/reportsPage', exact: true, element: <Reports /> },
+          /*Fin Rutas Proyecto*/
           { path: '/ui/typography', exact: true, element: <TypographyPage /> },
           { path: '/ui/shadow', exact: true, element: <Shadow /> },
           { path: '/sample-page', exact: true, element: <SamplePage /> },
@@ -61,7 +69,7 @@ const Router = [
           { path: "/form-elements/checkbox", element: <ExCheckbox /> },
           { path: "/form-elements/radio", element: <ExRadio /> },
           { path: "/form-elements/slider", element: <ExSlider /> },
-          { path: "/form-elements/switch", element: <ExSwitch /> },          
+          { path: "/form-elements/switch", element: <ExSwitch /> },
         ],
       },
       { path: '*', element: <Navigate to="/auth/404" /> },
