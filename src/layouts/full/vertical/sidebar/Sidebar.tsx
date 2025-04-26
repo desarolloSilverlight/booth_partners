@@ -58,7 +58,7 @@ const Sidebar = () => {
               }}
             >
 
-              <Scrollbar sx={{ height: "calc(100% - 270px)" }}>
+              <Scrollbar sx={{ height: "calc(100% - 200px)" }}>
 
                 {/* ------------------------------------------- */}
                 {/* Sidebar Items */}
@@ -86,7 +86,7 @@ const Sidebar = () => {
           {/* ------------------------------------------- */}
           {/* Logo */}
           {/* ------------------------------------------- */}
-          <Box px={2}>
+          <Box px={2} py={3} display="flex" justifyContent="center">
             <AuthLogo />
           </Box>
           {/* ------------------------------------------- */}

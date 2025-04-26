@@ -1,14 +1,11 @@
 import {
-  IconButton, Box, AppBar, useMediaQuery, Toolbar, styled, Stack, Button, Menu,
-  MenuItem, Typography,
-  Badge
+  IconButton, Box, AppBar, useMediaQuery, Toolbar, styled, Stack
 } from '@mui/material';
 import Profile from './Profile';
 import Logo from '../../shared/logo/Logo';
 import { useEffect, useState, useContext } from 'react';
 import { Icon } from '@iconify/react';
 import { DashboardContext } from 'src/context/DashboardContext';
-import { IconBell } from '@tabler/icons-react';
 
 const Header = () => {
   const [_height, setHeight] = useState('0px');
@@ -21,19 +18,16 @@ const Header = () => {
     background: '#ffff',
     justifyContent: 'center',
     position: "fixed",
-    top: "64px",
+    top: "64px", // posición por defecto
+
     backdropFilter: 'blur(4px)',
+
     [theme.breakpoints.down('lg')]: {
       minHeight: '64px',
-      top: "90px"
-    },
-    [theme.breakpoints.down('md')]: {
-      minHeight: '64px',
-      top: "99px"
+      top: "0px", // 🔼 AJUSTE: subimos el navbar
     },
     [theme.breakpoints.down('sm')]: {
-      minHeight: '64px',
-      top: "134px"
+      top: "0px", // 🔼 Más arriba en sm (opcional)
     },
   }));
 
@@ -50,135 +44,44 @@ const Header = () => {
       }
     };
     window.addEventListener('resize', handleResize);
-
-    // Cleanup function to remove event listener on unmount
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const { isMobileSidebar, setIsMobileSidebar } = useContext(DashboardContext);
 
-
-  // notification
-  const [anchorEl, setAnchorEl] = useState(null);
-
-  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null);
-
-
-  const handleClick = (event: any) => {
-    const rect = event.currentTarget.getBoundingClientRect(); // Get exact position
-    setMenuPosition({
-      top: rect.bottom + window.scrollY, // Position menu below the icon
-      left: rect.left + window.scrollX,  // Align with icon
-    });
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
   return (
     <>
-      <AppBarStyled color="default" >
+      <AppBarStyled color="default">
         <ToolbarStyled>
-          {/* ------------------------------------------- */}
-          {/* Logo */}
-          {/* ------------------------------------------- */}
 
-          {lgUp ? (
-            <>
-              <Box
-                sx={{
-                  width: toggleWidth,
-                }}
-              >
-                <Logo />
-              </Box>
-            </>
-          ) : (
+          {/* Botón hamburguesa solo en móvil */}
+          {!lgUp && (
             <IconButton
-              color="inherit"
-              aria-label="menu"
-              onClick={
-                lgUp
-                  ? () => { }
-                  : () => setIsMobileSidebar(!isMobileSidebar)
-              }
+              sx={{ color: "#000", mr: 1 }}
+              aria-label="Abrir menú"
+              onClick={() => setIsMobileSidebar(true)}
             >
-              <Icon icon="solar:list-bold" height={20} />
+              <Icon icon="solar:hamburger-menu-linear" height={24} />
             </IconButton>
           )}
-          {/* ------------------------------------------- */}
-          {/* Toggle Button Sidebar */}
-          {/* ------------------------------------------- */}
 
-          {/*   
-          <IconButton
-            aria-label="show 4 new mails"
-            color="inherit"
-            aria-controls="notification-menu"
-            aria-haspopup="true"
-            onClick={handleClick}
-          >
-            <Badge variant="dot" color="primary">
-              <IconBell size="21" stroke="1.5" />
-            </Badge>
-          </IconButton>
-          
-
-          <Menu
-            id="notification-menu"
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleClose}
-            anchorReference="anchorPosition" // Use custom positioning
-            anchorPosition={menuPosition ? { top: menuPosition.top, left: menuPosition.left } : undefined}
-            PaperProps={{
-              sx: {
-                mt: 1, // Ensures the menu appears slightly below the bell icon
-                boxShadow: 9, // Optional: Improves visibility with a shadow
-                minWidth: '200px', // Adjust width to ensure proper alignment
-              },
-            }}
-          >
-            <MenuItem onClick={handleClose}>
-              <Typography variant="body1">Item 1</Typography>
-            </MenuItem>
-            <MenuItem onClick={handleClose}>
-              <Typography variant="body1">Item 2</Typography>
-            </MenuItem>
-          </Menu>
-          */}
+          {/* Logo */}
+          {lgUp && (
+            <Box
+              sx={{
+                width: toggleWidth,
+                display: { xs: 'none', lg: 'block' },
+              }}
+            >
+              <Logo />
+            </Box>
+          )}
 
           <Box flexGrow={1} />
 
-          {lgUp ? (
-            <>
-              <Stack spacing={2} direction="row" alignItems="center">
-                {/*
-                <Button variant="contained" color="success" target="_blank" href="https://www.wrappixel.com/templates/materialpro-react-admin/?ref=376">
-                  Check Pro Template
-                </Button>
-                */ }
-                <Profile />
-              </Stack>
-            </>
-          ) : (
-            null
-          )}
-          {lgUp ? null : (
-            <>
-              <Stack spacing={2} direction="row" alignItems="center">
-                {/*
-                <Button variant="contained" color="success" target="_blank" href="https://www.wrappixel.com/templates/materialpro-react-admin/?ref=376">
-                  Check Pro Template
-                </Button>
-                */ }
-                <Profile />
-              </Stack>
-            </>
-          )}
-
+          <Stack spacing={2} direction="row" alignItems="center">
+            <Profile />
+          </Stack>
         </ToolbarStyled>
       </AppBarStyled>
     </>

@@ -161,9 +161,10 @@ const ListUsers = () => {
             <TableContainer
                 sx={{
                     width: {
-                        xs: "200px",
+                        xs: "100%",
                         sm: "100%",
                     },
+                    overflowX: "auto",
                 }}
             >
                 <Table
