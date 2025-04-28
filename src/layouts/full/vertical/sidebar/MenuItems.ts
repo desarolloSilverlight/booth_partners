@@ -18,7 +18,7 @@ interface MenuitemsType {
 const Menuitems: MenuitemsType[] = [
   {
     navlabel: true,
-    subheader: 'Home Pages',
+    subheader: 'Options',
   },
   {
     id: uniqueId(),
@@ -26,10 +26,10 @@ const Menuitems: MenuitemsType[] = [
     icon: 'layers-minimalistic-line-duotone',
     href: '/dashboard',
   },
-  {
+  /*{
     navlabel: true,
     subheader: 'Analysis',
-  },
+  },*/
   {
     id: uniqueId(),
     title: 'Users',

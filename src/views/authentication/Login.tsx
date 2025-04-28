@@ -44,7 +44,7 @@ const Login2 = () => {
             <AuthLogin
               subtext={
                 <Typography variant="subtitle1" textAlign="center" color="textSecondary" mb={1}>
-                  Your Social Campaigns
+                  {/* Aqui puedo poner algo si quiero :v */}
                 </Typography>
               }
               subtitle={
