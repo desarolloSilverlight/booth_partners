@@ -1,7 +1,7 @@
 import { Box, Typography, Stack, Button } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import rutaApi from 'src/config/config';
+import config from "src/config/config";
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useAuth } from 'src/context/AuthContext';
 
@@ -18,7 +18,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
         //console.log('Password:', password);
 
         if (username && password) {
-            fetch(`${rutaApi}login`, {
+            fetch(`${config.rutaApi}login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -30,7 +30,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
             })
                 .then((res) => res.json())
                 .then((data) => {
-                    console.log(data);
+                    // console.log(data);
                     if (data.status === 'success') {
                         setToken(data.token);
                         navigate('/dashboard');
