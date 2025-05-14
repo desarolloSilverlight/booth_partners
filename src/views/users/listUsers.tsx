@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import BaseCard from "src/components/BaseCard/BaseCard";
 import { useNavigate } from "react-router-dom";
-import rutaApi from 'src/config/config';
+import config from "src/config/config";
 import { useEffect, useState } from "react";
 import InputSearch from "src/components/forms/inputSearch/search";
 
@@ -51,12 +51,13 @@ const ListUsers = () => {
             redirect: "follow",
         };
 
-        fetch(`${rutaApi}users_system_list`, requestOptions)
+        fetch(`${config.rutaApi}users_system_list`, requestOptions)
             .then((response) => response.json())
             .then((result) => {
+                console.log(result);                
                 if (result.dataUsers) {
-                    const formattedUsers = result.dataUsers.map((user: any[]) => {
-                        const statusValue = user[7];
+                    const formattedUsers = result.dataUsers.map((user: any) => {
+                        const statusValue = user.userStatus;
                         let status, pbg;
 
                         if (statusValue === 1) {
@@ -71,9 +72,9 @@ const ListUsers = () => {
                         }
 
                         return {
-                            id: user[0].toString(),
-                            name: user[1],
-                            lastName: user[2],
+                            id: user.id_userSystem,
+                            name: user.first_name,
+                            lastName: user.last_name,
                             status: status,
                             pbg: pbg,
                             href: "Edit",
@@ -98,8 +99,7 @@ const ListUsers = () => {
         } else {
             const filtered = users.filter(user =>
                 user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.id.toLowerCase().includes(searchTerm.toLowerCase())
+                user.lastName.toLowerCase().includes(searchTerm.toLowerCase())
             );
             setFilteredUsers(filtered);
         }
