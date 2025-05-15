@@ -30,6 +30,13 @@ interface Employee {
     pbg: string;
     document_type: string;
     document_number: string;
+
+    // add data for education
+    educational_level: string;
+    socioeconomic_level: string;
+    university: string;
+    degree: string;
+
 }
 
 const ListEmployes = () => {
@@ -89,7 +96,15 @@ const ListEmployes = () => {
                             pbg: pbg,
                             document_type: employee.document_type,
                             document_number: employee.document_number,
+
+                            // add data for education
+                            educational_level: employee.custom_attributes?.["Educational level"],
+                            socioeconomic_level: employee.custom_attributes?.["Government-defined socioeconomic level"],
+                            university: employee.university,
+                            degree: employee.degree,
                         };
+
+                        // console.log("Empleado formateado:", formattedEmployee);
 
                         // Enviamos el empleado a la otra base de datos
                         saveEmployeeDB(formattedEmployee);
@@ -123,7 +138,13 @@ const ListEmployes = () => {
             active_until: employee.active_until || null,
             status: employee.status,
             document_type: employee.document_type,
-            document_number: employee.document_number
+            document_number: employee.document_number,
+
+            // add data for education
+            educational_level: employee.educational_level,
+            socioeconomic_level: employee.socioeconomic_level,
+            university: employee.university,
+            degree: employee.degree
         };
 
         try {
