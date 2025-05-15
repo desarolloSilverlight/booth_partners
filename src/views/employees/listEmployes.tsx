@@ -17,7 +17,7 @@ import config from "src/config/config";
 import InputSearch from "src/components/forms/inputSearch/search";
 import { error } from "console";
 
-interface Employee{
+interface Employee {
     id: string;
     full_name: string;
     gender: string;
@@ -49,7 +49,7 @@ const ListEmployes = () => {
 
         const myHeaders = new Headers();
         myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("auth_token", config.tokenApiBuk);       
+        myHeaders.append("auth_token", config.tokenApiBuk);
 
         const requestOptions: RequestInit = {
             method: "GET",
@@ -106,7 +106,7 @@ const ListEmployes = () => {
     }, []);
 
     const saveEmployeeDB = async (employee: Employee) => {
-        const token = sessionStorage.getItem("token");    
+        const token = sessionStorage.getItem("token");
         if (!token) {
             console.error('Token no encontrado en sessionStorage');
             return;
@@ -120,13 +120,13 @@ const ListEmployes = () => {
             civil_status: employee.civil_status,
             nationality: employee.nationality,
             active_since: employee.active_since,
-            active_until: employee.active_until || null, // si está vacío, mandamos null
+            active_until: employee.active_until || null,
             status: employee.status,
             document_type: employee.document_type,
             document_number: employee.document_number
         };
 
-        try {            
+        try {
             const myHeaders = new Headers();
             myHeaders.append("Content-Type", "application/json");
             myHeaders.append("authToken", token);
@@ -136,7 +136,7 @@ const ListEmployes = () => {
                 headers: myHeaders,
                 body: JSON.stringify(payload),
                 redirect: "follow",
-            };           
+            };
 
             const response = await fetch(`${config.rutaApi}saveEmployee`, requestOptions);
             if (!response.ok) {
@@ -145,16 +145,16 @@ const ListEmployes = () => {
                     status: response.status,
                     error: errorData.message || "Error desconocido",
                 });
-                return {success: false, error: errorData.message || "Error desconocido"};
+                return { success: false, error: errorData.message || "Error desconocido" };
             }
 
             const result = await response.json();
-            console.log("Empleado guardado:", result);
-            return {success: true, data: result};
+            // console.log("Empleado guardado:", result);
+            return { success: true, data: result };
 
         } catch (error) {
             console.error("Error al guardar el empleado:", error);
-            return {success: false, error: "Error al guardar el empleado"};
+            return { success: false, error: "Error al guardar el empleado" };
         }
     };
 
@@ -200,12 +200,12 @@ const ListEmployes = () => {
                 display: "flex",
                 alignItems: "center",
                 width: "100%",
-                grap: {xs: 2, sm: 4},
-                flexDirection: {xs: "column", sm: "row"},
+                grap: { xs: 2, sm: 4 },
+                flexDirection: { xs: "column", sm: "row" },
             }}>
                 <Typography variant="h5" sx={{
-                    width: {xs: "100%", sm: "auto"},
-                    textAlign: {xs: "left", sm: "inherit"}
+                    width: { xs: "100%", sm: "auto" },
+                    textAlign: { xs: "left", sm: "inherit" }
                 }}>
                     Empleados
                 </Typography>
@@ -215,9 +215,9 @@ const ListEmployes = () => {
                     onSearchChange={handleSearchChange}
                     onClearSearch={handleClearSearch}
                     placeholder="Buscar empleados..."
-                    width={{xs: "100%", sm: 300, md: 400}}
+                    width={{ xs: "100%", sm: 300, md: 400 }}
                 />
-            </Box>    
+            </Box>
         }>
             <TableContainer
                 sx={{
