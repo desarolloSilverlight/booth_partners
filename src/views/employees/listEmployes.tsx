@@ -59,7 +59,7 @@ const ListEmployes = () => {
         const token = sessionStorage.getItem("token");
 
         if (!token) {
-            console.error("Token no encontrado");
+            console.error("Token not found");
             setLoading(false);
             return;
         }

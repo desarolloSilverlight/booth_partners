@@ -54,7 +54,7 @@ const ListUsers = () => {
         fetch(`${config.rutaApi}users_system_list`, requestOptions)
             .then((response) => response.json())
             .then((result) => {
-                console.log(result);                
+                //console.log(result);                
                 if (result.dataUsers) {
                     const formattedUsers = result.dataUsers.map((user: any) => {
                         const statusValue = user.userStatus;
@@ -119,7 +119,7 @@ const ListUsers = () => {
 
     if (loading) {
         return (
-            <BaseCard title="Users">
+            <BaseCard title="Loading...">
                 <Typography>Cargando usuarios...</Typography>
             </BaseCard>
         );
