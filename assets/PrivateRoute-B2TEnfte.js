@@ -1,0 +1,1 @@
+import{h as a,j as t,k as s,O as u}from"./index-Bt5HoizJ.js";const n=()=>{const{token:e,loading:r}=a();return r?null:e?t.jsx(u,{}):t.jsx(s,{to:"/auth/login",replace:!0})};export{n as default};
