@@ -16,6 +16,7 @@ import { useNavigate } from "react-router-dom";
 import config from "src/config/config";
 import InputSearch from "src/components/forms/inputSearch/search";
 import { error } from "console";
+import { start } from "repl";
 
 interface Employee {
     id: string;
@@ -37,6 +38,15 @@ interface Employee {
     university: string;
     degree: string;
 
+    // add data for job
+    start_date: string;
+    end_date: string;
+    type_of_contract: string;
+    role_name: string;
+    role_description: string;
+    cost_center: string;
+    working_schedule_type: string;
+    project: string;
 }
 
 const ListEmployes = () => {
@@ -102,6 +112,17 @@ const ListEmployes = () => {
                             socioeconomic_level: employee.custom_attributes?.["Government-defined socioeconomic level"],
                             university: employee.university,
                             degree: employee.degree,
+
+                            // add data for job
+                            start_date: employee.current_job?.start_date,
+                            end_date: employee.current_job?.end_date,
+                            type_of_contract: employee.current_job?.type_of_contract,
+                            role_name: employee.current_job?.role?.name,
+                            role_description: employee.current_job?.role?.description,
+                            cost_center: employee.current_job?.cost_center,
+                            working_schedule_type: employee.current_job?.working_schedule_type,
+                            project: employee.current_job?.project,
+
                         };
 
                         // console.log("Empleado formateado:", formattedEmployee);
@@ -144,8 +165,20 @@ const ListEmployes = () => {
             educational_level: employee.educational_level,
             socioeconomic_level: employee.socioeconomic_level,
             university: employee.university,
-            degree: employee.degree
+            degree: employee.degree,
+
+            //add data for job
+            start_date: employee.start_date,
+            end_date: employee.end_date,
+            type_of_contract: employee.type_of_contract,
+            role_name: employee.role_name,
+            role_description: employee.role_description,
+            cost_center: employee.cost_center,
+            working_schedule_type: employee.working_schedule_type,
+            project: employee.project,
         };
+
+        //console.log(payload);
 
         try {
             const myHeaders = new Headers();
