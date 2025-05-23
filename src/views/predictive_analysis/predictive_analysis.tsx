@@ -14,6 +14,8 @@ import BaseCard from "src/components/BaseCard/BaseCard";
 import { useEffect, useState } from "react";
 import config from "src/config/config";
 import InputSearch from "src/components/forms/inputSearch/search";
+import { Grid2 as Grid } from "@mui/material";
+import RadarChart from "src/components/dashboard/radarChart";
 
 interface Predictive_Analysis {
     id: string;
@@ -59,7 +61,7 @@ const predictive_analitics = () => {
                         similarity_scores: item.stability_analysis.similarity_scores,
                     }));
                     setPredictive_analitics(formattedData);
-                    setFilteredData(formattedData);    
+                    setFilteredData(formattedData);
                 }
             })
             .catch((error) => {
@@ -68,18 +70,18 @@ const predictive_analitics = () => {
             .finally(() => {
                 setLoading(false);
             });
-    },[]);
+    }, []);
 
-    useEffect(()=> {
+    useEffect(() => {
         if (searchTerm === "") {
             setFilteredData(predictive_analitics);
-        }else{
+        } else {
             const filteredData = predictive_analitics.filter((dataAnalysis) =>
                 dataAnalysis.fullName.toLowerCase().includes(searchTerm.toLowerCase())
             );
             setFilteredData(filteredData);
-        }    
-    },[searchTerm, predictive_analitics]);
+        }
+    }, [searchTerm, predictive_analitics]);
 
     const handleSearchChange = (term: string) => {
         setSearchTerm(term);
@@ -108,7 +110,11 @@ const predictive_analitics = () => {
     return (
         <BaseCard title={
             <Box sx={{
-
+                display: "flex",
+                alignItems: "center",
+                width: "100%",
+                grap: { xs: 2, sm: 4 },
+                flexDirection: { xs: "column", sm: "row" },
             }}>
                 <Typography variant="h5" sx={{
                     width: { xs: '100%', sm: 'auto' },
@@ -154,21 +160,21 @@ const predictive_analitics = () => {
                             </TableCell>
                             <TableCell>
                                 <Typography variant="subtitle1">
-                                    High job stability
+                                    High Attrition Risk
                                 </Typography>
                             </TableCell>
                             <TableCell>
-                                <Typography variant="subtitle1">                                    
-                                    Average job stability
+                                <Typography variant="subtitle1">
+                                    Medium Attrition Risk
                                 </Typography>
                             </TableCell>
                             <TableCell>
-                                <Typography variant="subtitle1">                                    
-                                    Low job stability
+                                <Typography variant="subtitle1">
+                                    Low Attrition Risk
                                 </Typography>
                             </TableCell>
                             <TableCell>
-                                <Typography variant="subtitle1">                                    
+                                <Typography variant="subtitle1">
                                     Analysis result
                                 </Typography>
                             </TableCell>
@@ -212,6 +218,13 @@ const predictive_analitics = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
+            <Grid
+                size={{
+                    xs: 12,
+                    lg: 4
+                }}>
+                <RadarChart />
+            </Grid>
         </BaseCard>
     );
 };

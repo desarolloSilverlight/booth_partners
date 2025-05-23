@@ -8,7 +8,7 @@ const RadarChart = () => {
     const series = [
         {
             name: "Attrition Risk",
-            data: [80, 50, 30], // Puedes cambiar los valores
+            data: [40, 10, 50], // Puedes cambiar los valores
         },
     ];
 
