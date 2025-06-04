@@ -21,9 +21,7 @@ interface Predictive_Analysis {
     id: string;
     fullName: string;
     clasification: string;
-    similarity_scores: {
-        [key: string]: number;
-    };
+    similarity_scores: string;
 }
 
 const predictive_analitics = () => {
@@ -49,7 +47,8 @@ const predictive_analitics = () => {
             headers: myHeaders,
             redirect: "follow",
         };
-        fetch(`${config.rutaApi}listEmployee`, requestOptions)
+
+        fetch(`${config.rutaApi}analytics_attrition`, requestOptions)
             .then((response) => response.json())
             .then((result) => {
                 //console.log(result);
@@ -57,8 +56,8 @@ const predictive_analitics = () => {
                     const formattedData: Predictive_Analysis[] = result.dataAnalitics.map((item: any) => ({
                         id: item.id_employee,
                         fullName: item.full_name,
-                        clasification: item.stability_analysis.classification,
-                        similarity_scores: item.stability_analysis.similarity_scores,
+                        clasification: item.stability_analysis.result,
+                        similarity_scores: item.stability_analysis.similitud_con_riesgo,
                     }));
                     setPredictive_analitics(formattedData);
                     setFilteredData(formattedData);
@@ -155,22 +154,12 @@ const predictive_analitics = () => {
                             </TableCell>
                             <TableCell>
                                 <Typography variant="subtitle1">
-                                    First Name
+                                    Full Name
                                 </Typography>
                             </TableCell>
                             <TableCell>
                                 <Typography variant="subtitle1">
-                                    High Attrition Risk
-                                </Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="subtitle1">
-                                    Medium Attrition Risk
-                                </Typography>
-                            </TableCell>
-                            <TableCell>
-                                <Typography variant="subtitle1">
-                                    Low Attrition Risk
+                                    Analysis result Value
                                 </Typography>
                             </TableCell>
                             <TableCell>
@@ -195,17 +184,7 @@ const predictive_analitics = () => {
                                 </TableCell>
                                 <TableCell>
                                     <Typography color="textSecondary" fontSize="14px">
-                                        {typeof dataAnalysis.similarity_scores?.["Muy Estable"] === 'number' ? dataAnalysis.similarity_scores["Muy Estable"] : '-'}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" fontSize="14px">
-                                        {typeof dataAnalysis.similarity_scores?.["Medio Estable"] === 'number' ? dataAnalysis.similarity_scores["Medio Estable"] : '-'}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" fontSize="14px">
-                                        {typeof dataAnalysis.similarity_scores?.["No Estable"] === 'number' ? dataAnalysis.similarity_scores["No Estable"] : '-'}
+                                       {dataAnalysis.similarity_scores}
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
@@ -217,14 +196,7 @@ const predictive_analitics = () => {
                         ))}
                     </TableBody>
                 </Table>
-            </TableContainer>
-            <Grid
-                size={{
-                    xs: 12,
-                    lg: 4
-                }}>
-                <RadarChart />
-            </Grid>
+            </TableContainer>            
         </BaseCard>
     );
 };

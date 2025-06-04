@@ -15,7 +15,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import config from "src/config/config";
 import InputSearch from "src/components/forms/inputSearch/search";
-import { error } from "console";
+import { error, log } from "console";
 import { start } from "repl";
 
 interface Employee {
@@ -32,21 +32,16 @@ interface Employee {
     document_type: string;
     document_number: string;
 
-    // add data for education
-    educational_level: string;
-    socioeconomic_level: string;
-    university: string;
-    degree: string;
+    edad: string;
+    region: string;
+    district: string;
+    education_level: string;
+    health_company: string;
 
-    // add data for job
-    start_date: string;
-    end_date: string;
+    tiempoEmpresa: string;
+    tiempoCargo: string;
     type_of_contract: string;
-    role_name: string;
-    role_description: string;
-    cost_center: string;
-    working_schedule_type: string;
-    project: string;
+    regular_hours: string;
 }
 
 const ListEmployes = () => {
@@ -57,7 +52,6 @@ const ListEmployes = () => {
 
     useEffect(() => {
         const token = sessionStorage.getItem("token");
-
         if (!token) {
             console.error("Token not found");
             setLoading(false);
@@ -76,9 +70,29 @@ const ListEmployes = () => {
 
         fetch(`${config.rutaApiBuk}employees/active`, requestOptions)
             .then((response) => response.json())
-            .then((result) => {
-                if (result.data) {
-                    const formattedEmployees = result.data.map((employee: any) => {
+            .then(async (result) => {
+                const employeesData = Array.isArray(result.data) ? result.data : [result.data];
+                const formattedEmployees = await Promise.all(
+                    employeesData.map(async (employee: any) => {
+                        // Datos del primer fetch
+                        const employee_id = employee.person_id;
+                        const birthday = employee.birthday;
+                        const active_since = employee.active_since;
+
+                        // Segundo fetch (jobs)
+                        const jobResponse = await fetch(
+                            `${config.rutaApiBuk}employees/${employee.id}/jobs`,
+                            requestOptions
+                        );
+                        const jobResult = await jobResponse.json();
+                        const dataJobs = jobResult.data[0];
+
+                        // Cálculos
+                        const edad = birthday ? new Date().getFullYear() - new Date(birthday).getFullYear() : null;
+                        const tiempoEmpresa = active_since ? calcularAniosMeses(active_since) : null;
+                        const tiempoCargo = dataJobs?.start_date ? calcularAniosMeses(dataJobs.start_date) : null;
+
+                        // Formatear estado
                         const statusValue = employee.status;
                         let status, pbg;
 
@@ -93,7 +107,8 @@ const ListEmployes = () => {
                             pbg = "warning.main";
                         }
 
-                        const formattedEmployee = {
+                        // Objeto final combinado
+                        return {
                             id: employee.person_id,
                             full_name: employee.full_name,
                             gender: employee.gender,
@@ -106,36 +121,23 @@ const ListEmployes = () => {
                             pbg: pbg,
                             document_type: employee.document_type,
                             document_number: employee.document_number,
-
-                            // add data for education
-                            educational_level: employee.custom_attributes?.["Educational level"],
-                            socioeconomic_level: employee.custom_attributes?.["Government-defined socioeconomic level"],
-                            university: employee.university,
-                            degree: employee.degree,
-
-                            // add data for job
-                            start_date: employee.current_job?.start_date,
-                            end_date: employee.current_job?.end_date,
-                            type_of_contract: employee.current_job?.type_of_contract,
-                            role_name: employee.current_job?.role?.name,
-                            role_description: employee.current_job?.role?.description,
-                            cost_center: employee.current_job?.cost_center,
-                            working_schedule_type: employee.current_job?.working_schedule_type,
-                            project: employee.current_job?.project,
-
+                            edad: edad,
+                            region: employee.region,
+                            district: employee.district,
+                            education_level: employee.custom_attributes?.['Educational level'],
+                            health_company: employee.health_company,
+                            tiempoEmpresa: employee.tiempoEmpresa,
+                            tiempoCargo: employee.tiempoCargo,
+                            type_of_contract: dataJobs?.type_of_contract,
+                            regular_hours: dataJobs?.regular_hours
                         };
+                    })
+                );
 
-                        // console.log("Empleado formateado:", formattedEmployee);
-
-                        // Enviamos el empleado a la otra base de datos
-                        saveEmployeeDB(formattedEmployee);
-
-                        return formattedEmployee;
-                    });
-
-                    setEmployees(formattedEmployees);
-                    setFilteredEmployees(formattedEmployees);
-                }
+                // Guardar todos los empleados y actualizar estado
+                await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
+                setEmployees(formattedEmployees);
+                setFilteredEmployees(formattedEmployees);
             })
             .catch((error) => console.error("Error:", error))
             .finally(() => setLoading(false));
@@ -156,29 +158,17 @@ const ListEmployes = () => {
             civil_status: employee.civil_status,
             nationality: employee.nationality,
             active_since: employee.active_since,
-            active_until: employee.active_until || null,
+            active_until: employee.active_until,
             status: employee.status,
             document_type: employee.document_type,
             document_number: employee.document_number,
 
-            // add data for education
-            educational_level: employee.educational_level,
-            socioeconomic_level: employee.socioeconomic_level,
-            university: employee.university,
-            degree: employee.degree,
-
-            //add data for job
-            start_date: employee.start_date,
-            end_date: employee.end_date,
+            edad: employee.edad,
+            region: employee.region,
+            education_level: employee.education_level,
             type_of_contract: employee.type_of_contract,
-            role_name: employee.role_name,
-            role_description: employee.role_description,
-            cost_center: employee.cost_center,
-            working_schedule_type: employee.working_schedule_type,
-            project: employee.project,
-        };
-
-        //console.log(payload);
+            regular_hours: employee.regular_hours
+        }; 
 
         try {
             const myHeaders = new Headers();
@@ -231,6 +221,19 @@ const ListEmployes = () => {
     const handleClearSearch = () => {
         setSearchTerm("");
     };
+
+    // Función para calcular diferencia en años y meses
+    function calcularAniosMeses(fechaInicioStr: string): string {
+        const fechaInicio = new Date(fechaInicioStr);
+        const fechaActual = new Date();
+        let anios = fechaActual.getFullYear() - fechaInicio.getFullYear();
+        let meses = fechaActual.getMonth() - fechaInicio.getMonth();
+        if (meses < 0) {
+            anios--;
+            meses += 12;
+        }
+        return `${anios} years and ${meses} months`;
+    }
 
     if (loading) {
         return (
