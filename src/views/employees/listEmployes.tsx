@@ -42,6 +42,11 @@ interface Employee {
     tiempoCargo: string;
     type_of_contract: string;
     regular_hours: string;
+
+    role_name: string;
+    role_description: string;
+
+    days?: string[];
 }
 
 const ListEmployes = () => {
@@ -68,7 +73,7 @@ const ListEmployes = () => {
             redirect: "follow",
         };
 
-        fetch(`${config.rutaApiBuk}employees/active`, requestOptions)
+        fetch(`${config.rutaApiBuk}employees`, requestOptions)
             .then((response) => response.json())
             .then(async (result) => {
                 const employeesData = Array.isArray(result.data) ? result.data : [result.data];
@@ -129,10 +134,16 @@ const ListEmployes = () => {
                             tiempoEmpresa: employee.tiempoEmpresa,
                             tiempoCargo: employee.tiempoCargo,
                             type_of_contract: dataJobs?.type_of_contract,
-                            regular_hours: dataJobs?.regular_hours
+                            regular_hours: dataJobs?.regular_hours,
+
+                            role_name: dataJobs?.role.name,
+                            role_description: dataJobs?.role.description || employee.custom_attributes?.['Funciones Especiales'],
+                            days: dataJobs?.days || [],
                         };
                     })
                 );
+
+                console.log("Formatted Employees:", formattedEmployees);                
 
                 // Guardar todos los empleados y actualizar estado
                 await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
@@ -167,7 +178,11 @@ const ListEmployes = () => {
             region: employee.region,
             education_level: employee.education_level,
             type_of_contract: employee.type_of_contract,
-            regular_hours: employee.regular_hours
+            regular_hours: employee.regular_hours,
+
+            role_name: employee.role_name,
+            role_description: employee.role_description,
+            days: employee.days || [],
         }; 
 
         try {
