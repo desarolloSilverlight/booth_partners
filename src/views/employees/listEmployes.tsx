@@ -15,8 +15,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import config from "src/config/config";
 import InputSearch from "src/components/forms/inputSearch/search";
-import { error, log } from "console";
-import { start } from "repl";
 
 interface Employee {
     id: string;
@@ -50,6 +48,7 @@ interface Employee {
 }
 
 const ListEmployes = () => {
+    const navigate = useNavigate();
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
     const [loading, setLoading] = useState(true);
@@ -143,7 +142,7 @@ const ListEmployes = () => {
                     })
                 );
 
-                console.log("Formatted Employees:", formattedEmployees);                
+                //console.log("Formatted Employees:", formattedEmployees);                
 
                 // Guardar todos los empleados y actualizar estado
                 await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
@@ -248,6 +247,10 @@ const ListEmployes = () => {
             meses += 12;
         }
         return `${anios} years and ${meses} months`;
+    }
+
+    const showEmployee = (id: string) => {
+        navigate(`/employees/showEmploye/${id}`);
     }
 
     if (loading) {
@@ -363,6 +366,11 @@ const ListEmployes = () => {
                                     Status
                                 </Typography>
                             </TableCell>
+                            <TableCell>
+                                <Typography variant="subtitle1">
+                                    Action
+                                </Typography>
+                            </TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -431,6 +439,21 @@ const ListEmployes = () => {
                                         />
                                     </Stack>
                                 </TableCell>
+                                <TableCell>
+                                      <Stack direction="row" spacing={1}>
+                                        <Chip
+                                            label="Show"
+                                            onClick={() => showEmployee(employee.id)}
+                                            sx={{
+                                                backgroundColor: "primary.main",
+                                                color: "white",
+                                                fontWeight: "600",
+                                                fontSize: "0.75rem",
+                                                cursor: "pointer",
+                                            }}
+                                        />
+                                    </Stack>
+                                </TableCell>          
                             </TableRow>
                         ))}
                     </TableBody>

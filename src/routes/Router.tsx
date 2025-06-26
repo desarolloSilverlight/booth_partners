@@ -3,6 +3,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { chain } from 'lodash';
+import path from 'path';
 import React, { lazy } from 'react';
 import { Navigate, createBrowserRouter } from 'react-router';
 
@@ -15,6 +16,7 @@ const Dashboard = lazy(() => import("../views/dashboard/page"));
 const ListUsers = lazy(() => import("../views/users/listUsers"));
 const ListProfiles = lazy(() => import("../views/profiles/listProfiles"));
 const ListEmployes = lazy(() => import("../views/employees/listEmployes"));
+const ShowEmploye = lazy(() => import("../views/employees/showEmploye"));
 const DataUpload = lazy(() => import("../views/data_upload/uploadFile"));
 const PredictiveAnalysis = lazy(() => import("../views/predictive_analysis/predictive_analysis"));
 const Reports = lazy(() => import("../views/reports/reportsPage"));
@@ -55,6 +57,7 @@ const Router = [
           { path: '/users/listUsers', exact: true, element: <ListUsers /> },
           { path: '/profiles/listProfiles', exact: true, element: <ListProfiles /> },
           { path: '/employees/listEmployes', exact: true, element: <ListEmployes /> },
+          { path: '/employees/showEmploye/:id', exact: true, element: <ShowEmploye /> },
           { path: '/data_upload/uploadFile', exact: true, element: <DataUpload /> },
           { path: '/predictive_analysis/predictive_analysis', exact: true, element: <PredictiveAnalysis /> },
           { path: '/reports/reportsPage', exact: true, element: <Reports /> },
