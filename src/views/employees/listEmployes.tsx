@@ -36,8 +36,8 @@ interface Employee {
     education_level: string;
     health_company: string;
 
-    tiempoEmpresa: string;
-    tiempoCargo: string;
+    //tiempoEmpresa: string;
+    //tiempoCargo: string;
     type_of_contract: string;
     regular_hours: string;
 
@@ -45,6 +45,12 @@ interface Employee {
     role_description: string;
 
     days?: string[];
+
+    anniversaryBenefit: string;
+    birthdayBenefit: string;
+    sickLeavePlan: string;
+
+    termination_reason: string;
 }
 
 const ListEmployes = () => {
@@ -93,8 +99,8 @@ const ListEmployes = () => {
 
                         // Cálculos
                         const edad = birthday ? new Date().getFullYear() - new Date(birthday).getFullYear() : null;
-                        const tiempoEmpresa = active_since ? calcularAniosMeses(active_since) : null;
-                        const tiempoCargo = dataJobs?.start_date ? calcularAniosMeses(dataJobs.start_date) : null;
+                        //const tiempoEmpresa = active_since ? calcularAniosMeses(active_since) : null;
+                        //const tiempoCargo = dataJobs?.start_date ? calcularAniosMeses(dataJobs.start_date) : null;
 
                         // Formatear estado
                         const statusValue = employee.status;
@@ -130,19 +136,25 @@ const ListEmployes = () => {
                             district: employee.district,
                             education_level: employee.custom_attributes?.['Educational level'],
                             health_company: employee.health_company,
-                            tiempoEmpresa: employee.tiempoEmpresa,
-                            tiempoCargo: employee.tiempoCargo,
+                            //tiempoEmpresa: employee.tiempoEmpresa,
+                            //tiempoCargo: employee.tiempoCargo,
                             type_of_contract: dataJobs?.type_of_contract,
                             regular_hours: dataJobs?.regular_hours,
 
                             role_name: dataJobs?.role.name,
                             role_description: dataJobs?.role.description || employee.custom_attributes?.['Funciones Especiales'],
                             days: dataJobs?.days || [],
+
+                            anniversaryBenefit: employee.custom_attributes?.['Anniversary benefit'] || "",
+                            birthdayBenefit: employee.custom_attributes?.['Birthday benefit'] || "",
+                            sickLeavePlan: employee.custom_attributes?.['Sick Leave Plan'] || "",
+
+                            termination_reason: employee.termination_reason,
                         };
                     })
                 );
 
-                //console.log("Formatted Employees:", formattedEmployees);                
+                //console.log("Formatted Employees:", formattedEmployees);
 
                 // Guardar todos los empleados y actualizar estado
                 await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
@@ -182,7 +194,11 @@ const ListEmployes = () => {
             role_name: employee.role_name,
             role_description: employee.role_description,
             days: employee.days || [],
-        }; 
+
+            anniversaryBenefit: employee.anniversaryBenefit,
+            birthdayBenefit: employee.birthdayBenefit,
+            sickLeavePlan: employee.sickLeavePlan,
+        };
 
         try {
             const myHeaders = new Headers();
@@ -440,7 +456,7 @@ const ListEmployes = () => {
                                     </Stack>
                                 </TableCell>
                                 <TableCell>
-                                      <Stack direction="row" spacing={1}>
+                                    <Stack direction="row" spacing={1}>
                                         <Chip
                                             label="Show"
                                             onClick={() => showEmployee(employee.id)}
@@ -453,7 +469,7 @@ const ListEmployes = () => {
                                             }}
                                         />
                                     </Stack>
-                                </TableCell>          
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
