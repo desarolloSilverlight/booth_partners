@@ -198,6 +198,8 @@ const ListEmployes = () => {
             anniversaryBenefit: employee.anniversaryBenefit,
             birthdayBenefit: employee.birthdayBenefit,
             sickLeavePlan: employee.sickLeavePlan,
+
+            termination_reason: employee.termination_reason,
         };
 
         try {

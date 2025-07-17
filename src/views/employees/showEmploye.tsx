@@ -226,8 +226,8 @@ const showEmploye = () => {
                         sx={{ mb: 2 }}
                     />
                     <TextField
-                        id="employee-motivo-retiro"
-                        label="Motivo Retiro"
+                        id="employee-resignation-reasons"
+                        label="Resignation Reasons"
                         variant="outlined"
                         multiline
                         rows={4} // o la cantidad que desees
