@@ -4,6 +4,8 @@ import {
     FormControlLabel,
     Checkbox,
     Button,
+    MenuItem,
+    Autocomplete
 } from "@mui/material";
 import BaseCard from "src/components/BaseCard/BaseCard";
 import { useNavigate, useParams } from "react-router";
@@ -11,7 +13,7 @@ import config from "src/config/config";
 import { useEffect, useState } from "react";
 
 interface Employee {
-    id: string;
+    id_employee: string;
     full_name: string;
     gender: string;
     birthday: string;
@@ -23,21 +25,16 @@ interface Employee {
     pbg: string;
     document_type: string;
     document_number: string;
-
-    edad: string;
+    age: string;
     region: string;
-    district: string;
+    type_of_contract: string;
     education_level: string;
     health_company: string;
-
     tiempoEmpresa: string;
     tiempoCargo: string;
-    type_of_contract: string;
     regular_hours: string;
-
     role_name: string;
     role_description: string;
-
     days?: string[];
 }
 
@@ -49,6 +46,7 @@ const showEmploye = () => {
 
     useEffect(() => {
         const token = sessionStorage.getItem("token");
+
         if (!token) {
             console.error("Token not found");
             setLoading(false);
@@ -56,25 +54,24 @@ const showEmploye = () => {
         }
 
         const myHeaders = new Headers();
+        myHeaders.append("authToken", token);
         myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("auth_token", config.tokenApiBuk);
 
         const requestOptions: RequestInit = {
-            method: "GET",
+            method: "POST",
             headers: myHeaders,
             redirect: "follow",
+            body: JSON.stringify({ id }),
         };
 
-        fetch(`${config.rutaApiBuk}employees/${id}`, requestOptions)
+        fetch(`${config.rutaApi}employees_profile`, requestOptions)
             .then((response) => response.json())
             .then((result) => {
                 console.log(result);
-                setEmployee(result.data);
+                setEmployee(result.dataEmployee);
             })
             .catch((error) => console.error("Error:", error))
             .finally(() => setLoading(false));
-
-
     }, [id]);
 
     return (
@@ -85,7 +82,7 @@ const showEmploye = () => {
                         id="employee-id"
                         label="ID"
                         variant="outlined"
-                        defaultValue={employee?.id}
+                        defaultValue={employee?.id_employee}
                         fullWidth
                         InputLabelProps={{ shrink: true }}
                         sx={{ mb: 2 }}
@@ -182,9 +179,9 @@ const showEmploye = () => {
                     />
                     <TextField
                         id="employee-age"
-                        label="Edad"
+                        label="Age"
                         variant="outlined"
-                        defaultValue={employee?.edad}
+                        defaultValue={employee?.age}
                         fullWidth
                         InputLabelProps={{ shrink: true }}
                         sx={{ mb: 2 }}
@@ -199,10 +196,10 @@ const showEmploye = () => {
                         sx={{ mb: 2 }}
                     />
                     <TextField
-                        id="employee-district"
-                        label="District"
+                        id="employee-type-of-conntract"
+                        label="Type of Contract"
                         variant="outlined"
-                        defaultValue={employee?.district}
+                        defaultValue={employee?.type_of_contract}
                         fullWidth
                         InputLabelProps={{ shrink: true }}
                         sx={{ mb: 2 }}
@@ -217,13 +214,41 @@ const showEmploye = () => {
                         sx={{ mb: 2 }}
                     />
                     <TextField
-                        id="employee-health-company"
-                        label="Health Company"
+                        id="employee-role-name"
+                        label="Role Name"
                         variant="outlined"
-                        defaultValue={employee?.health_company}
+                        defaultValue={employee?.role_name}
                         fullWidth
                         InputLabelProps={{ shrink: true }}
                         sx={{ mb: 2 }}
+                    />
+                    <Autocomplete
+                        id="employee-termination-reason"
+                        options={["Select...",
+                                 "Career Development",
+                                 "Compensation and Benefits",
+                                 "Immediate Supervisor",
+                                 "Client",
+                                 "Management",
+                                 "Work Location, Environment and Conditions",
+                                 "Coworkers",
+                                 "Health",
+                                 "Family circumstances",
+                                 "Just Cause",
+                                 "Authorized Cause",
+                                 "End of Contract",
+                                 "Project Completion"]}
+                        defaultValue={employee?.health_company || ""}
+                        fullWidth
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Termination Reason"
+                                variant="outlined"
+                                InputLabelProps={{ shrink: true }}
+                                sx={{ mb: 2 }}
+                            />
+                        )}
                     />
                     <TextField
                         id="employee-resignation-reasons"

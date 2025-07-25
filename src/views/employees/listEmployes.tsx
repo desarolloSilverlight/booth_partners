@@ -29,27 +29,19 @@ interface Employee {
     pbg: string;
     document_type: string;
     document_number: string;
-
     edad: string;
     region: string;
     district: string;
     education_level: string;
     health_company: string;
-
-    //tiempoEmpresa: string;
-    //tiempoCargo: string;
     type_of_contract: string;
     regular_hours: string;
-
     role_name: string;
     role_description: string;
-
     days?: string[];
-
     anniversaryBenefit: string;
     birthdayBenefit: string;
     sickLeavePlan: string;
-
     termination_reason: string;
 }
 
@@ -62,6 +54,7 @@ const ListEmployes = () => {
 
     useEffect(() => {
         const token = sessionStorage.getItem("token");
+
         if (!token) {
             console.error("Token not found");
             setLoading(false);
@@ -69,8 +62,7 @@ const ListEmployes = () => {
         }
 
         const myHeaders = new Headers();
-        myHeaders.append("Content-Type", "application/json");
-        myHeaders.append("auth_token", config.tokenApiBuk);
+        myHeaders.append("authToken", token);
 
         const requestOptions: RequestInit = {
             method: "GET",
@@ -78,38 +70,21 @@ const ListEmployes = () => {
             redirect: "follow",
         };
 
-        fetch(`${config.rutaApiBuk}employees`, requestOptions)
+        fetch(`${config.rutaApi}employee_system_list`, requestOptions)
             .then((response) => response.json())
             .then(async (result) => {
-                const employeesData = Array.isArray(result.data) ? result.data : [result.data];
+                // console.log("📦 Resultado:", result);
+                const employeesData = Array.isArray(result.dataEmployees) ? result.dataEmployees : [result.dataEmployees];
                 const formattedEmployees = await Promise.all(
                     employeesData.map(async (employee: any) => {
-                        // Datos del primer fetch
-                        const employee_id = employee.person_id;
-                        const birthday = employee.birthday;
-                        const active_since = employee.active_since;
-
-                        // Segundo fetch (jobs)
-                        const jobResponse = await fetch(
-                            `${config.rutaApiBuk}employees/${employee.id}/jobs`,
-                            requestOptions
-                        );
-                        const jobResult = await jobResponse.json();
-                        const dataJobs = jobResult.data[0];
-
-                        // Cálculos
-                        const edad = birthday ? new Date().getFullYear() - new Date(birthday).getFullYear() : null;
-                        //const tiempoEmpresa = active_since ? calcularAniosMeses(active_since) : null;
-                        //const tiempoCargo = dataJobs?.start_date ? calcularAniosMeses(dataJobs.start_date) : null;
-
                         // Formatear estado
                         const statusValue = employee.status;
                         let status, pbg;
 
-                        if (statusValue === "activo") {
+                        if (statusValue === "Active") {
                             status = "Active";
                             pbg = "success.main";
-                        } else if (statusValue === "inactivo") {
+                        } else if (statusValue === "Not Active") {
                             status = "Not Active";
                             pbg = "error.main";
                         } else {
@@ -119,8 +94,10 @@ const ListEmployes = () => {
 
                         // Objeto final combinado
                         return {
-                            id: employee.person_id,
+                            id: employee.id_employee,
                             full_name: employee.full_name,
+                            document_type: employee.document_type,
+                            document_number: employee.document_number,
                             gender: employee.gender,
                             birthday: employee.birthday,
                             civil_status: employee.civil_status,
@@ -129,110 +106,15 @@ const ListEmployes = () => {
                             active_until: employee.active_until,
                             status: status,
                             pbg: pbg,
-                            document_type: employee.document_type,
-                            document_number: employee.document_number,
-                            edad: edad,
-                            region: employee.region,
-                            district: employee.district,
-                            education_level: employee.custom_attributes?.['Educational level'],
-                            health_company: employee.health_company,
-                            //tiempoEmpresa: employee.tiempoEmpresa,
-                            //tiempoCargo: employee.tiempoCargo,
-                            type_of_contract: dataJobs?.type_of_contract,
-                            regular_hours: dataJobs?.regular_hours,
-
-                            role_name: dataJobs?.role.name,
-                            role_description: dataJobs?.role.description || employee.custom_attributes?.['Funciones Especiales'],
-                            days: dataJobs?.days || [],
-
-                            anniversaryBenefit: employee.custom_attributes?.['Anniversary benefit'] || "",
-                            birthdayBenefit: employee.custom_attributes?.['Birthday benefit'] || "",
-                            sickLeavePlan: employee.custom_attributes?.['Sick Leave Plan'] || "",
-
-                            termination_reason: employee.termination_reason,
                         };
                     })
-                );
-
-                //console.log("Formatted Employees:", formattedEmployees);
-
-                // Guardar todos los empleados y actualizar estado
-                await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
+                );                
                 setEmployees(formattedEmployees);
                 setFilteredEmployees(formattedEmployees);
             })
             .catch((error) => console.error("Error:", error))
             .finally(() => setLoading(false));
     }, []);
-
-    const saveEmployeeDB = async (employee: Employee) => {
-        const token = sessionStorage.getItem("token");
-        if (!token) {
-            console.error('Token no encontrado en sessionStorage');
-            return;
-        }
-
-        // Construimos el objeto limpio
-        const payload = {
-            full_name: employee.full_name,
-            gender: employee.gender,
-            birthday: employee.birthday,
-            civil_status: employee.civil_status,
-            nationality: employee.nationality,
-            active_since: employee.active_since,
-            active_until: employee.active_until,
-            status: employee.status,
-            document_type: employee.document_type,
-            document_number: employee.document_number,
-
-            edad: employee.edad,
-            region: employee.region,
-            education_level: employee.education_level,
-            type_of_contract: employee.type_of_contract,
-            regular_hours: employee.regular_hours,
-
-            role_name: employee.role_name,
-            role_description: employee.role_description,
-            days: employee.days || [],
-
-            anniversaryBenefit: employee.anniversaryBenefit,
-            birthdayBenefit: employee.birthdayBenefit,
-            sickLeavePlan: employee.sickLeavePlan,
-
-            termination_reason: employee.termination_reason,
-        };
-
-        try {
-            const myHeaders = new Headers();
-            myHeaders.append("Content-Type", "application/json");
-            myHeaders.append("authToken", token);
-
-            const requestOptions: RequestInit = {
-                method: "POST",
-                headers: myHeaders,
-                body: JSON.stringify(payload),
-                redirect: "follow",
-            };
-
-            const response = await fetch(`${config.rutaApi}saveEmployee`, requestOptions);
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                console.error("Error al guardar el empleado:", {
-                    status: response.status,
-                    error: errorData.message || "Error desconocido",
-                });
-                return { success: false, error: errorData.message || "Error desconocido" };
-            }
-
-            const result = await response.json();
-            // console.log("Empleado guardado:", result);
-            return { success: true, data: result };
-
-        } catch (error) {
-            console.error("Error al guardar el empleado:", error);
-            return { success: false, error: "Error al guardar el empleado" };
-        }
-    };
 
     useEffect(() => {
         if (searchTerm === "") {
@@ -255,19 +137,20 @@ const ListEmployes = () => {
     };
 
     // Función para calcular diferencia en años y meses
-    function calcularAniosMeses(fechaInicioStr: string): string {
-        const fechaInicio = new Date(fechaInicioStr);
-        const fechaActual = new Date();
-        let anios = fechaActual.getFullYear() - fechaInicio.getFullYear();
-        let meses = fechaActual.getMonth() - fechaInicio.getMonth();
-        if (meses < 0) {
-            anios--;
-            meses += 12;
-        }
-        return `${anios} years and ${meses} months`;
-    }
+    // function calcularAniosMeses(fechaInicioStr: string): string {
+    //     const fechaInicio = new Date(fechaInicioStr);
+    //     const fechaActual = new Date();
+    //     let anios = fechaActual.getFullYear() - fechaInicio.getFullYear();
+    //     let meses = fechaActual.getMonth() - fechaInicio.getMonth();
+    //     if (meses < 0) {
+    //         anios--;
+    //         meses += 12;
+    //     }
+    //     return `${anios} years and ${meses} months`;
+    // }
 
     const showEmployee = (id: string) => {
+        //console.log("ID del empleado:", id);
         navigate(`/employees/showEmploye/${id}`);
     }
 
@@ -300,7 +183,7 @@ const ListEmployes = () => {
                     width: { xs: "100%", sm: "auto" },
                     textAlign: { xs: "left", sm: "inherit" }
                 }}>
-                    Empleados
+                    EMPLOYEES
                 </Typography>
 
                 <InputSearch
@@ -392,7 +275,7 @@ const ListEmployes = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredEmployees.map((employee, index) => (
+                        {filteredEmployees.map((employee, index) => (                            
                             <TableRow key={employee.id}>
                                 <TableCell>
                                     <Typography fontSize="15px" fontWeight={500}>
