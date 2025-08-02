@@ -32,6 +32,10 @@ interface Employee {
     birthdayBenefit: string;
     sickLeavePlan: string;
     termination_reason: string;
+    salary_level: string;
+    attrition_type: string;
+    attrition_category: string;
+    attrition_specific_reason: string;
 }
 
 const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any, subtext: any }) => {
@@ -67,7 +71,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                         setAlertMsg('Actualizando datos, por favor espere...');
                         setOpen(true);
                         setToken(data.token);
-                        
+
                         const token = sessionStorage.getItem("token");
                         if (!token) {
                             console.error("Token not found");
@@ -150,6 +154,11 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                                             birthdayBenefit: employee.custom_attributes?.['Birthday benefit'] || "",
                                             sickLeavePlan: employee.custom_attributes?.['Sick Leave Plan'] || "",
                                             termination_reason: employee.termination_reason,
+                                            salary_level: employee.custom_attributes?.['Salary level'] || "",
+                                            attrition_type: employee.custom_attributes?.['Attrition type'] || "",
+                                            attrition_category: employee.custom_attributes?.['Attrition Category'] || "",
+                                            attrition_specific_reason: employee.custom_attributes?.['Attrition specific reason'] || "",
+
                                         };
                                     })
                                 );
@@ -165,14 +174,14 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                                     navigate('/dashboard');
                                 }, 2000); // Redirigir después de 2 segundos
 
-                               
+
                             })
                             .catch((error) => {
                                 console.error("Error:", error)
                                 setAlertMsg('Error al actualizar información.');
                                 setOpen(true);
                             })
-                            .finally(() => setLoading(false));                        
+                            .finally(() => setLoading(false));
                     } else {
                         setAlertMsg('Usuario o contraseña incorrectos');
                         setOpen(true);
@@ -184,7 +193,8 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                     setOpen(true);
                 });
         } else {
-            alert('Por favor completa Ingrese su usuario y contraseña');        }
+            alert('Por favor completa Ingrese su usuario y contraseña');
+        }
     };
 
     const saveEmployeeDB = async (employee: Employee) => {
@@ -222,6 +232,12 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
             sickLeavePlan: employee.sickLeavePlan,
 
             termination_reason: employee.termination_reason,
+
+            salary_level: employee.salary_level,
+            attrition_type: employee.attrition_type,
+            attrition_category: employee.attrition_category,
+            attrition_specific_reason: employee.attrition_specific_reason,
+
         };
 
         try {
@@ -257,7 +273,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
     };
 
     return (
-        <>       
+        <>
             <Snackbar open={open} autoHideDuration={alertMsg === '¡Bienvenido, Ingreso Exitoso!' ? 2000 : null} onClose={() => setOpen(false)}>
                 <Alert onClose={() => setOpen(false)} severity={alertMsg === '¡Bienvenido, Ingreso Exitoso!' ? 'success' : 'info'} sx={{ width: '100%' }}>
                     {alertMsg}
