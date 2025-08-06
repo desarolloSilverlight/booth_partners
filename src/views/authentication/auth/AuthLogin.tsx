@@ -89,7 +89,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                             redirect: "follow",
                         };
 
-                        fetch(`${config.rutaApiBuk}employees`, requestOptions)
+                        fetch(`${config.rutaApiBuk}employees?page=2`, requestOptions)
                             .then((response) => response.json())
                             .then(async (result) => {
                                 const employeesData = Array.isArray(result.data) ? result.data : [result.data];
