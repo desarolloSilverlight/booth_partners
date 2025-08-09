@@ -4,8 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import config from "src/config/config";
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useAuth } from 'src/context/AuthContext';
+import { last } from 'lodash';
 
 interface Employee {
+    //.............................Codigo para diferenciar falsos y verdaderos...........................
+    code_sheet: string;
+
+    //...........................................Datos del empleado.......................................
     id: string;
     full_name: string;
     gender: string;
@@ -47,151 +52,166 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
     const [loading, setLoading] = useState(true);
     const [alertMsg, setAlertMsg] = useState('');
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
         //console.log('Username:', username);
         //console.log('Password:', password);
 
         if (username && password) {
-            fetch(`${config.rutaApi}login`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    username,
-                    password,
-                }),
-            })
-                .then((res) => res.json())
-                .then((data) => {
-                    // console.log(data);
-                    if (data.status === 'success') {
-                        setAlertMsg('Actualizando datos, por favor espere...');
-                        setOpen(true);
-                        setToken(data.token);
+            try {
 
-                        const token = sessionStorage.getItem("token");
-                        if (!token) {
-                            console.error("Token not found");
-                            setLoading(false);
-                            return;
+                const loginRes = await fetch(`${config.rutaApi}login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                    }),
+                });
+                const data = await loginRes.json();
+
+                if (data.status === 'success') {
+                    setAlertMsg('Actualizando datos, por favor espere...');
+                    setOpen(true);
+                    setToken(data.token);
+
+                    const token = sessionStorage.getItem("token");
+                    if (!token) {
+                        console.error("Token not found");
+                        setLoading(false);
+                        return;
+                    }
+
+                    const myHeaders = new Headers();
+                    myHeaders.append("Content-Type", "application/json");
+                    myHeaders.append("auth_token", config.tokenApiBuk);
+
+                    const requestOptions: RequestInit = {
+                        method: "GET",
+                        headers: myHeaders,
+                        redirect: "follow",
+                    };
+
+                    const allEmployess: any[] = [];
+                    let page = 1;
+                    let hasMore = true;
+
+                    while (hasMore) {
+                        const response = await fetch(`${config.rutaApiBuk}employees?page=${page}`, requestOptions);
+                        const result = await response.json();
+                        const employeesData = Array.isArray(result.data) ? result.data : [result.data];
+
+                        if (!employeesData.length || employeesData.length === 0) {
+                            hasMore = false;
+                            break; // No more data to fetch                                
+                        } else {
+                            allEmployess.push(...employeesData);
+                            page += 1; // Incrementar la página para la siguiente iteración
                         }
 
-                        const myHeaders = new Headers();
-                        myHeaders.append("Content-Type", "application/json");
-                        myHeaders.append("auth_token", config.tokenApiBuk);
-
-                        const requestOptions: RequestInit = {
-                            method: "GET",
-                            headers: myHeaders,
-                            redirect: "follow",
-                        };
-
-                        fetch(`${config.rutaApiBuk}employees?page=2`, requestOptions)
-                            .then((response) => response.json())
-                            .then(async (result) => {
-                                const employeesData = Array.isArray(result.data) ? result.data : [result.data];
-                                const formattedEmployees = await Promise.all(
-                                    employeesData.map(async (employee: any) => {
-                                        // Datos del primer fetch
-                                        const employee_id = employee.person_id;
-                                        const birthday = employee.birthday;
-                                        const active_since = employee.active_since;
-
-                                        // Segundo fetch (jobs)
-                                        const jobResponse = await fetch(
-                                            `${config.rutaApiBuk}employees/${employee.id}/jobs`,
-                                            requestOptions
-                                        );
-                                        const jobResult = await jobResponse.json();
-                                        const dataJobs = jobResult.data[0];
-
-                                        // Cálculos
-                                        const edad = birthday ? new Date().getFullYear() - new Date(birthday).getFullYear() : null;
-
-                                        // Formatear estado
-                                        const statusValue = employee.status;
-                                        let status, pbg;
-
-                                        if (statusValue === "activo") {
-                                            status = "Active";
-                                            pbg = "success.main";
-                                        } else if (statusValue === "inactivo") {
-                                            status = "Not Active";
-                                            pbg = "error.main";
-                                        } else {
-                                            status = "A stranger";
-                                            pbg = "warning.main";
-                                        }
-
-                                        // Objeto final combinado
-                                        return {
-                                            id: employee.person_id,
-                                            full_name: employee.full_name,
-                                            gender: employee.gender,
-                                            birthday: employee.birthday,
-                                            civil_status: employee.civil_status,
-                                            nationality: employee.nationality,
-                                            active_since: employee.active_since,
-                                            active_until: employee.active_until,
-                                            status: status,
-                                            pbg: pbg,
-                                            document_type: employee.document_type,
-                                            document_number: employee.document_number,
-                                            edad: edad,
-                                            region: employee.region,
-                                            district: employee.district,
-                                            education_level: employee.custom_attributes?.['Educational level'],
-                                            health_company: employee.health_company,
-                                            type_of_contract: dataJobs?.type_of_contract,
-                                            regular_hours: dataJobs?.regular_hours,
-                                            role_name: dataJobs?.role.name,
-                                            role_description: dataJobs?.role.description || employee.custom_attributes?.['Funciones Especiales'],
-                                            days: dataJobs?.days || [],
-                                            anniversaryBenefit: employee.custom_attributes?.['Anniversary benefit'] || "",
-                                            birthdayBenefit: employee.custom_attributes?.['Birthday benefit'] || "",
-                                            sickLeavePlan: employee.custom_attributes?.['Sick Leave Plan'] || "",
-                                            termination_reason: employee.termination_reason,
-                                            salary_level: employee.custom_attributes?.['Salary level'] || "",
-                                            attrition_type: employee.custom_attributes?.['Attrition type'] || "",
-                                            attrition_category: employee.custom_attributes?.['Attrition Category'] || "",
-                                            attrition_specific_reason: employee.custom_attributes?.['Attrition specific reason'] || "",
-
-                                        };
-                                    })
-                                );
-
-                                //console.log("Formatted Employees:", formattedEmployees);
-
-                                // Guardar todos los empleados y actualizar estado
-                                await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
-
-                                setAlertMsg('¡Bienvenido, Ingreso Exitoso!');
-                                setOpen(true);
-                                setTimeout(() => {
-                                    navigate('/dashboard');
-                                }, 2000); // Redirigir después de 2 segundos
-
-
-                            })
-                            .catch((error) => {
-                                console.error("Error:", error)
-                                setAlertMsg('Error al actualizar información.');
-                                setOpen(true);
-                            })
-                            .finally(() => setLoading(false));
-                    } else {
-                        setAlertMsg('Usuario o contraseña incorrectos');
-                        setOpen(true);
                     }
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                    setAlertMsg('Error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.');
+
+                    const formattedEmployees: Employee[] = await Promise.all(
+                        allEmployess
+                            .filter(emp => emp.code_sheet?.charAt(0) === "O") // 🔹 Filtra aquí
+                            .map(async (employee: any) => {
+                                const jobResponse = await fetch(
+                                    `${config.rutaApiBuk}employees/${employee.id}/jobs`,
+                                    requestOptions
+                                );
+                                const jobResult = await jobResponse.json();
+                                const dataJobs = jobResult.data[0];
+
+                                const edad = employee.birthday
+                                    ? String(new Date().getFullYear() - new Date(employee.birthday).getFullYear())
+                                    : "";
+
+                                let status: string;
+                                let pbg: string;
+                                if (employee.status === "activo") {
+                                    status = "Active";
+                                    pbg = "success.main";
+                                } else if (employee.status === "inactivo") {
+                                    status = "Not Active";
+                                    pbg = "error.main";
+                                } else {
+                                    status = "A stranger";
+                                    pbg = "warning.main";
+                                }
+
+                                return {
+                                    code_sheet: employee.code_sheet, // ✅ Incluimos code_sheet para que cumpla la interfaz
+                                    id: employee.person_id,
+                                    full_name: employee.full_name,
+                                    gender: employee.gender,
+                                    birthday: employee.birthday,
+                                    civil_status: employee.civil_status,
+                                    nationality: employee.nationality,
+                                    active_since: employee.active_since,
+                                    active_until: employee.active_until,
+                                    status,
+                                    pbg,
+                                    document_type: employee.document_type,
+                                    document_number: employee.document_number,
+                                    edad,
+                                    region: employee.region,
+                                    district: employee.district,
+                                    education_level: employee.custom_attributes?.['Educational level'],
+                                    health_company: employee.health_company,
+                                    type_of_contract: dataJobs?.type_of_contract,
+                                    regular_hours: dataJobs?.regular_hours,
+                                    role_name: dataJobs?.role.name,
+                                    role_description:
+                                        dataJobs?.role.description ||
+                                        employee.custom_attributes?.['Funciones Especiales'],
+                                    days: dataJobs?.days || [],
+                                    anniversaryBenefit:
+                                        employee.custom_attributes?.['Anniversary benefit'] || "",
+                                    birthdayBenefit:
+                                        employee.custom_attributes?.['Birthday benefit'] || "",
+                                    sickLeavePlan:
+                                        employee.custom_attributes?.['Sick Leave Plan'] || "",
+                                    termination_reason: employee.termination_reason,
+                                    salary_level: employee.custom_attributes?.['Salary level'] || "",
+                                    attrition_type: employee.custom_attributes?.['Attrition type'] || "",
+                                    attrition_category:
+                                        employee.custom_attributes?.['Attrition Category'] || "",
+                                    attrition_specific_reason:
+                                        employee.custom_attributes?.['Attrition specific reason'] || "",
+                                } as Employee;
+                            })
+                    );
+
+                    //console.log("Total Employees Fetched:", formattedEmployees.length);
+                    //console.log("Formatted Employees:", formattedEmployees);                   
+                    const resultSave = await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
+
+                    const hasError = resultSave.some(res => res && res.success === false);
+
+                    if (hasError) {
+                        setAlertMsg('Error al actualizar información.');
+                        setOpen(true);
+                    } else {
+                        setAlertMsg('¡Bienvenido, Ingreso Exitoso!');
+                        setOpen(true);
+                        setTimeout(() => {
+                            navigate('/dashboard');
+                        }, 2000); // Redirigir después de 2 segundos
+                    }
+
+                } else {
+                    setAlertMsg('Usuario o contraseña incorrectos');
                     setOpen(true);
-                });
+                }
+            } catch (error) {
+                console.error('Error al manejar el login:', error);
+                setAlertMsg('Error al iniciar sesión. Por favor, inténtalo de nuevo más tarde.');
+                setOpen(true);
+            }
+
         } else {
             alert('Por favor completa Ingrese su usuario y contraseña');
         }

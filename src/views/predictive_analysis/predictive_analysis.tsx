@@ -41,20 +41,26 @@ const predictive_analitics = () => {
     const [filtereredData, setFilteredData] = useState<Predictive_Analysis[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [alertQueue, setAlertQueue] = useState<{ msg: string, severity: "info" | "success" | "error" }[]>([]);
+    const [currentAlert, setCurrentAlert] = useState<{ msg: string, severity: "info" | "success" | "error" } | null>(null);
     const [alertOpen, setAlertOpen] = useState(false);
-    const [alertMsg, setAlertMsg] = useState("");
-    const [alertSeverity, setAlertSeverity] = useState<"info" | "success" | "error">("info");
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!alertOpen && alertQueue.length > 0) {
+            const [nextAlert, ...rest] = alertQueue;
+            setCurrentAlert(nextAlert);
+            setAlertQueue(rest);
+            setAlertOpen(true);
+        }
+    }, [alertQueue, alertOpen]);
 
     useEffect(() => {
         const token = sessionStorage.getItem("token");
 
         if (!token) {
-            console.error("Token not found");
-            setAlertMsg("Token defeated, enter again");
-            setAlertSeverity("error");
-            setAlertOpen(true);
-            setLoading(false);            
+            showAlert("Token defeated, enter again", "error");
+            setLoading(false);
             navigate("/auth/login");
             return;
         }
@@ -68,227 +74,112 @@ const predictive_analitics = () => {
             redirect: "follow",
         };
 
-        setAlertMsg("Generating measurement vectors...");
-        setAlertSeverity("info");
-        setAlertOpen(true);
-
-        // fetch(`${config.rutaApi}analytics_attrition_status/8ae9ecdd-0985-4615-8374-5a1eade90648`, requestOptions)
-        //     .then((response) => {
-        //         if (response.status === 401) {
-        //             setAlertMsg("Session expired. Please log in again.");
-        //             setAlertSeverity("error");
-        //             setAlertOpen(true);
-        //             sessionStorage.removeItem("token");
-        //             navigate("/auth/login");
-        //             throw new Error("Unauthorized");
-        //         }
-
-        //         return response.json();
-        //     })
-        //     .then((analysisStatusResult) => {
-        //         console.log('Analysis task status:', analysisStatusResult);
-        //         if (analysisStatusResult.status === "completed") {
-        //             // clearInterval(analysisIntervalId);
-        //             const predictions = analysisStatusResult.result?.predictions || [];
-        //             const metrics = analysisStatusResult.result?.metrics || {};
-
-        //             const formattedData: Predictive_Analysis[] = predictions.map((item: any) => ({
-        //                 auc: metrics.auc ?? "",
-        //                 id: item.employee_id,
-        //                 fullName: item.full_name,
-        //                 attrition_probability: item.attrition_probability,
-        //                 clasification: item.classification,
-        //                 felicidad: item.semantic_score.felicidad,
-        //                 frustracion: item.semantic_score.frustración,
-        //                 tristeza: item.semantic_score.tristeza,
-        //                 estres: item.semantic_score.estrés,
-        //                 texto_predictivo: item.texto_predictivo,
-        //             }));
-        //             setPredictive_analitics(formattedData);
-        //             setFilteredData(formattedData);
-
-        //             setTimeout(() => {
-        //                 setAlertMsg("¡Analysis completed successfully!");
-        //                 setAlertSeverity("success");
-        //                 setAlertOpen(true);
-        //             }, 3000);                    
-        //         }
-        //     })
-        //     .catch((error) => {
-        //         if (error.message !== "Unauthorized") {
-        //             setAlertMsg("Error checking analysis task status");
-        //             setAlertSeverity("error");
-        //             setAlertOpen(true);
-        //             console.error('❌ Error checking analysis task status:', error);
-        //         }
-        //     })
-        //     .finally(() => {
-        //         setLoading(false);
-        //     });
+        // 🔹 Paso 1: Generar embeddings
+        showAlert("Generating measurement vectors...", "info");
 
         fetch(`${config.rutaApi}creating_embedding`, requestOptions)
             .then((response) => {
-                if (response.status === 401) {
-                    setAlertMsg("Session expired. Please log in again.");
-                    setAlertSeverity("error");
-                    setAlertOpen(true);
-                    sessionStorage.removeItem("token");
-                    navigate("/auth/login");
-                    throw new Error("Unauthorized");
-                }
+                if (response.status === 401) return handleUnauthorized();
                 return response.json();
             })
             .then((result) => {
-                const taskId = result.task_id;
-                if (!taskId) {
-                    setAlertMsg("Error generating embeddings");
-                    setAlertSeverity("error");
-                    setAlertOpen(true);
-                    throw new Error("Task ID not found in response");
-                }
+                const taskId = result?.task_id;
+                if (!taskId) throw new Error("Task ID not found");
 
-                setAlertMsg("Embeddings generated successfully. Analyzing data...");
-                setAlertSeverity("success");
-                setAlertOpen(true);
+                return waitForTask(`${config.rutaApi}estado_tarea/${taskId}`, requestOptions);
+            })
+            .then(() => {
+                // 🔹 Paso 2: Analizar datos
+                showAlert("Analyzing attrition predictions...", "info");
 
-                const intervalId = setInterval(() => {
-                    fetch(`${config.rutaApi}estado_tarea/${taskId}`, requestOptions)
-                        .then((response) => {
-                            if (response.status === 401) {
-                                setAlertMsg("Session expired. Please log in again.");
-                                setAlertSeverity("error");
-                                setAlertOpen(true);
-                                sessionStorage.removeItem("token");
-                                navigate("/auth/login");
-                                throw new Error("Unauthorized");
-                            }
-                            return response.json();
-                        })
-                        .then((statusResult) => {
-                            console.log('Task status:', statusResult);
-                            if (statusResult.State === "Success") {
-                                clearInterval(intervalId);
+                return fetch(`${config.rutaApi}analytics_attrition`, requestOptions)
+                    .then((response) => {
+                        if (response.status === 401) return handleUnauthorized();
+                        return response.json();
+                    });
+            })
+            .then((result) => {
+                const jobId = result?.job_id;
+                if (!jobId) throw new Error("Job ID not found");
 
-                                setAlertMsg("Analyzing attrition predictions...");
-                                setAlertSeverity("info");
-                                setAlertOpen(true);
+                return waitForTask(`${config.rutaApi}analytics_attrition_status/${jobId}`, requestOptions);
+            })
+            .then((finalData) => {
+                const predictions = finalData.result?.predictions || [];
+                const metrics = finalData.result?.metrics || {};
 
-                                fetch(`${config.rutaApi}analytics_attrition`, requestOptions)
-                                    .then((response) => {
-                                        if (response.status === 401) {
-                                            setAlertMsg("Session expired. Please log in again.");
-                                            setAlertSeverity("error");
-                                            setAlertOpen(true);
-                                            sessionStorage.removeItem("token");
-                                            navigate("/auth/login");
-                                            throw new Error("Unauthorized");
-                                        }
-                                        return response.json();
-                                    })
-                                    .then((result) => {
-                                        const taskAnalysisId = result.job_id;
-                                        if (!taskAnalysisId) {
-                                            setAlertMsg("Error analyzing attrition data");
-                                            setAlertSeverity("error");
-                                            setAlertOpen(true);
-                                            throw new Error("Job ID not found in response");
-                                        }
+                const formattedData: Predictive_Analysis[] = predictions.map((item: any) => ({
+                    auc: metrics.auc ?? "",
+                    id: item.employee_id,
+                    fullName: item.full_name,
+                    attrition_probability: item.attrition_probability,
+                    clasification: item.classification,
+                    felicidad: item.semantic_score.felicidad,
+                    frustracion: item.semantic_score.frustración,
+                    tristeza: item.semantic_score.tristeza,
+                    estres: item.semantic_score.estrés,
+                    texto_predictivo: item.texto_predictivo,
+                }));
 
-                                        const analysisIntervalId = setInterval(() => {
-                                            fetch(`${config.rutaApi}analytics_attrition_status/${taskAnalysisId}`, requestOptions)
-                                                .then((response) => {
-                                                    if (response.status === 401) {
-                                                        setAlertMsg("Session expired. Please log in again.");
-                                                        setAlertSeverity("error");
-                                                        setAlertOpen(true);
-                                                        sessionStorage.removeItem("token");
-                                                        navigate("/auth/login");
-                                                        throw new Error("Unauthorized");
-                                                    }
+                setPredictive_analitics(formattedData);
+                setFilteredData(formattedData);
 
-                                                    return response.json();
-                                                })
-                                                .then((analysisStatusResult) => {
-                                                    console.log('Analysis task status:', analysisStatusResult);
-                                                    if (analysisStatusResult.status === "completed") {
-                                                        clearInterval(analysisIntervalId);
-                                                        const predictions = analysisStatusResult.result?.predictions || [];
-                                                        const metrics = analysisStatusResult.result?.metrics || {};
-
-                                                        const formattedData: Predictive_Analysis[] = predictions.map((item: any) => ({
-                                                            auc: metrics.auc ?? "",
-                                                            id: item.employee_id,
-                                                            fullName: item.full_name,
-                                                            attrition_probability: item.attrition_probability,
-                                                            clasification: item.classification,
-                                                            felicidad: item.semantic_score.felicidad,
-                                                            frustracion: item.semantic_score.frustración,
-                                                            tristeza: item.semantic_score.tristeza,
-                                                            estres: item.semantic_score.estrés,
-                                                            texto_predictivo: item.texto_predictivo,
-                                                        }));
-                                                        setPredictive_analitics(formattedData);
-                                                        setFilteredData(formattedData);
-
-                                                        setTimeout(() => {
-                                                            setAlertMsg("¡Analysis completed successfully!");
-                                                            setAlertSeverity("success");
-                                                            setAlertOpen(true);
-                                                        }, 3000);                    
-                                                    }
-                                                })
-                                                .catch((error) => {
-                                                    if (error.message !== "Unauthorized") {
-                                                        setAlertMsg("Error checking analysis task status");
-                                                        setAlertSeverity("error");
-                                                        setAlertOpen(true);
-                                                        console.error('❌ Error checking analysis task status:', error);
-                                                    }
-                                                })
-                                                .finally(() => {
-                                                    setLoading(false);
-                                                });
-                                        }, 5000);                                       
-
-                                    })
-                                    .catch((error) => {
-                                        if (error.message !== "Unauthorized") {
-                                            setAlertMsg("Error al analizar datos de atrición");
-                                            setAlertSeverity("error");
-                                            setAlertOpen(true);
-                                            console.error("Error fetching data:", error);
-                                        }
-                                    })
-                                    .finally(() => {
-                                        setLoading(false);
-                                    });
-                            }
-                        })
-                        .catch((error) => {
-                            if (error.message !== "Unauthorized") {
-                                setAlertMsg("Error checking task status");
-                                setAlertSeverity("error");
-                                setAlertOpen(true);
-                                console.error('❌ Error checking task status:', error);
-                            }
-                        })
-                        .finally(() => {
-                            setLoading(false);
-                        });
-                }, 5000);                
+                // 🔹 Paso 3: Finalizado
+                showAlert("¡Analysis completed successfully!", "success");
             })
             .catch((error) => {
                 if (error.message !== "Unauthorized") {
-                    setAlertMsg("Error generando embeddings");
-                    setAlertSeverity("error");
-                    setAlertOpen(true);
-                    console.error('❌ Error fetching data:', error);
+                    showAlert(error.message || "Error in process", "error");
+                    console.error(error);
                 }
             })
             .finally(() => {
-                setLoading(true);
-            });        
+                // 🔹 loading se apaga al final
+                setLoading(false);
+            });
+
     }, []);
+
+    const showAlert = (msg: string, severity: "info" | "success" | "error") => {
+        setAlertQueue(prev => [...prev, { msg, severity }]);
+    };
+
+    const handleAlertClose = (_?: unknown, reason?: string) => {
+        if (reason === 'clickaway') return;
+        setAlertOpen(false);
+    };
+
+    // 🔹 Función para manejar 401
+    const handleUnauthorized = () => {
+        showAlert("Session expired. Please log in again.", "error");
+        sessionStorage.removeItem("token");
+        navigate("/auth/login");
+        throw new Error("Unauthorized");
+    };
+
+    // 🔹 Polling hasta que la tarea termine
+    const waitForTask = (url: string, options: RequestInit) => {
+        return new Promise<any>((resolve, reject) => {
+            const intervalId = setInterval(() => {
+                fetch(url, options)
+                    .then((res) => {
+                        if (res.status === 401) return handleUnauthorized();
+                        return res.json();
+                    })
+                    .then((statusResult) => {
+                        console.log("Task status:", statusResult);
+                        if (statusResult.State === "Success" || statusResult.status === "completed") {
+                            clearInterval(intervalId);
+                            resolve(statusResult);
+                        }
+                    })
+                    .catch((err) => {
+                        clearInterval(intervalId);
+                        reject(err);
+                    });
+            }, 5000);
+        });
+    };
 
     useEffect(() => {
         if (searchTerm === "") {
@@ -326,20 +217,26 @@ const predictive_analitics = () => {
     }
 
     return (
-        <>  
-            <Snackbar 
+        <>
+            <Snackbar
                 open={alertOpen}
-                autoHideDuration={
-                    alertSeverity === "success" || alertSeverity === "error"
-                    ? 2000 : null
-                }
-                onClose={() => setAlertOpen(false)}>
-                <Alert onClose={() => setAlertOpen(false)}
-                     severity={alertSeverity}
-                     sx={{ width: '100%' }}>
-                    {alertMsg}
-                </Alert>
+                autoHideDuration={2000}
+                onClose={handleAlertClose}
+                key={currentAlert?.msg}
+            >
+                {currentAlert ? (
+                    <Alert
+                        onClose={handleAlertClose}
+                        severity={currentAlert.severity}
+                        sx={{ width: '100%' }}
+                    >
+                        {currentAlert.msg}
+                    </Alert>
+                ) : (
+                    <></>
+                )}
             </Snackbar>
+
             <BaseCard title={
                 <Box sx={{
                     display: "flex",
@@ -471,7 +368,7 @@ const predictive_analitics = () => {
                             ))}
                         </TableBody>
                     </Table>
-                </TableContainer>            
+                </TableContainer>
             </BaseCard>
         </>
     );
