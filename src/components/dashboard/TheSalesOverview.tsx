@@ -1,20 +1,81 @@
-import React from "react";
+import React, {use, useEffect, useState} from "react";
 import { useTheme } from "@mui/material/styles";
 import { Stack, Typography, Avatar, Box } from "@mui/material";
 import DashboardCard from "../shared/DashboardCard";
+import config from "src/config/config";
+import { useNavigate } from "react-router-dom";
 
 const Chart = React.lazy(() => import('react-apexcharts'));
 
 
 const SalesOverview = () => {
+  const [loading, setLoading] = useState(true);
+  const [alertQueue, setAlertQueue] = useState<{ msg: string, severity: "info" | "success" | "error" }[]>([]);
+  const navigate = useNavigate();
   // chart color
   const theme = useTheme();
   const primary = theme.palette.primary.main;
-  const secondary = theme.palette.secondary.main;
+  // const secondary = theme.palette.secondary.main;
+
+  const [categories, setCategories] = useState<string[]>([]);
+  const [seriesData, setSeriesData] = useState<number[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = sessionStorage.getItem("token");
+
+        if (!token) {
+            showAlert("Token defeated, enter again", "error");
+            setLoading(false);
+            navigate("/auth/login");
+            return;
+        }
+
+        const myHeaders = new Headers();
+        myHeaders.append("authToken", token);
+
+        const requestOptions: RequestInit = {
+            method: "GET",
+            headers: myHeaders,
+            redirect: "follow",
+        };
+
+        const res = await fetch(`${config.rutaApi}employee_system_list`, requestOptions);
+        const data = await res.json();
+
+        const notActive = data.dataEmployees.filter((row: any) => row.status === "Not Active");
+
+        const grouped = notActive.reduce((acc: any, row: any) => {
+          const client = row.customer || "Unknown Client";
+          acc[client] = (acc[client] || 0) + 1;
+          return acc;
+        }, {});
+
+        const clients = Object.keys(grouped);
+        const counts = Object.values(grouped) as number[];
+
+        setCategories(clients);
+        setSeriesData(counts);
+
+        // console.log("Categories:", clients);
+        // console.log("Series Data:", counts);
+
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const showAlert = (msg: string, severity: "info" | "success" | "error") => {
+      setAlertQueue(prev => [...prev, { msg, severity }]);
+  };
+
 
   // chart
   const optionscolumnchart: any = {
-
     plotOptions: {
       bar: {
         horizontal: false,
@@ -22,13 +83,12 @@ const SalesOverview = () => {
         columnWidth: "35%",
       },
     },
-
     grid: {
       show: true,
       strokeDashArray: 3,
       borderColor: "rgba(0,0,0,.1)",
     },
-    colors: [primary, secondary],
+    colors: [primary],
     chart: {
       width: 70,
       height: 40,
@@ -40,7 +100,7 @@ const SalesOverview = () => {
     },
     xaxis: {
       type: "category",
-      categories: ["Client 1", "Client 2", "Client 3", "Client 4", "Client 5", "Client 6", "Client 7"],
+      categories: categories,
       axisTicks: {
         show: false,
       },
@@ -64,7 +124,7 @@ const SalesOverview = () => {
     },
   };
   const seriescolumnchart = [
-    { name: "Employe", data: [10, 15, 5, 2, 4, 12, 1] },
+    { name: "Employe", data: seriesData },
     //{ name: "Pixel", data: [280, 250, 325, 215, 250, 310, 170] },
   ];
 

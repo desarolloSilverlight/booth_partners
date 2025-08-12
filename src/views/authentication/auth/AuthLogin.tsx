@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import config from "src/config/config";
 import CustomTextField from 'src/components/forms/theme-elements/CustomTextField';
 import { useAuth } from 'src/context/AuthContext';
-import { last } from 'lodash';
 
 interface Employee {
     //.............................Codigo para diferenciar falsos y verdaderos...........................
@@ -19,6 +18,7 @@ interface Employee {
     nationality: string;
     active_since: string;
     active_until: string;
+    customer_employe: string;
     status: string;
     pbg: string;
     document_type: string;
@@ -142,14 +142,17 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                                     pbg = "warning.main";
                                 }
 
+                                const customer_employe = employee.code_sheet?.split("-").pop() || "";
+
                                 return {
-                                    code_sheet: employee.code_sheet, // ✅ Incluimos code_sheet para que cumpla la interfaz
+                                    code_sheet: employee.code_sheet,
                                     id: employee.person_id,
                                     full_name: employee.full_name,
                                     gender: employee.gender,
                                     birthday: employee.birthday,
                                     civil_status: employee.civil_status,
                                     nationality: employee.nationality,
+                                    customer_employe,
                                     active_since: employee.active_since,
                                     active_until: employee.active_until,
                                     status,
@@ -185,10 +188,9 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                             })
                     );
 
-                    //console.log("Total Employees Fetched:", formattedEmployees.length);
-                    //console.log("Formatted Employees:", formattedEmployees);                   
-                    const resultSave = await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
+                    // console.log("Formatted Employees:", formattedEmployees);              
 
+                    const resultSave = await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
                     const hasError = resultSave.some(res => res && res.success === false);
 
                     if (hasError) {
@@ -233,6 +235,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
             nationality: employee.nationality,
             active_since: employee.active_since,
             active_until: employee.active_until,
+            customer: employee.customer_employe,
             status: employee.status,
             document_type: employee.document_type,
             document_number: employee.document_number,
@@ -260,6 +263,8 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
 
         };
 
+        // console.log("Estrucutra enviada: ", payload);
+
         try {
             const myHeaders = new Headers();
             myHeaders.append("Content-Type", "application/json");
@@ -283,7 +288,6 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
             }
 
             const result = await response.json();
-            // console.log("Empleado guardado:", result);
             return { success: true, data: result };
 
         } catch (error) {
