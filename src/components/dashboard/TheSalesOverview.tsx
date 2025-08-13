@@ -1,4 +1,4 @@
-import React, {use, useEffect, useState} from "react";
+import React, { use, useEffect, useState } from "react";
 import { useTheme } from "@mui/material/styles";
 import { Stack, Typography, Avatar, Box } from "@mui/material";
 import DashboardCard from "../shared/DashboardCard";
@@ -26,22 +26,30 @@ const SalesOverview = () => {
         const token = sessionStorage.getItem("token");
 
         if (!token) {
-            showAlert("Token defeated, enter again", "error");
-            setLoading(false);
-            navigate("/auth/login");
-            return;
+          showAlert("Token defeated, enter again", "error");
+          setLoading(false);
+          navigate("/auth/login");
+          return;
         }
 
         const myHeaders = new Headers();
         myHeaders.append("authToken", token);
 
         const requestOptions: RequestInit = {
-            method: "GET",
-            headers: myHeaders,
-            redirect: "follow",
+          method: "GET",
+          headers: myHeaders,
+          redirect: "follow",
         };
 
         const res = await fetch(`${config.rutaApi}employee_system_list`, requestOptions);
+
+        if (res.status === 401) {
+          sessionStorage.removeItem("token");
+          alert("Sesión expirada, por favor ingresa nuevamente");
+          navigate("/auth/login");
+          return;
+        }
+
         const data = await res.json();
 
         const notActive = data.dataEmployees.filter((row: any) => row.status === "Not Active");
@@ -70,7 +78,7 @@ const SalesOverview = () => {
   }, []);
 
   const showAlert = (msg: string, severity: "info" | "success" | "error") => {
-      setAlertQueue(prev => [...prev, { msg, severity }]);
+    setAlertQueue(prev => [...prev, { msg, severity }]);
   };
 
 

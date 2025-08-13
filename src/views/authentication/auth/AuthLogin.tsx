@@ -106,17 +106,17 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
 
                         if (!employeesData.length || employeesData.length === 0) {
                             hasMore = false;
-                            break; // No more data to fetch                                
+                            break;
                         } else {
                             allEmployess.push(...employeesData);
-                            page += 1; // Incrementar la página para la siguiente iteración
+                            page += 1;
                         }
 
                     }
 
                     const formattedEmployees: Employee[] = await Promise.all(
                         allEmployess
-                            .filter(emp => emp.code_sheet?.charAt(0) === "O") // 🔹 Filtra aquí
+                            .filter(emp => emp.code_sheet?.charAt(0) === "O")
                             .map(async (employee: any) => {
                                 const jobResponse = await fetch(
                                     `${config.rutaApiBuk}employees/${employee.id}/jobs`,
@@ -188,21 +188,27 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                             })
                     );
 
-                    // console.log("Formatted Employees:", formattedEmployees);              
+                    // console.log("Formatted Employees:", formattedEmployees);
 
-                    const resultSave = await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
-                    const hasError = resultSave.some(res => res && res.success === false);
+                    setAlertMsg('¡Bienvenido, Ingreso Exitoso!');
+                    setOpen(true);
+                    setTimeout(() => {
+                        navigate('/dashboard');
+                    }, 2000); // Redirigir después de 2 segundos
 
-                    if (hasError) {
-                        setAlertMsg('Error al actualizar información.');
-                        setOpen(true);
-                    } else {
-                        setAlertMsg('¡Bienvenido, Ingreso Exitoso!');
-                        setOpen(true);
-                        setTimeout(() => {
-                            navigate('/dashboard');
-                        }, 2000); // Redirigir después de 2 segundos
-                    }
+                    // const resultSave = await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
+                    // const hasError = resultSave.some(res => res && res.success === false);
+
+                    // if (hasError) {
+                    //     setAlertMsg('Error al actualizar información.');
+                    //     setOpen(true);
+                    // } else {
+                    //     setAlertMsg('¡Bienvenido, Ingreso Exitoso!');
+                    //     setOpen(true);
+                    //     setTimeout(() => {
+                    //         navigate('/dashboard');
+                    //     }, 2000); // Redirigir después de 2 segundos
+                    // }
 
                 } else {
                     setAlertMsg('Usuario o contraseña incorrectos');

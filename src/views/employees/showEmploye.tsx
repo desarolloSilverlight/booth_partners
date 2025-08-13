@@ -21,6 +21,7 @@ interface Employee {
     nationality: string;
     active_since: string;
     active_until: string;
+    customer: string;
     status: string;
     pbg: string;
     document_type: string;
@@ -36,6 +37,11 @@ interface Employee {
     role_name: string;
     role_description: string;
     days?: string[];
+    attrition_type: string;
+    attrition_category: string;
+    attrition_specific_reason: string;
+    description_ia: string;
+
 }
 
 const showEmploye = () => {
@@ -49,6 +55,8 @@ const showEmploye = () => {
 
         if (!token) {
             console.error("Token not found");
+            alert("Token defeated, enter again");
+            navigate("/auth/login");
             setLoading(false);
             return;
         }
@@ -67,7 +75,7 @@ const showEmploye = () => {
         fetch(`${config.rutaApi}employees_profile`, requestOptions)
             .then((response) => response.json())
             .then((result) => {
-                console.log(result);
+                // console.log(result);
                 setEmployee(result.dataEmployee);
             })
             .catch((error) => console.error("Error:", error))
@@ -151,6 +159,15 @@ const showEmploye = () => {
                         sx={{ mb: 2 }}
                     />
                     <TextField
+                        id="employee-customer"
+                        label="Customer"
+                        variant="outlined"
+                        defaultValue={employee?.customer}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
                         id="employee-status"
                         label="Status"
                         variant="outlined"
@@ -222,52 +239,46 @@ const showEmploye = () => {
                         InputLabelProps={{ shrink: true }}
                         sx={{ mb: 2 }}
                     />
-                    <Autocomplete
-                        id="employee-termination-reason"
-                        options={["Select...",
-                                 "Career Development",
-                                 "Compensation and Benefits",
-                                 "Immediate Supervisor",
-                                 "Client",
-                                 "Management",
-                                 "Work Location, Environment and Conditions",
-                                 "Coworkers",
-                                 "Health",
-                                 "Family circumstances",
-                                 "Just Cause",
-                                 "Authorized Cause",
-                                 "End of Contract",
-                                 "Project Completion"]}
-                        defaultValue={employee?.health_company || ""}
+                    <TextField
+                        id="employee-attrition_type"
+                        label="Attrition Type"
+                        variant="outlined"
+                        defaultValue={employee?.attrition_type}
                         fullWidth
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Termination Reason"
-                                variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                                sx={{ mb: 2 }}
-                            />
-                        )}
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ mb: 2 }}
                     />
                     <TextField
-                        id="employee-resignation-reasons"
-                        label="Resignation Reasons"
+                        id="employee-attrition_category"
+                        label="Attrition Category"
                         variant="outlined"
+                        defaultValue={employee?.attrition_category}
+                        fullWidth
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ mb: 2 }}
+                    />
+                    <TextField
+                        id="employee-attrtion-spesific-reasons"
+                        label="Attrition Specific Reasons"
+                        variant="outlined"
+                        defaultValue={employee?.attrition_specific_reason}
                         multiline
                         rows={4} // o la cantidad que desees
                         fullWidth
                         InputLabelProps={{ shrink: true }}
                         sx={{ mb: 2 }}
                     />
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        type="submit"
+                    <TextField
+                        id="employee-attrition-possible-reasons"
+                        label="Attrition Possible Reasons"
+                        variant="outlined"
+                        defaultValue={employee?.description_ia}
+                        multiline
+                        rows={4} // o la cantidad que desees
                         fullWidth
-                    >
-                        Guardar
-                    </Button>
+                        InputLabelProps={{ shrink: true }}
+                        sx={{ mb: 2 }}
+                    />
                 </form>
             </BaseCard>
         </div>

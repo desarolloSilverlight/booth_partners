@@ -12,9 +12,9 @@ import {
     Snackbar,
     Alert,
     Tooltip,
-    Button,             
-    Dialog,             
-    DialogTitle,        
+    Button,
+    Dialog,
+    DialogTitle,
     DialogContent,
     DialogActions
 } from "@mui/material";
@@ -55,10 +55,10 @@ const predictive_analitics = () => {
     const [selectedText, setSelectedText] = React.useState("");
 
     const yesterdayUpdate = dayjs()
-    .subtract(1, "day")
-    .set("hour", 23)
-    .set("minute", 59)
-    .format("MMMM DD, YYYY, hh:mm A");
+        .subtract(1, "day")
+        .set("hour", 23)
+        .set("minute", 59)
+        .format("MMMM DD, YYYY, hh:mm A");
 
     const handleOpen = (texto: string) => {
         setSelectedText(texto); // Guardar el texto de la fila clicada
@@ -109,6 +109,8 @@ const predictive_analitics = () => {
                 if (!result || !Array.isArray(result)) {
                     throw new Error("Invalid response format");
                 }
+
+                // console.log("Data fetched:", result);
 
                 const formattedData: Predictive_Analysis[] = result.map((item: any) => {
                     let felicidad = "";
@@ -224,7 +226,7 @@ const predictive_analitics = () => {
         //     });
 
     }, []);
-    
+
     const showAlert = (msg: string, severity: "info" | "success" | "error") => {
         setAlertQueue(prev => [...prev, { msg, severity }]);
     };
@@ -233,7 +235,7 @@ const predictive_analitics = () => {
         if (reason === 'clickaway') return;
         setAlertOpen(false);
     };
-    
+
     const handleUnauthorized = () => {
         showAlert("Session expired. Please log in again.", "error");
         sessionStorage.removeItem("token");
@@ -331,18 +333,18 @@ const predictive_analitics = () => {
                         flexDirection: { xs: "column", sm: "row" },
                         justifyContent: "space-between",
                     }}
-                    >
+                >
                     {/* Bloque Título + Fecha */}
                     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                         <Typography variant="h5">
-                        Predictive Attrition Analysis
+                            Predictive Attrition Analysis
                         </Typography>
                         <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        sx={{ fontStyle: "italic" }}
+                            variant="body2"
+                            color="textSecondary"
+                            sx={{ fontStyle: "italic" }}
                         >
-                        Last update: {yesterdayUpdate} (Colombia Time)
+                            Last update: {yesterdayUpdate} (Colombia Time)
                         </Typography>
                     </Box>
 
@@ -463,11 +465,11 @@ const predictive_analitics = () => {
                                             {dataAnalysis.clasification}
                                         </Typography>
                                     </TableCell>
-                                    <TableCell sx={{ maxWidth: 300, whiteSpace: 'normal', wordBreak: 'break-word' }}>  
-                                        <Button 
-                                            size="small" 
-                                            variant="outlined" 
-                                            sx={{ mt: 1 }} 
+                                    <TableCell sx={{ maxWidth: 300, whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            sx={{ mt: 1 }}
                                             onClick={() => handleOpen(dataAnalysis.texto_predictivo)}
                                         >
                                             Show Text
