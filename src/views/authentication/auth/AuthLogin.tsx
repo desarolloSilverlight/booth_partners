@@ -190,25 +190,25 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
 
                     // console.log("Formatted Employees:", formattedEmployees);
 
-                    setAlertMsg('¡Bienvenido, Ingreso Exitoso!');
-                    setOpen(true);
-                    setTimeout(() => {
-                        navigate('/dashboard');
-                    }, 2000); // Redirigir después de 2 segundos
+                    // setAlertMsg('¡Bienvenido, Ingreso Exitoso!');
+                    // setOpen(true);
+                    // setTimeout(() => {
+                    //     navigate('/dashboard');
+                    // }, 2000); // Redirigir después de 2 segundos
 
-                    // const resultSave = await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
-                    // const hasError = resultSave.some(res => res && res.success === false);
+                    const resultSave = await Promise.all(formattedEmployees.map(emp => saveEmployeeDB(emp)));
+                    const hasError = resultSave.some(res => res && res.success === false);
 
-                    // if (hasError) {
-                    //     setAlertMsg('Error al actualizar información.');
-                    //     setOpen(true);
-                    // } else {
-                    //     setAlertMsg('¡Bienvenido, Ingreso Exitoso!');
-                    //     setOpen(true);
-                    //     setTimeout(() => {
-                    //         navigate('/dashboard');
-                    //     }, 2000); // Redirigir después de 2 segundos
-                    // }
+                    if (hasError) {
+                        setAlertMsg('Error al actualizar información.');
+                        setOpen(true);
+                    } else {
+                        setAlertMsg('¡Bienvenido, Ingreso Exitoso!');
+                        setOpen(true);
+                        setTimeout(() => {
+                            navigate('/dashboard');
+                        }, 2000); // Redirigir después de 2 segundos
+                    }
 
                 } else {
                     setAlertMsg('Usuario o contraseña incorrectos');

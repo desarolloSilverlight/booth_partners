@@ -49,11 +49,11 @@ const RadarChart = () => {
                 let countLow = 0;
 
                 data.forEach((emp: any) => {
-                    if (emp.classification) {
-                        const classification = emp.classification.toLowerCase();
-                        if (classification.includes("high")) countHigh++;
-                        else if (classification.includes("medium")) countMedium++;
-                        else if (classification.includes("low")) countLow++;
+                    if (emp.clasification) {
+                        const clasification = emp.clasification.toLowerCase();
+                        if (clasification.includes("high")) countHigh++;
+                        else if (clasification.includes("medium")) countMedium++;
+                        else if (clasification.includes("low")) countLow++;
                     }
                 });
 

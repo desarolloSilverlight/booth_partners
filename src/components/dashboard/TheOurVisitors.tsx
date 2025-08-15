@@ -4,7 +4,6 @@ import { Stack, Typography, Avatar, Box, Divider } from "@mui/material";
 import DashboardCard from "../shared/DashboardCard";
 import config from "src/config/config";
 import { useNavigate } from "react-router-dom";
-import { format } from "path";
 
 const Chart = React.lazy(() => import("react-apexcharts"));
 
@@ -56,47 +55,26 @@ const OurVisitors = () => {
 
         // console.log("Data fetched:", data);
 
-        let totals = {
-          happiness: 0,
-          frustration: 0,
-          sadness: 0,
-          stress: 0,
+        let counts: Record<string, number> = {
+          "Very Satisfied": 0,
+          "Satisfied": 0,
+          "Neutral": 0,
+          "Dissatisfied": 0,
+          "Very Dissatisfied": 0,
         };
 
 
         data.forEach((emp: any) => {
-          if (emp.semantic_score) {
-            try {
-              // Convertir el string a objeto JSON válido
-              const fixedJson = emp.semantic_score
-                .replace(/'/g, '"') // cambiar comillas simples por dobles
-                .replace(/([a-zA-Záéíóúñ]+):/g, '"$1":'); // asegurar claves con comillas
-
-              const scores = JSON.parse(fixedJson);
-
-              totals.happiness += scores["felicidad"] || 0;
-              totals.frustration += scores["frustración"] || 0;
-              totals.sadness += scores["tristeza"] || 0;
-              totals.stress += scores["estrés"] || 0;
-            } catch (err) {
-              console.error("Error parsing semantic_score", err);
-            }
+          if (emp.calification && counts.hasOwnProperty(emp.calification)) {
+            counts[emp.calification]++;
           }
         });
 
-        // Calcular porcentajes
-        const totalSum =
-          totals.happiness +
-          totals.frustration +
-          totals.sadness +
-          totals.stress;
+        const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
-        const percentages = [
-          parseFloat(((totals.happiness / totalSum) * 100).toFixed(1)),
-          parseFloat(((totals.frustration / totalSum) * 100).toFixed(1)),
-          parseFloat(((totals.sadness / totalSum) * 100).toFixed(1)),
-          parseFloat(((totals.stress / totalSum) * 100).toFixed(1)),
-        ];
+        const percentages = Object.values(counts).map((val) => 
+          total > 0 ? parseFloat(((val / total) * 100).toFixed(1)) : 0
+        );
 
         setSeriesData(percentages);
         setLoading(false);
@@ -111,14 +89,26 @@ const OurVisitors = () => {
   }, [navigate]);
 
   const optionscolumnchart: any = {
-    labels: ["Happiness", "Frustration", "Sadness", "Stress"],
+    labels: [
+      "Very satisfied",
+      "Satisfied",
+      "Neutral",
+      "Dissatisfied",
+      "Very dissatisfied",
+    ],
     chart: {
       height: 250,
       type: "donut",
       foreColor: "#adb0bb",
       fontFamily: `inherit`,
     },
-    colors: [primary, secondary, info, warning],
+    colors: [
+      theme.palette.success.main,
+      theme.palette.primary.main,
+      theme.palette.info.main,
+      theme.palette.warning.main,
+      theme.palette.error.main,
+    ],
     dataLabels: { enabled: false },
     legend: { show: false },
     stroke: { colors: ["transparent"] },
@@ -168,10 +158,11 @@ const OurVisitors = () => {
             flexWrap="wrap"
           >
             {[
-              { label: "Happiness", color: primary },
-              { label: "Frustration", color: secondary },
-              { label: "Sadness", color: info },
-              { label: "Stress", color: warning },
+              { label: "Very Satisfied", color: theme.palette.success.main },
+              { label: "Satisfied", color: theme.palette.primary.main },
+              { label: "Neutral", color: theme.palette.info.main },
+              { label: "Dissatisfied", color: theme.palette.warning.main},
+              { label: "Very Dissatisfied", color: theme.palette.error.main },
             ].map((item, index) => (
               <Stack
                 key={index}

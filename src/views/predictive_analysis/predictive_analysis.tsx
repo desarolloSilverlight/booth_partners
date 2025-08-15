@@ -27,18 +27,13 @@ import React from "react";
 import dayjs from "dayjs";
 
 interface Predictive_Analysis {
-    auc: string;
     id: number;
     fullName: string;
     customer: string;
+    calification: string;
     clasification: string;
     attrition_probability: string;
-    felicidad: string;
-    frustracion: string;
-    tristeza: string;
-    estres: string;
-    texto_predictivo: string;
-    similarity_scores: any;
+    text_ai: string;
 }
 
 const predictive_analitics = () => {
@@ -112,41 +107,15 @@ const predictive_analitics = () => {
 
                 // console.log("Data fetched:", result);
 
-                const formattedData: Predictive_Analysis[] = result.map((item: any) => {
-                    let felicidad = "";
-                    let frustracion = "";
-                    let tristeza = "";
-                    let estres = "";
-
-                    try {
-                        const scoreStr = item.semantic_score
-                            .replace(/'/g, '"')
-                            .replace(/frustración/g, 'frustracion')
-                            .replace(/estrés/g, 'estres');
-
-                        const scoreObj = JSON.parse(scoreStr);
-
-                        felicidad = scoreObj.felicidad ?? "";
-                        frustracion = scoreObj.frustracion ?? "";
-                        tristeza = scoreObj.tristeza ?? "";
-                        estres = scoreObj.estres ?? "";
-                    } catch (e) {
-                        console.error("Error parseando semantic_score:", e);
-                    }
-
+                const formattedData: Predictive_Analysis[] = result.map((item: any) => {                    
                     return {
-                        auc: item.auc || "",
                         id: item.fkid_employe,
                         fullName: item.full_name || "",
                         customer: item.customer || "",
-                        clasification: item.classification || "",
+                        calification: item.calification || "",
+                        clasification: item.clasification || "",
                         attrition_probability: item.attrition_probability || "",
-                        felicidad,
-                        frustracion,
-                        tristeza,
-                        estres,
-                        texto_predictivo: item.texto_predictivo || "",
-                        similarity_scores: item.similarity_scores || {},
+                        text_ai: item.text_ai || "",
                     };
                 });
 
@@ -392,22 +361,7 @@ const predictive_analitics = () => {
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="subtitle1">
-                                        happiness
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="subtitle1">
-                                        frustration
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="subtitle1">
-                                        stress
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="subtitle1">
-                                        sadness
+                                        satisfaction
                                     </Typography>
                                 </TableCell>
                                 <TableCell>
@@ -442,22 +396,7 @@ const predictive_analitics = () => {
                                     </TableCell>
                                     <TableCell>
                                         <Typography color="textSecondary" fontSize="14px">
-                                            {dataAnalysis.felicidad}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography color="textSecondary" fontSize="14px">
-                                            {dataAnalysis.frustracion}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography color="textSecondary" fontSize="14px">
-                                            {dataAnalysis.estres}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography color="textSecondary" fontSize="14px">
-                                            {dataAnalysis.tristeza}
+                                            {dataAnalysis.calification}
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
@@ -470,7 +409,7 @@ const predictive_analitics = () => {
                                             size="small"
                                             variant="outlined"
                                             sx={{ mt: 1 }}
-                                            onClick={() => handleOpen(dataAnalysis.texto_predictivo)}
+                                            onClick={() => handleOpen(dataAnalysis.text_ai)}
                                         >
                                             Show Text
                                         </Button>
