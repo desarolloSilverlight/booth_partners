@@ -142,7 +142,7 @@ const SalesOverview = () => {
 
       <DashboardCard
         title="Chart No. 1"
-        subtitle="Top Clients by Attrition Rate"
+        subtitle="Historic Attrition Risk"
         action={
           <Stack spacing={3} mt={5} direction="row">
             <Stack direction="row" spacing={1} alignItems="center">

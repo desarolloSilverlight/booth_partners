@@ -13,14 +13,14 @@ import {
 import BaseCard from "src/components/BaseCard/BaseCard";
 
 
-const ListEmployes = () => {
+const ShowAttritionEmployeeCustomer = () => {
     return (
-        <BaseCard title="Data Upload">
+        <BaseCard title="Empleados con riesgo de deserción por cliente">
             <TableContainer>
 
             </TableContainer>
         </BaseCard>
     );
-};
+}
 
-export default ListEmployes;
+export default ShowAttritionEmployeeCustomer;

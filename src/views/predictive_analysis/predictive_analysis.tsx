@@ -107,12 +107,21 @@ const predictive_analitics = () => {
 
                 // console.log("Data fetched:", result);
 
-                const formattedData: Predictive_Analysis[] = result.map((item: any) => {                    
+                const formattedData: Predictive_Analysis[] = result.map((item: any) => {
                     return {
                         id: item.fkid_employe,
                         fullName: item.full_name || "",
                         customer: item.customer || "",
-                        calification: item.calification || "",
+                        calification: (() => {
+                            try {
+                                const obj = typeof item.calification === "string"
+                                    ? JSON.parse(item.calification.replace(/'/g, '"'))
+                                    : item.calification;
+                                return obj?.Nivel || "";
+                            } catch {
+                                return "";
+                            }
+                        })(),
                         clasification: item.clasification || "",
                         attrition_probability: item.attrition_probability || "",
                         text_ai: item.text_ai || "",

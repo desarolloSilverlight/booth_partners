@@ -50,12 +50,6 @@ const Menuitems: MenuitemsType[] = [
   },
   {
     id: uniqueId(),
-    title: 'Data Upload',
-    icon: 'cloud-upload-bold',
-    href: '/data_upload/uploadFile',
-  },
-  {
-    id: uniqueId(),
     title: 'Predictive Attrition Analysis',
     icon: 'chart-broken',
     href: '/predictive_analysis/predictive_analysis',
@@ -67,6 +61,14 @@ const Menuitems: MenuitemsType[] = [
     href: '/reports/reportsPage',
   },
   /*
+  
+  {
+    id: uniqueId(),
+    title: 'Data Upload',
+    icon: 'cloud-upload-bold',
+    href: '/data_upload/uploadFile',
+  },
+  
   {
     id: uniqueId(),
     title: 'Autocomplete',

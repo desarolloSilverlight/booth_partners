@@ -4,6 +4,7 @@ import SalesOverview from "src/components/dashboard/TheSalesOverview";
 import OurVisitors from "src/components/dashboard/TheOurVisitors";
 import PieChart from "src/components/dashboard/pieChart";
 import RadarChart from "src/components/dashboard/radarChart";
+import BarChartRiskCustomer from "src/components/dashboard/barChartRiskCustomer";
 import { useNavigate } from "react-router";
 //import ProfileCard from "src/components/dashboard/TheProfileCard";
 //import ActivityTimeline from "src/components/dashboard/TheActivityTimeline";
@@ -41,6 +42,31 @@ export default function Dashboard() {
                         <OurVisitors />
                     </Box>
                 </Grid>
+                <Grid
+                    size={{
+                        xs: 12,
+                        lg: 4
+                    }}>
+                    <Box
+                        sx={{ cursor: "pointer" }}
+                        onClick={() => navigate("/predictive_analysis/predictive_analysis")}
+                    >
+                        <RadarChart />
+                    </Box>
+                </Grid>
+                <Grid
+                    size={{
+                        xs: 12,
+                        lg: 8
+                    }}>
+                    <Box
+                        sx={{ cursor: "pointer" }}
+                        onClick={() => navigate("/predictive_analysis/predictive_analysis")}
+                    >
+                        <BarChartRiskCustomer />
+                    </Box>
+
+                </Grid>
 
                 {/*    
                 <Grid
@@ -51,16 +77,6 @@ export default function Dashboard() {
                     <PieChart />
                 </Grid>
                 */}
-
-
-                <Grid
-                    size={{
-                        xs: 12,
-                        lg: 4
-                    }}>
-                    <RadarChart />
-                </Grid>
-
 
                 {/*        
                 <Grid

@@ -53,26 +53,38 @@ const OurVisitors = () => {
 
         const data = await res.json();
 
-        // console.log("Data fetched:", data);
-
+        // Inicializamos los contadores
         let counts: Record<string, number> = {
-          "Very Satisfied": 0,
-          "Satisfied": 0,
-          "Neutral": 0,
-          "Dissatisfied": 0,
-          "Very Dissatisfied": 0,
+          Positive: 0,
+          Negative: 0,
+          Neutral: 0,
         };
 
-
         data.forEach((emp: any) => {
-          if (emp.calification && counts.hasOwnProperty(emp.calification)) {
-            counts[emp.calification]++;
+          if (emp.calification) {
+            try {
+              // arreglar el JSON (comillas simples -> dobles)
+              const fixedJson = emp.calification
+                .replace(/'/g, '"')
+                .replace(/([a-zA-Záéíóúñ]+):/g, '"$1":');
+
+              const scores = JSON.parse(fixedJson);
+
+              const nivel = scores["Nivel"]; // aquí está el campo que necesitas
+
+              if (nivel && counts.hasOwnProperty(nivel)) {
+                counts[nivel] += 1;
+              }
+            } catch (err) {
+              console.error("Error parsing calification", err);
+            }
           }
         });
 
+        // Calcular porcentajes
         const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
-        const percentages = Object.values(counts).map((val) => 
+        const percentages = Object.values(counts).map((val) =>
           total > 0 ? parseFloat(((val / total) * 100).toFixed(1)) : 0
         );
 
@@ -88,14 +100,9 @@ const OurVisitors = () => {
     fetchData();
   }, [navigate]);
 
+  // Opciones de la gráfica
   const optionscolumnchart: any = {
-    labels: [
-      "Very satisfied",
-      "Satisfied",
-      "Neutral",
-      "Dissatisfied",
-      "Very dissatisfied",
-    ],
+    labels: ["Positive", "Negative", "Neutral"],
     chart: {
       height: 250,
       type: "donut",
@@ -103,11 +110,9 @@ const OurVisitors = () => {
       fontFamily: `inherit`,
     },
     colors: [
-      theme.palette.success.main,
-      theme.palette.primary.main,
-      theme.palette.info.main,
-      theme.palette.warning.main,
-      theme.palette.error.main,
+      theme.palette.success.main, // verde
+      theme.palette.error.main,   // rojo
+      theme.palette.info.main,    // azul
     ],
     dataLabels: { enabled: false },
     legend: { show: false },
@@ -136,7 +141,7 @@ const OurVisitors = () => {
       y: {
         formatter: function (val: number) {
           return val.toFixed(1) + "%";
-        }
+        },
       },
       theme: theme.palette.mode === "dark" ? "dark" : "light",
       fillSeriesColor: false,
@@ -158,11 +163,9 @@ const OurVisitors = () => {
             flexWrap="wrap"
           >
             {[
-              { label: "Very Satisfied", color: theme.palette.success.main },
-              { label: "Satisfied", color: theme.palette.primary.main },
+              { label: "Positive", color: theme.palette.success.main },
+              { label: "Negative", color: theme.palette.error.main },
               { label: "Neutral", color: theme.palette.info.main },
-              { label: "Dissatisfied", color: theme.palette.warning.main},
-              { label: "Very Dissatisfied", color: theme.palette.error.main },
             ].map((item, index) => (
               <Stack
                 key={index}
