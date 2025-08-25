@@ -165,7 +165,13 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                                     education_level: employee.custom_attributes?.['Educational level'],
                                     health_company: employee.health_company,
                                     type_of_contract: dataJobs?.type_of_contract,
-                                    regular_hours: dataJobs?.regular_hours,
+
+                                    regular_hours: employee.current_job.custom_attributes?.['Daily working hours']
+                                    ? employee.current_job.custom_attributes['Daily working hours'] === "1"
+                                        ? "40"
+                                        : String(Math.round(parseFloat(employee.current_job.custom_attributes['Daily working hours']) * 5))
+                                    : "",
+
                                     role_name: dataJobs?.role.name,
                                     role_description:
                                         dataJobs?.role.description ||

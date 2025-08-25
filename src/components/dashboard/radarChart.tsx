@@ -35,12 +35,12 @@ const RadarChart = () => {
                     requestOptions
                 );
 
-                if (res.status === 401) {
-                    sessionStorage.removeItem("token");
-                    alert("Sesión expirada, por favor ingresa nuevamente");
-                    navigate("/auth/login");
-                    return;
-                }
+                // if (res.status === 401) {
+                //     sessionStorage.removeItem("token");
+                //     alert("Sesión expirada, por favor ingresa nuevamente");
+                //     navigate("/auth/login");
+                //     return;
+                // }
 
                 const data = await res.json();
 

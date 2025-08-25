@@ -370,7 +370,7 @@ const predictive_analitics = () => {
                                 </TableCell>
                                 <TableCell>
                                     <Typography variant="subtitle1">
-                                        satisfaction
+                                        Perception
                                     </Typography>
                                 </TableCell>
                                 <TableCell>

@@ -45,12 +45,12 @@ const BarChartRiskCustomer = () => {
                     requestOptions
                 );
 
-                if (res.status === 401) {
-                    sessionStorage.removeItem("token");
-                    alert("Sesión expirada, por favor ingresa nuevamente");
-                    navigate("/auth/login");
-                    return;
-                }
+                // if (res.status === 401) {
+                //     sessionStorage.removeItem("token");
+                //     alert("Sesión expirada, por favor ingresa nuevamente");
+                //     navigate("/auth/login");
+                //     return;
+                // }
 
                 const data = await res.json();
 
@@ -98,6 +98,10 @@ const BarChartRiskCustomer = () => {
         fetchData();
     }, []);
 
+    const showMetricsCustomer = (cliente: string, riesgo: string) =>{
+        navigate(`/show_attrition_employee_customer/show_attrition_employee_customer?cliente=${encodeURIComponent(cliente)}&riesgo=${encodeURIComponent(riesgo)}`);
+    };
+
     const showAlert = (
         msg: string,
         severity: "info" | "success" | "error"
@@ -113,10 +117,17 @@ const BarChartRiskCustomer = () => {
             foreColor: "#adb0bb",
             fontFamily: "inherit",
             toolbar: { show: false },
+            events: {
+                dataPointSelection: function (event: any, chartContext: any, config: any) {
+                    const cliente = categories[config.dataPointIndex];
+                    const riesgo = seriesData[config.seriesIndex].name;
+                    showMetricsCustomer(cliente, riesgo);
+                }
+            }
         },
         plotOptions: {
             bar: {
-                horizontal: true, // 👈 Cambiamos a barras horizontales
+                horizontal: true, 
                 borderRadius: 4,
                 barHeight: "60%",
             },
