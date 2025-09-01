@@ -142,67 +142,6 @@ const predictive_analitics = () => {
                 setLoading(false);
             });
 
-        // fetch(`${config.rutaApi}creating_embedding`, requestOptions)
-        //     .then((response) => {
-        //         if (response.status === 401) return handleUnauthorized();
-        //         return response.json();
-        //     })
-        //     .then((result) => {
-        //         const taskId = result?.task_id;
-        //         if (!taskId) throw new Error("Task ID not found");
-
-        //         return waitForTask(`${config.rutaApi}estado_tarea/${taskId}`, requestOptions);
-        //     })
-        //     .then(() => {
-        //         // 🔹 Paso 2: Analizar datos
-        //         showAlert("Analyzing attrition predictions...", "info");
-
-        //         return fetch(`${config.rutaApi}analytics_attrition`, requestOptions)
-        //             .then((response) => {
-        //                 if (response.status === 401) return handleUnauthorized();
-        //                 return response.json();
-        //             });
-        //     })
-        //     .then((result) => {
-        //         const jobId = result?.job_id;
-        //         if (!jobId) throw new Error("Job ID not found");
-
-        //         return waitForTask(`${config.rutaApi}analytics_attrition_status/${jobId}`, requestOptions);
-        //     })
-        //     .then((finalData) => {
-        //         const predictions = finalData.result?.predictions || [];
-        //         const metrics = finalData.result?.metrics || {};
-
-        //         const formattedData: Predictive_Analysis[] = predictions.map((item: any) => ({
-        //             auc: metrics.auc ?? "",
-        //             id: item.employee_id,
-        //             fullName: item.full_name,
-        //             attrition_probability: item.attrition_probability,
-        //             clasification: item.classification,
-        //             felicidad: item.semantic_score.felicidad,
-        //             frustracion: item.semantic_score.frustración,
-        //             tristeza: item.semantic_score.tristeza,
-        //             estres: item.semantic_score.estrés,
-        //             texto_predictivo: item.texto_predictivo,
-        //         }));
-
-        //         setPredictive_analitics(formattedData);
-        //         setFilteredData(formattedData);
-
-        //         // 🔹 Paso 3: Finalizado
-        //         showAlert("¡Analysis completed successfully!", "success");
-        //     })
-        //     .catch((error) => {
-        //         if (error.message !== "Unauthorized") {
-        //             showAlert(error.message || "Error in process", "error");
-        //             console.error(error);
-        //         }
-        //     })
-        //     .finally(() => {
-        //         // 🔹 loading se apaga al final
-        //         setLoading(false);
-        //     });
-
     }, []);
 
     const showAlert = (msg: string, severity: "info" | "success" | "error") => {
@@ -221,36 +160,13 @@ const predictive_analitics = () => {
         throw new Error("Unauthorized");
     };
 
-    // 🔹 Polling hasta que la tarea termine
-    // const waitForTask = (url: string, options: RequestInit) => {
-    //     return new Promise<any>((resolve, reject) => {
-    //         const intervalId = setInterval(() => {
-    //             fetch(url, options)
-    //                 .then((res) => {
-    //                     if (res.status === 401) return handleUnauthorized();
-    //                     return res.json();
-    //                 })
-    //                 .then((statusResult) => {
-    //                     console.log("Task status:", statusResult);
-    //                     if (statusResult.State === "Success" || statusResult.status === "completed") {
-    //                         clearInterval(intervalId);
-    //                         resolve(statusResult);
-    //                     }
-    //                 })
-    //                 .catch((err) => {
-    //                     clearInterval(intervalId);
-    //                     reject(err);
-    //                 });
-    //         }, 5000);
-    //     });
-    // };
-
     useEffect(() => {
         if (searchTerm === "") {
             setFilteredData(predictive_analitics);
         } else {
             const filteredData = predictive_analitics.filter((dataAnalysis) =>
-                dataAnalysis.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+                dataAnalysis.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                dataAnalysis.customer.toLowerCase().includes(searchTerm.toLowerCase())
             );
             setFilteredData(filteredData);
         }
@@ -272,7 +188,7 @@ const predictive_analitics = () => {
         );
     }
 
-    if (!loading && filtereredData.length === 0) {
+    if (predictive_analitics.length === 0) {
         return (
             <BaseCard title="No data found">
                 <Typography>No data available for analysis.</Typography>

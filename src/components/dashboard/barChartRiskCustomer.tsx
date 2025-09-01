@@ -84,7 +84,7 @@ const BarChartRiskCustomer = () => {
                 setCategories(clients);
                 setSeriesData([
                     { name: "Low Risk", data: lowData },
-                    { name: "Mid Risk", data: midData },
+                    { name: "Medium Risk", data: midData },
                     { name: "High Risk", data: highData },
                 ]);
 
