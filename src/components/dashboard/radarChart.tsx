@@ -35,13 +35,6 @@ const RadarChart = () => {
                     requestOptions
                 );
 
-                // if (res.status === 401) {
-                //     sessionStorage.removeItem("token");
-                //     alert("Sesión expirada, por favor ingresa nuevamente");
-                //     navigate("/auth/login");
-                //     return;
-                // }
-
                 const data = await res.json();
 
                 let countHigh = 0;
@@ -75,10 +68,23 @@ const RadarChart = () => {
         fetchData();
     }, [navigate]);
 
+    const showRisk = (riesgo: string) => {
+        navigate(`/show_attrition_employee_customer/show_risk?risk=${encodeURIComponent(riesgo)}`);
+    };
+
     const options: any = {
         chart: {
             type: "radar",
             toolbar: { show: false },
+            events: {
+                markerClick: (event: any, chartContext: any, config: any) => {
+                    const riskCategories = ["High", "Medium", "Low"];
+                    const clickedRisk = riskCategories[config.dataPointIndex];
+                    if (clickedRisk) {
+                        showRisk(clickedRisk);
+                    }
+                },
+            },
         },
         xaxis: {
             categories: ["High Risk", "Medium Risk", "Low Risk"],

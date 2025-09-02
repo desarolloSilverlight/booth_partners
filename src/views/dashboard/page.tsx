@@ -47,19 +47,14 @@ export default function Dashboard() {
                         xs: 12,
                         lg: 4
                     }}>
-                    <Box
-                        sx={{ cursor: "pointer" }}
-                        onClick={() => navigate("/predictive_analysis/predictive_analysis")}
-                    >
-                        <RadarChart />
-                    </Box>
+                    <RadarChart />
                 </Grid>
                 <Grid
                     size={{
                         xs: 12,
                         lg: 8
                     }}>
-                        <BarChartRiskCustomer />
+                    <BarChartRiskCustomer />
                 </Grid>
 
                 {/*    

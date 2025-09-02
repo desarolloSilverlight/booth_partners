@@ -45,13 +45,6 @@ const BarChartRiskCustomer = () => {
                     requestOptions
                 );
 
-                // if (res.status === 401) {
-                //     sessionStorage.removeItem("token");
-                //     alert("Sesión expirada, por favor ingresa nuevamente");
-                //     navigate("/auth/login");
-                //     return;
-                // }
-
                 const data = await res.json();
 
                 // Agrupar empleados por cliente y clasificación
@@ -98,7 +91,7 @@ const BarChartRiskCustomer = () => {
         fetchData();
     }, []);
 
-    const showMetricsCustomer = (cliente: string, riesgo: string) =>{
+    const showMetricsCustomer = (cliente: string, riesgo: string) => {
         navigate(`/show_attrition_employee_customer/show_attrition_employee_customer?cliente=${encodeURIComponent(cliente)}&riesgo=${encodeURIComponent(riesgo)}`);
     };
 
@@ -127,7 +120,7 @@ const BarChartRiskCustomer = () => {
         },
         plotOptions: {
             bar: {
-                horizontal: true, 
+                horizontal: true,
                 borderRadius: 4,
                 barHeight: "60%",
             },

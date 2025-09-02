@@ -18,6 +18,7 @@ const ListProfiles = lazy(() => import("../views/profiles/listProfiles"));
 const ListEmployes = lazy(() => import("../views/employees/listEmployes"));
 const ShowEmploye = lazy(() => import("../views/employees/showEmploye"));
 const ShowAttritionEmployeeCustomer = lazy(() => import("../views/show_attrition_employee_customer/show_attrition_employee_customer"));
+const ShowRisks = lazy(() => import("../views/show_attrition_employee_customer/show_risk"));
 const PredictiveAnalysis = lazy(() => import("../views/predictive_analysis/predictive_analysis"));
 const Reports = lazy(() => import("../views/reports/reportsPage"));
 const PrivateRoute = lazy(() => import("./PrivateRoute"));
@@ -59,6 +60,7 @@ const Router = [
           { path: '/employees/listEmployes', exact: true, element: <ListEmployes /> },
           { path: '/employees/showEmploye/:id', exact: true, element: <ShowEmploye /> },
           { path: '/show_attrition_employee_customer/show_attrition_employee_customer', exact: true, element: <ShowAttritionEmployeeCustomer /> },
+          { path: '/show_attrition_employee_customer/show_risk', exact: true, element: <ShowRisks /> },
           { path: '/predictive_analysis/predictive_analysis', exact: true, element: <PredictiveAnalysis /> },
           { path: '/reports/reportsPage', exact: true, element: <Reports /> },
           /*Fin Rutas Proyecto*/

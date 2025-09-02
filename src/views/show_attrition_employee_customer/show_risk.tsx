@@ -17,11 +17,12 @@ import {
 } from "@mui/material";
 import BaseCard from "src/components/BaseCard/BaseCard";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import InputSearch from "src/components/forms/inputSearch/search";
 import config from "src/config/config";
+import { set } from "lodash";
 
-interface attritionEmployeeCustomer {
+interface showRisks {
     id: number;
     fullName: string;
     customer: string;
@@ -31,31 +32,27 @@ interface attritionEmployeeCustomer {
     text_ai: string;
 }
 
-const ShowAttritionEmployeeCustomer = () => {
-    const [attrition_employee_customer, setattrition_employee_customer] = useState<attritionEmployeeCustomer[]>([]);
-    const [filteredData, setFilteredData] = useState<attritionEmployeeCustomer[]>([]);
+const ShowRisks = () => {
+    const [show_risks, setShow_risks] = useState<showRisks[]>([]);
+    const [filteredRisks, setFilteredRisks] = useState<showRisks[]>([]);
     const location = useLocation();
     const [searchTerm, setSearchTerm] = useState("");
-    const params = new URLSearchParams(location.search);
     const navigate = useNavigate();
+    const params = new URLSearchParams(useLocation().search);
     const [alertQueue, setAlertQueue] = useState<{ msg: string, severity: "info" | "success" | "error" }[]>([]);
     const [currentAlert, setCurrentAlert] = useState<{ msg: string, severity: "info" | "success" | "error" } | null>(null);
     const [loading, setLoading] = useState(true);
     const [alertOpen, setAlertOpen] = useState(false);
-
-    // estado para el Dialog
     const [open, setOpen] = useState(false);
     const [selectedText, setSelectedText] = useState("");
 
-    const cliente = params.get("cliente");
-    const riesgo = params.get("riesgo");
+    const risk = params.get("risk");
 
     useEffect(() => {
         const token = sessionStorage.getItem("token");
 
         if (!token) {
-            showAlert("Token defeated, enter again", "error");
-            setLoading(false);
+            alert("Token defeated, enter again");
             navigate("/auth/login");
             return;
         }
@@ -65,8 +62,7 @@ const ShowAttritionEmployeeCustomer = () => {
         myHeaders.append("Content-Type", "application/json");
 
         const sendBody = {
-            cliente: cliente,
-            riesgo: riesgo
+            risk: risk
         };
 
         const requestOptions: RequestInit = {
@@ -76,9 +72,9 @@ const ShowAttritionEmployeeCustomer = () => {
             redirect: "follow",
         };
 
-        showAlert("Risk per client", "success");
+        showAlert(`Show All Risks In ${risk}`, "success");
 
-        fetch(`${config.rutaApi}show_attrition_employee_customer`, requestOptions)
+        fetch(`${config.rutaApi}show_risks`, requestOptions)
             .then((response) => {
                 if (response.status === 401) return handleUnauthorized();
                 return response.json();
@@ -90,41 +86,33 @@ const ShowAttritionEmployeeCustomer = () => {
 
                 if (result.message) {
                     showAlert(result.message, "info");
-                    setFilteredData([]);
-                    setattrition_employee_customer([]);
+                    setFilteredRisks([]);
+                    setShow_risks([]);
                     return;
                 }
 
-                const data = result.dataAttrition || result; // soporta ambos casos
+                const data = result.dataRisks || result;
 
                 if (!Array.isArray(data)) {
-                    throw new Error("Invalid response format");
+                    throw new Error("Invalid data format received from server");
                 }
 
-                const formattedData: attritionEmployeeCustomer[] = data.map((item: any) => {
+                const formattedData: showRisks[] = data.map((item: any) => {
                     return {
-                        id: item.fkid_employe,
-                        fullName: item.full_name || "",
-                        customer: item.customer || "",
-                        calification: (() => {
-                            try {
-                                const obj = typeof item.calification === "string"
-                                    ? JSON.parse(item.calification.replace(/'/g, '"'))
-                                    : item.calification;
-                                return obj?.Nivel || "";
-                            } catch {
-                                return "";
-                            }
-                        })(),
-                        clasification: item.clasification || "",
-                        attrition_probability: item.attrition_probability || "",
-                        text_ai: item.text_ai || "",
+                        id: item.id || 0,
+                        fullName: item.full_name || "N/A",
+                        customer: item.customer || "N/A",
+                        calification: item.calification || "N/A",
+                        clasification: item.clasification || "N/A",
+                        attrition_probability: item.attrition_probability || "N/A",
+                        text_ai: item.text_ai || "No additional info",
                     };
                 });
 
                 // console.log("Formatted Data:", formattedData);
-                setattrition_employee_customer(formattedData);
-                setFilteredData(formattedData);
+
+                setShow_risks(formattedData);
+                setFilteredRisks(formattedData);
             })
             .catch((error) => {
                 if (error.message !== "Unauthorized") {
@@ -132,27 +120,25 @@ const ShowAttritionEmployeeCustomer = () => {
                     console.error(error);
                 }
             })
-            .finally(() => {
-                setLoading(false);
-            });
+            .finally(() => { setLoading(false); })
     }, []);
 
     const showAlert = (msg: string, severity: "info" | "success" | "error") => {
-        setAlertQueue(prev => [...prev, { msg, severity }]);
+        setAlertQueue((prev) => [...prev, { msg, severity }]);
     };
 
     useEffect(() => {
         if (searchTerm === "") {
-            setFilteredData(attrition_employee_customer);
+            setFilteredRisks(show_risks);
         } else {
-            const filteredData = attrition_employee_customer.filter((dataAnalysis) =>
-                dataAnalysis.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+            const filteredRisks = show_risks.filter((risk) =>
+                risk.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                risk.customer.toLowerCase().includes(searchTerm.toLowerCase())
             );
-            setFilteredData(filteredData);
+            setFilteredRisks(filteredRisks);
         }
-    }, [searchTerm, attrition_employee_customer]);
+    }, [searchTerm, show_risks]);
 
-    // controla alert queue
     useEffect(() => {
         if (!currentAlert && alertQueue.length > 0) {
             const nextAlert = alertQueue[0];
@@ -202,10 +188,10 @@ const ShowAttritionEmployeeCustomer = () => {
         );
     }
 
-    if (attrition_employee_customer.length === 0) {
+    if (show_risks.length === 0) {
         return (
             <BaseCard title="No data found">
-                <Typography>No data available for analysis.</Typography>
+                <Typography>No data available for show.</Typography>
             </BaseCard>
         );
     }
@@ -244,7 +230,7 @@ const ShowAttritionEmployeeCustomer = () => {
                 >
                     <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
                         <Typography variant="h5">
-                            Predictive Attrition Analysis
+                            Show Risks
                         </Typography>
                     </Box>
 
@@ -252,18 +238,18 @@ const ShowAttritionEmployeeCustomer = () => {
                         searchTerm={searchTerm}
                         onSearchChange={handleSearchChange}
                         onClearSearch={handleClearSearch}
-                        placeholder="Analyzing ...."
-                        width={{ xs: '100%', sm: 300, md: 400 }}
+                        placeholder="Search by Name or Customer"
+                        width={250}
                     />
                 </Box>
             }>
                 <TableContainer
                     sx={{
-                        width: "100%",
-                        overflowX: "auto",
+                        width: '100%',
+                        overflowX: 'auto',
                     }}
                 >
-                    <Table aria-label="simple table" sx={{ whiteSpace: "nowrap" }}>
+                    <Table aria-label="simple table" sx={{ whiteSpace: 'nowrap' }}>
                         <TableHead>
                             <TableRow>
                                 <TableCell>No.</TableCell>
@@ -275,19 +261,19 @@ const ShowAttritionEmployeeCustomer = () => {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filteredData.map((dataAnalysis, index) => (
-                                <TableRow key={dataAnalysis.id}>
+                            {filteredRisks.map((risk, index) => (
+                                <TableRow key={risk.id}>
                                     <TableCell>{index + 1}</TableCell>
-                                    <TableCell>{dataAnalysis.fullName}</TableCell>
-                                    <TableCell>{dataAnalysis.customer}</TableCell>
-                                    <TableCell>{dataAnalysis.calification}</TableCell>
-                                    <TableCell>{dataAnalysis.clasification}</TableCell>
+                                    <TableCell>{risk.fullName}</TableCell>
+                                    <TableCell>{risk.customer}</TableCell>
+                                    <TableCell>{risk.calification}</TableCell>
+                                    <TableCell>{risk.clasification}</TableCell>
                                     <TableCell sx={{ maxWidth: 300, whiteSpace: 'normal', wordBreak: 'break-word' }}>
                                         <Button
                                             size="small"
                                             variant="outlined"
                                             sx={{ mt: 1 }}
-                                            onClick={() => handleOpen(dataAnalysis.text_ai)}
+                                            onClick={() => handleOpen(risk.text_ai)}
                                         >
                                             Show Text
                                         </Button>
@@ -314,6 +300,7 @@ const ShowAttritionEmployeeCustomer = () => {
             </Dialog>
         </>
     );
+
 }
 
-export default ShowAttritionEmployeeCustomer;
+export default ShowRisks;
