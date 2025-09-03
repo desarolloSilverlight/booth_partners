@@ -196,6 +196,12 @@ const predictive_analitics = () => {
         );
     }
 
+    const riskCounts = {
+        low: filtereredData.filter(item => item.clasification.toLowerCase().includes("low")).length,
+        medium: filtereredData.filter(item => item.clasification.toLowerCase().includes("medium")).length,
+        high: filtereredData.filter(item => item.clasification.toLowerCase().includes("high")).length,
+    }
+
     return (
         <>
             <Snackbar
@@ -217,149 +223,209 @@ const predictive_analitics = () => {
                 )}
             </Snackbar>
 
-            <BaseCard title={
-                <Box
-                    sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        width: "100%",
-                        gap: { xs: 2, sm: 4 },
-                        flexDirection: { xs: "column", sm: "row" },
-                        justifyContent: "space-between",
-                    }}
-                >
-                    {/* Bloque Título + Fecha */}
-                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
-                        <Typography variant="h5">
-                            Predictive Attrition Analysis
-                        </Typography>
-                        <Typography
-                            variant="body2"
-                            color="textSecondary"
-                            sx={{ fontStyle: "italic" }}
-                        >
-                            Last update: {yesterdayUpdate} (Colombia Time)
-                        </Typography>
-                    </Box>
-
-                    {/* InputSearch a la derecha */}
-                    <InputSearch
-                        searchTerm={searchTerm}
-                        onSearchChange={handleSearchChange}
-                        onClearSearch={handleClearSearch}
-                        placeholder="Analyzing ...."
-                        width={{ xs: '100%', sm: 300, md: 400 }}
-                    />
-                </Box>
-            }>
-                <TableContainer
-                    sx={{
-                        width: {
-                            xs: "100%",
-                            sm: "100%",
-                        },
-                        overflowX: "auto",
-                    }}
-                >
-                    <Table
-                        aria-label="simple table"
+            <Box mb={3}>
+                <BaseCard title="Overview of the analysis prediction">
+                    <TableContainer
                         sx={{
-                            whiteSpace: "nowrap",
+                            width: {
+                                xs: "100%",
+                                sm: "100%",
+                            },
+                            overflowX: "auto",
                         }}
                     >
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>
-                                    <Typography variant="subtitle1">
-                                        No.
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="subtitle1">
-                                        Full Name
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="subtitle1">
-                                        Customer
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="subtitle1">
-                                        Perception
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="subtitle1">
-                                        Analysis result
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography variant="subtitle1">
-                                        predictive analysis
-                                    </Typography>
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {filtereredData.map((dataAnalysis, index) => (
-                                <TableRow key={dataAnalysis.id}>
+                        <Table
+                            aria-label="simple table"
+                            sx={{
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            <TableHead>
+                                <TableRow>
                                     <TableCell>
-                                        <Typography fontSize="15px" fontWeight={500}>
-                                            {index + 1}
+                                        <Typography variant="subtitle1">
+                                            Low Risks
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
-                                        <Typography color="textSecondary" fontSize="14px">
-                                            {dataAnalysis.fullName}
+                                        <Typography variant="subtitle1">
+                                            Medium Risks
                                         </Typography>
                                     </TableCell>
                                     <TableCell>
-                                        <Typography color="textSecondary" fontSize="14px">
-                                            {dataAnalysis.customer}
+                                        <Typography variant="subtitle1">
+                                            High Risks
                                         </Typography>
                                     </TableCell>
-                                    <TableCell>
-                                        <Typography color="textSecondary" fontSize="14px">
-                                            {dataAnalysis.calification}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Typography color="textSecondary" fontSize="14px">
-                                            {dataAnalysis.clasification}
-                                        </Typography>
-                                    </TableCell>
-                                    <TableCell sx={{ maxWidth: 300, whiteSpace: 'normal', wordBreak: 'break-word' }}>
-                                        <Button
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{ mt: 1 }}
-                                            onClick={() => handleOpen(dataAnalysis.text_ai)}
-                                        >
-                                            Show Text
-                                        </Button>
-                                    </TableCell>
-
-                                    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-                                        <DialogTitle>Predictive Analysis</DialogTitle>
-                                        <DialogContent dividers>
-                                            <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
-                                                {selectedText}
-                                            </Typography>
-                                        </DialogContent>
-                                        <DialogActions>
-                                            <Button onClick={handleClose} variant="contained" color="primary">
-                                                Close
-                                            </Button>
-                                        </DialogActions>
-                                    </Dialog>
-
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </BaseCard>
+                            </TableHead>
+                            <TableBody>
+                                <TableCell>
+                                    <Typography fontWeight={600} color="success.main">
+                                        {riskCounts.low}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography fontWeight={600} color="warning.main">
+                                        {riskCounts.medium}
+                                    </Typography>
+                                </TableCell>
+                                <TableCell>
+                                    <Typography fontWeight={600} color="error.main">
+                                        {riskCounts.high}
+                                    </Typography>
+                                </TableCell>
+                            </TableBody>    
+                        </Table>
+                    </TableContainer>
+                </BaseCard>
+            </Box>
+          
+            <Box mb={3}>
+                <BaseCard title={
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            width: "100%",
+                            gap: { xs: 2, sm: 4 },
+                            flexDirection: { xs: "column", sm: "row" },
+                            justifyContent: "space-between",
+                        }}
+                    >
+                        {/* Bloque Título + Fecha */}
+                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
+                            <Typography variant="h5">
+                                Predictive Attrition Analysis
+                            </Typography>
+                            <Typography
+                                variant="body2"
+                                color="textSecondary"
+                                sx={{ fontStyle: "italic" }}
+                            >
+                                Last update: {yesterdayUpdate} (Colombia Time)
+                            </Typography>
+                        </Box>
+
+                        {/* InputSearch a la derecha */}
+                        <InputSearch
+                            searchTerm={searchTerm}
+                            onSearchChange={handleSearchChange}
+                            onClearSearch={handleClearSearch}
+                            placeholder="Analyzing ...."
+                            width={{ xs: '100%', sm: 300, md: 400 }}
+                        />
+                    </Box>
+                }>
+                    <TableContainer
+                        sx={{
+                            width: {
+                                xs: "100%",
+                                sm: "100%",
+                            },
+                            overflowX: "auto",
+                        }}
+                    >
+                        <Table
+                            aria-label="simple table"
+                            sx={{
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>
+                                        <Typography variant="subtitle1">
+                                            No.
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="subtitle1">
+                                            Full Name
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="subtitle1">
+                                            Customer
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="subtitle1">
+                                            Perception
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="subtitle1">
+                                            Analysis result
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography variant="subtitle1">
+                                            predictive analysis
+                                        </Typography>
+                                    </TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {filtereredData.map((dataAnalysis, index) => (
+                                    <TableRow key={dataAnalysis.id}>
+                                        <TableCell>
+                                            <Typography fontSize="15px" fontWeight={500}>
+                                                {index + 1}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography color="textSecondary" fontSize="14px">
+                                                {dataAnalysis.fullName}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography color="textSecondary" fontSize="14px">
+                                                {dataAnalysis.customer}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography color="textSecondary" fontSize="14px">
+                                                {dataAnalysis.calification}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography color="textSecondary" fontSize="14px">
+                                                {dataAnalysis.clasification}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell sx={{ maxWidth: 300, whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                                            <Button
+                                                size="small"
+                                                variant="outlined"
+                                                sx={{ mt: 1 }}
+                                                onClick={() => handleOpen(dataAnalysis.text_ai)}
+                                            >
+                                                Show Text
+                                            </Button>
+                                        </TableCell>
+
+                                        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+                                            <DialogTitle>Predictive Analysis</DialogTitle>
+                                            <DialogContent dividers>
+                                                <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
+                                                    {selectedText}
+                                                </Typography>
+                                            </DialogContent>
+                                            <DialogActions>
+                                                <Button onClick={handleClose} variant="contained" color="primary">
+                                                    Close
+                                                </Button>
+                                            </DialogActions>
+                                        </Dialog>
+
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </BaseCard>            
+            </Box>            
         </>
     );
 };

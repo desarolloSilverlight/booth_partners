@@ -70,7 +70,10 @@ const OurVisitors = () => {
 
               const scores = JSON.parse(fixedJson);
 
-              const nivel = scores["Nivel"]; // aquí está el campo que necesitas
+              let nivel = scores["Nivel"];
+              if (nivel === "Positivo") nivel = "Positive";
+              if (nivel === "Negativo") nivel = "Negative";
+              if (nivel === "Neutro") nivel = "Neutral";
 
               if (nivel && counts.hasOwnProperty(nivel)) {
                 counts[nivel] += 1;
