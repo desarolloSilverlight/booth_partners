@@ -22,13 +22,7 @@ export default function Dashboard() {
                         xs: 12,
                         lg: 8
                     }}>
-                    <Box
-                        sx={{ cursor: "pointer" }}
-                        onClick={() => navigate("/employees/listEmployes")}
-                    >
-                        <SalesOverview />
-                    </Box>
-
+                    <SalesOverview />
                 </Grid>
                 <Grid
                     size={{
