@@ -410,20 +410,37 @@ const PredictiveAnalytics = () => {
                                             </Box>
                                         )}
                                     </Box>
-                                </Box>
-                            </Box>
 
-                            {/* Prioritized Risk Drivers */}
-                            {parsed && driversList.length > 0 && (
-                                <Box sx={{ p: 2, bgcolor: "grey.100", borderRadius: 2, mb: 2 }}>
-                                    <Typography variant="h6" gutterBottom>Prioritized Risk Drivers</Typography>
-                                    <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                                        {driversList.map((item, index) => (
-                                            <li key={index}>{item}</li>
-                                        ))}
-                                    </ul>
+                                    
                                 </Box>
-                            )}
+                                
+                                {/* Recuadro 3: Prioritized Risk Drivers */}
+                                {parsed && driversList.length > 0 && (
+                                <Box
+                                    sx={{
+                                    p: 2,
+                                    bgcolor: "grey.100",
+                                    borderRadius: 2,
+                                    flex: 2,
+                                    minWidth: 280
+                                    }}
+                                >
+                                    <Typography variant="body1" fontWeight="bold" gutterBottom>
+                                    Prioritized Risk Drivers
+                                    </Typography>
+
+                                    {driversList.map((item, index) => (
+                                    <Typography
+                                        key={index}
+                                        variant="body2"
+                                        sx={{ color: "text.secondary", mb: 1 }}
+                                    >
+                                        • {item}
+                                    </Typography>
+                                    ))}
+                                </Box>
+                                )}
+                            </Box>
 
                             {/* Overall Situation Assessment */}
                             {parsed && assessmentList.length > 0 && (
