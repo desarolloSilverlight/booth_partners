@@ -211,11 +211,11 @@ const PredictiveAnalytics = () => {
     };
 
     const cleanAndSplitText = (text: string) => {
-    if (!text) return [];
-    return text
-        .split(/\n|\. /) // dividimos por salto de línea o punto+espacio
-        .map(item => item.replace(/\*\*|^-|\d+$/g, "").trim()) // quitamos **, -, números sueltos
-        .filter(item => item.length > 0); // eliminamos vacíos
+        if (!text) return [];
+        return text
+            .split(/\n|\. /) // dividimos por salto de línea o punto+espacio
+            .map(item => item.replace(/\*\*|^-|\d+$/g, "").trim()) // quitamos **, -, números sueltos
+            .filter(item => item.length > 0); // eliminamos vacíos
     };
 
     const parsed = selectedEmployee?.text_ai ? parseTextAI(selectedEmployee.text_ai) : null;
@@ -229,16 +229,16 @@ const PredictiveAnalytics = () => {
         <>
             {/* Alertas */}
             {currentAlert && (
-            <Snackbar
-                open={alertOpen}
-                autoHideDuration={2000}
-                onClose={handleAlertClose}
-                key={currentAlert.msg}
-            >
-                <Alert onClose={handleAlertClose} severity={currentAlert.severity} sx={{ width: '100%' }}>
-                    {currentAlert.msg}
-                </Alert>
-            </Snackbar>
+                <Snackbar
+                    open={alertOpen}
+                    autoHideDuration={2000}
+                    onClose={handleAlertClose}
+                    key={currentAlert.msg}
+                >
+                    <Alert onClose={handleAlertClose} severity={currentAlert.severity} sx={{ width: '100%' }}>
+                        {currentAlert.msg}
+                    </Alert>
+                </Snackbar>
             )}
 
             {/* Conteo de riesgos */}
@@ -326,14 +326,14 @@ const PredictiveAnalytics = () => {
             <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
                 {selectedEmployee && (
                     <>
-                        <DialogTitle sx={{ bgcolor: "primary.main", color: "white", borderRadius: "8px 8px 0 0" }}>
+                        <DialogTitle sx={{ bgcolor: "#2a3547", color: "white", borderRadius: "8px 8px 0 0" }}>
                             ATTRITION RISK INSIGHTS - {selectedEmployee.fullName}
                             <Chip
                                 label={selectedEmployee.clasification}
                                 color={
                                     selectedEmployee.clasification.toLowerCase().includes("high") ? "error"
-                                    : selectedEmployee.clasification.toLowerCase().includes("medium") ? "warning"
-                                    : "success"
+                                        : selectedEmployee.clasification.toLowerCase().includes("medium") ? "warning"
+                                            : "success"
                                 }
                                 sx={{ ml: 2 }}
                             />
@@ -341,22 +341,25 @@ const PredictiveAnalytics = () => {
                         <DialogContent dividers>
                             {/* Título */}
                             <Typography variant="h6" fontWeight="bold" gutterBottom>Prioritized Risk Drivers</Typography>
-                            
+
                             {/* Contenedor en fila */}
                             <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
                                 {/* Recuadro 1: Nombre */}
                                 <Box
                                     sx={{
                                         display: "flex",
+                                        flexDirection: "column", // Cambia a columna
                                         alignItems: "center",
+                                        justifyContent: "center",
                                         p: 2,
                                         bgcolor: "grey.100",
                                         borderRadius: 2,
-                                        flex: 1
+                                        flex: 1,
+                                        minWidth: 100
                                     }}
                                 >
-                                    <Typography sx={{ mr: 1, fontSize: "2rem" }}>🏢</Typography>
-                                    <Typography variant="body1" fontWeight="bold">
+                                    <Typography sx={{ fontSize: "2rem", mb: 1 }}>🏢</Typography>
+                                    <Typography variant="body1" fontWeight="bold" align="center">
                                         {selectedEmployee.customer}
                                     </Typography>
                                 </Box>
@@ -383,18 +386,18 @@ const PredictiveAnalytics = () => {
                                         }}
                                     >
                                         {selectedEmployee.calification === "Positive" ? "😀" :
-                                        selectedEmployee.calification === "Negative" ? "☹" :
-                                        selectedEmployee.calification === "Neutral" ? "😐" :
-                                        "🤨"}
+                                            selectedEmployee.calification === "Negative" ? "😞" :
+                                                selectedEmployee.calification === "Neutral" ? "😐" :
+                                                    "🤨"}
                                     </Typography>
 
                                     {/* Texto: Calificación + Sentiment Analysis */}
                                     <Box sx={{ flex: 1 }}>
                                         <Typography variant="body1" fontWeight="bold" gutterBottom>
                                             {selectedEmployee.calification === "Positive" ? "Positive" :
-                                            selectedEmployee.calification === "Negative" ? "Negative" :
-                                            selectedEmployee.calification === "Neutral" ? "Neutral" :
-                                            "No comments to analyze"}
+                                                selectedEmployee.calification === "Negative" ? "Negative" :
+                                                    selectedEmployee.calification === "Neutral" ? "Neutral" :
+                                                        "No comments to analyze"}
                                         </Typography>
                                         {sentimentList.length > 0 && (
                                             <Box>
@@ -410,59 +413,129 @@ const PredictiveAnalytics = () => {
                                             </Box>
                                         )}
                                     </Box>
-
-                                    
                                 </Box>
-                                
+
                                 {/* Recuadro 3: Prioritized Risk Drivers */}
                                 {parsed && driversList.length > 0 && (
-                                <Box
-                                    sx={{
-                                    p: 2,
-                                    bgcolor: "grey.100",
-                                    borderRadius: 2,
-                                    flex: 2,
-                                    minWidth: 280
-                                    }}
-                                >
-                                    <Typography variant="body1" fontWeight="bold" gutterBottom>
-                                    Prioritized Risk Drivers
-                                    </Typography>
-
-                                    {driversList.map((item, index) => (
-                                    <Typography
-                                        key={index}
-                                        variant="body2"
-                                        sx={{ color: "text.secondary", mb: 1 }}
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            alignItems: "flex-start",
+                                            gap: 2,
+                                            p: 2,
+                                            bgcolor: "grey.100",
+                                            borderRadius: 2,
+                                            flex: 2,
+                                            minWidth: 280
+                                        }}
                                     >
-                                        • {item}
-                                    </Typography>
-                                    ))}
-                                </Box>
+                                        {/* Emoji de riesgo */}
+                                        <Typography
+                                            sx={{
+                                                fontSize: "2rem",
+                                                flexShrink: 0,
+                                                display: "flex",
+                                                alignItems: "center"
+                                            }}
+                                        >
+                                            {selectedEmployee.clasification.toLowerCase().includes("high") ? "🔴" :
+                                                selectedEmployee.clasification.toLowerCase().includes("medium") ? "🟡" :
+                                                    selectedEmployee.clasification.toLowerCase().includes("low") ? "🟢" :
+                                                        "⚪"}
+                                        </Typography>
+
+                                        {/* Texto y lista de drivers */}
+                                        <Box sx={{ flex: 1 }}>
+                                            <Typography variant="body1" fontWeight="bold" gutterBottom>
+                                                Prioritized Risk Drivers
+                                            </Typography>
+                                            {driversList.map((item, index) => (
+                                                <Typography
+                                                    key={index}
+                                                    variant="body2"
+                                                    sx={{ color: "text.secondary", mb: 1 }}
+                                                >
+                                                    • {item}
+                                                </Typography>
+                                            ))}
+                                        </Box>
+                                    </Box>
                                 )}
                             </Box>
 
                             {/* Overall Situation Assessment */}
                             {parsed && assessmentList.length > 0 && (
-                                <Box sx={{ p: 2, bgcolor: "grey.100", borderRadius: 2, mb: 2 }}>
-                                    <Typography variant="h6" gutterBottom>Overall Situation Assessment</Typography>
-                                    <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                                        {assessmentList.map((item, index) => (
-                                            <li key={index}>{item}</li>
-                                        ))}
-                                    </ul>
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        alignItems: "flex-start",
+                                        gap: 2,
+                                        p: 2,
+                                        bgcolor: "grey.100",
+                                        borderRadius: 2,
+                                        mb: 2
+                                    }}
+                                >
+                                    {/* Emoji de assessment */}
+                                    <Typography
+                                        sx={{
+                                            fontSize: "2rem",
+                                            flexShrink: 0,
+                                            display: "flex",
+                                            alignItems: "center"
+                                        }}
+                                    >
+                                        📝
+                                    </Typography>
+                                    {/* Texto y lista de assessment */}
+                                    <Box sx={{ flex: 1 }}>
+                                        <Typography variant="h6" gutterBottom>
+                                            Overall Situation Assessment
+                                        </Typography>
+                                        <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                                            {assessmentList.map((item, index) => (
+                                                <li key={index}>{item}</li>
+                                            ))}
+                                        </ul>
+                                    </Box>
                                 </Box>
                             )}
 
                             {/* Recommended Actions */}
                             {parsed && actionsList.length > 0 && (
-                                <Box sx={{ p: 2, bgcolor: "grey.100", borderRadius: 2, mb: 2 }}>
-                                    <Typography variant="h6" gutterBottom>Recommended Actions</Typography>
-                                    <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                                        {actionsList.map((item, index) => (
-                                            <li key={index}>{item}</li>
-                                        ))}
-                                    </ul>
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        alignItems: "flex-start",
+                                        gap: 2,
+                                        p: 2,
+                                        bgcolor: "grey.100",
+                                        borderRadius: 2,
+                                        mb: 2
+                                    }}
+                                >
+                                    {/* Emoji de acción */}
+                                    <Typography
+                                        sx={{
+                                            fontSize: "2rem",
+                                            flexShrink: 0,
+                                            display: "flex",
+                                            alignItems: "center"
+                                        }}
+                                    >
+                                        ✅
+                                    </Typography>
+                                    {/* Texto y lista de acciones */}
+                                    <Box sx={{ flex: 1 }}>
+                                        <Typography variant="h6" gutterBottom>
+                                            Recommended Actions
+                                        </Typography>
+                                        <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                                            {actionsList.map((item, index) => (
+                                                <li key={index}>{item}</li>
+                                            ))}
+                                        </ul>
+                                    </Box>
                                 </Box>
                             )}
 
