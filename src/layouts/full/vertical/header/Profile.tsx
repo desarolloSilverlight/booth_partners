@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
 
+  const nameUser = sessionStorage.getItem("name_user");
+
   const [anchorEl2, setAnchorEl2] = useState(null);
   const handleClick2 = (event: any) => {
     setAnchorEl2(event.currentTarget);
@@ -60,7 +62,7 @@ const Profile = () => {
             ml: 1,
           }}
         >
-          User Name
+          {nameUser}
         </Typography>
       </IconButton>
       {/* ------------------------------------------- */}

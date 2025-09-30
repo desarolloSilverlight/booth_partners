@@ -112,7 +112,7 @@ const RadarChart = () => {
     };
 
     return (
-        <DashboardCard title="Chart No. 3" subtitle="Attrition Risk">
+        <DashboardCard title="Attrition Risk" subtitle="">
             <Stack direction="row" justifyContent="center">
                 <Box width="400px">
                     <Suspense fallback={<div>Cargando gráfico...</div>}>

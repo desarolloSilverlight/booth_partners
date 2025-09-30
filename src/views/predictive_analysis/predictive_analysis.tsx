@@ -438,9 +438,9 @@ const PredictiveAnalytics = () => {
                                                 alignItems: "center"
                                             }}
                                         >
-                                            {selectedEmployee.clasification.toLowerCase().includes("high") ? "🔴" :
-                                                selectedEmployee.clasification.toLowerCase().includes("medium") ? "🟡" :
-                                                    selectedEmployee.clasification.toLowerCase().includes("low") ? "🟢" :
+                                            {selectedEmployee.clasification.toLowerCase().includes("high") ? "❌" :
+                                                selectedEmployee.clasification.toLowerCase().includes("medium") ? "⚠️" :
+                                                    selectedEmployee.clasification.toLowerCase().includes("low") ? "✅" :
                                                         "⚪"}
                                         </Typography>
 
@@ -523,7 +523,7 @@ const PredictiveAnalytics = () => {
                                             alignItems: "center"
                                         }}
                                     >
-                                        ✅
+                                        📊
                                     </Typography>
                                     {/* Texto y lista de acciones */}
                                     <Box sx={{ flex: 1 }}>

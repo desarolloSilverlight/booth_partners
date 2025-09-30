@@ -47,7 +47,7 @@ const PieChart = () => {
     };
 
     return (
-        <DashboardCard title="Chart No. 3" subtitle="Performance">
+        <DashboardCard title="Performance" subtitle="">
             <Box height="300px">
                 <Suspense fallback={<div>Cargando gráfico...</div>}>
                     <Chart options={options} series={series} type="pie" height={300} />

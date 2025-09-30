@@ -10,7 +10,7 @@ const Chart = React.lazy(() => import('react-apexcharts'));
 const SalesOverview = () => {
   const [loading, setLoading] = useState(true);
   const [alertQueue, setAlertQueue] = useState<{ msg: string, severity: "info" | "success" | "error" }[]>([]);
-  const [year, setYear] = useState<number>(2025);
+  const [year, setYear] = useState<number | string>(2025);
   const [categories, setCategories] = useState<string[]>([]);
   const [seriesData, setSeriesData] = useState<number[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
@@ -68,7 +68,7 @@ const SalesOverview = () => {
     setAlertQueue(prev => [...prev, { msg, severity }]);
   };
 
-  const processData = (selectedYear: number) => {
+  const processData = (selectedYear: string | number) => {
     const allClients = Array.from(new Set(employees.map(emp => emp.customer || "Unknown Client")));
 
     const result: { [key: string]: number } = {};
@@ -76,27 +76,51 @@ const SalesOverview = () => {
     allClients.forEach(client => {
       const clientEmployees = employees.filter(emp => (emp.customer || "Unknown Client") === client);
 
-      const total = clientEmployees.length;
+      // agrupar empleados inactivos por año
+      const inactiveByYear: { [year: number]: number } = {};
+      const totalByYear: { [year: number]: number } = {};
 
-      const inactiveInYear = clientEmployees.filter(emp => {
-        if (!emp.active_until) return false;
-        const yearEnd = new Date(emp.active_until).getFullYear();
-        return emp.status === "Not Active" && yearEnd === selectedYear;
-      }).length;
+      clientEmployees.forEach(emp => {
+        if (emp.active_until) {
+          const yearEnd = new Date(emp.active_until).getFullYear();
 
-      if (inactiveInYear > 0) {
-        result[client] = parseFloat(((inactiveInYear / total) * 100).toFixed(1));
+          if (!totalByYear[yearEnd]) totalByYear[yearEnd] = clientEmployees.length;
+          if (!inactiveByYear[yearEnd]) inactiveByYear[yearEnd] = 0;
+
+          if (emp.status === "Not Active") {
+            inactiveByYear[yearEnd] += 1;
+          }
+        }
+      });
+
+      if (selectedYear === "all") {
+        // PROMEDIO HISTÓRICO
+        const percentages: number[] = [];
+        Object.keys(inactiveByYear).forEach(y => {
+          const yearNum = Number(y);
+          const total = totalByYear[yearNum] || clientEmployees.length;
+          const inactive = inactiveByYear[yearNum];
+          const perc = (inactive / total) * 100;
+          percentages.push(perc);
+        });
+
+        if (percentages.length > 0) {
+          const avg = percentages.reduce((a, b) => a + b, 0) / percentages.length;
+          result[client] = parseFloat(avg.toFixed(1));
+        }
+      } else {
+        // SOLO EL AÑO SELECCIONADO
+        const inactive = inactiveByYear[Number(selectedYear)] || 0;
+        const total = totalByYear[Number(selectedYear)] || clientEmployees.length;
+        if (inactive > 0) {
+          result[client] = parseFloat(((inactive / total) * 100).toFixed(1));
+        }
       }
     });
 
-    // 3. Actualizamos datos para la gráfica solo con empresas con retiros
-    const clients = Object.keys(result);
-    const percentages = Object.values(result);
-
-    setCategories(clients);
-    setSeriesData(percentages);
+    setCategories(Object.keys(result));
+    setSeriesData(Object.values(result));
   };
-
 
   // Chart options
   const optionscolumnchart: any = {
@@ -114,29 +138,34 @@ const SalesOverview = () => {
 
   const seriescolumnchart = [{ name: "Attrition %", data: seriesData }];
 
-  const years = Array.from(
-    new Set(
-      employees
-        .filter(emp => emp.active_until)
-        .map(emp => new Date(emp.active_until).getFullYear())
-    )
-  ).sort((a, b) => b - a);
+  const years = [
+    "all",
+    ...Array.from(
+      new Set(
+        employees
+          .filter(emp => emp.active_until)
+          .map(emp => new Date(emp.active_until).getFullYear())
+      )
+    ).sort((a, b) => b - a)
+  ];
 
   return (
     <DashboardCard
-      title="Chart No. 1"
-      subtitle="Historic Attrition Risk"
+      title="Historic Attrition Risk"
+      subtitle=""
       action={
         <Stack direction="row" spacing={2} alignItems="center">
           <TextField
             select
             size="small"
-            label="Año"
+            label="Year"
             value={year}
-            onChange={e => setYear(Number(e.target.value))}
+            onChange={e => setYear(e.target.value)}
           >
             {years.map(y => (
-              <MenuItem key={y} value={y}>{y}</MenuItem>
+              <MenuItem key={y} value={y}>
+                {y === "all" ? "Todos" : y}
+              </MenuItem>
             ))}
           </TextField>
         </Stack>

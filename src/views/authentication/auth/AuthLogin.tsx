@@ -41,6 +41,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                 // si tu API devuelve un token, lo guardamos en el contexto
                 if (data.token) {
                     setToken(data.token);
+                    sessionStorage.setItem('name_user', data.name_user);
                 }
 
                 setAlertMsg('¡Bienvenido, Ingreso Exitoso!');

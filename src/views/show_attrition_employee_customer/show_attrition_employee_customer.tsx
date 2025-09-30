@@ -363,10 +363,10 @@ const ShowAttritionEmployeeCustomer = () => {
                                     >
                                         <Typography sx={{ fontSize: "2rem", flexShrink: 0 }}>
                                             {selectedEmployee.clasification.toLowerCase().includes("high")
-                                                ? "🔴"
+                                                ? "❌"
                                                 : selectedEmployee.clasification.toLowerCase().includes("medium")
-                                                    ? "🟡"
-                                                    : "🟢"}
+                                                    ? "⚠️"
+                                                    : "✅"}
                                         </Typography>
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="body1" fontWeight="bold" gutterBottom>
@@ -402,7 +402,7 @@ const ShowAttritionEmployeeCustomer = () => {
                             {/* Recommended Actions */}
                             {actionsList.length > 0 && (
                                 <Box sx={{ display: "flex", gap: 2, p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
-                                    <Typography sx={{ fontSize: "2rem", flexShrink: 0 }}>✅</Typography>
+                                    <Typography sx={{ fontSize: "2rem", flexShrink: 0 }}>📊</Typography>
                                     <Box sx={{ flex: 1 }}>
                                         <Typography variant="h6" gutterBottom>
                                             Recommended Actions

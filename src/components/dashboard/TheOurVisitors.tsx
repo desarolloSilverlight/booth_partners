@@ -153,8 +153,8 @@ const OurVisitors = () => {
 
   return (
     <DashboardCard
-      title="Chart No. 2"
-      subtitle="Job Satisfaction"
+      title="Job Satisfaction"
+      subtitle=""
       footer={
         <>
           <Divider />
