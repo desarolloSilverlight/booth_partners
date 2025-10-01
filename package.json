@@ -25,6 +25,7 @@
     "@tabler/icons-react": "^2.39.0",
     "apexcharts": "4.4.0",
     "dayjs": "^1.11.13",
+    "file-saver": "^2.0.5",
     "i18next": "24.0.5",
     "lodash": "4.17.21",
     "react": "^19.0.0",
@@ -37,6 +38,9 @@
     "react-top-loading-bar": "^2.3.1",
     "simplebar-react": "^3.3.0",
     "stylis-plugin-rtl": "^2.1.1",
+    "xlsx": "^0.18.5",
+    "xlsx-js-style": "^1.2.0",
+    "xlsx-style": "^0.8.13",
     "yup": "1.4.0"
   },
   "devDependencies": {

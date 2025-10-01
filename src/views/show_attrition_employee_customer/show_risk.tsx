@@ -24,6 +24,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import InputSearch from "src/components/forms/inputSearch/search";
 import config from "src/config/config";
+import * as XLSX from "xlsx-js-style";
 
 interface showRisks {
     id: number;
@@ -34,27 +35,6 @@ interface showRisks {
     attrition_probability: string;
     text_ai: string;
 }
-
-const parseTextAI = (text: string) => {
-    if (!text) return {};
-
-    return {
-        brief: (text.match(/Attrition Risk Brief:([\s\S]*?)(?=\*\*Risk Level|Risk Level:)/i)?.[1] || "").trim(),
-        riskLevel: (text.match(/Risk Level:([\s\S]*?)(?=\*\*Prioritized|Prioritized Risk Drivers:)/i)?.[1] || "").trim(),
-        drivers: (text.match(/Prioritized Risk Drivers:([\s\S]*?)(?=\*\*Sentiment|Sentiment Analysis:)/i)?.[1] || "").trim(),
-        sentiment: (text.match(/Sentiment Analysis:([\s\S]*?)(?=\*\*Overall|Overall Situation Assessment:)/i)?.[1] || "").trim(),
-        assessment: (text.match(/Overall Situation Assessment:([\s\S]*?)(?=\*\*Recommended|Recommended Actions:)/i)?.[1] || "").trim(),
-        actions: (text.match(/Recommended Actions:([\s\S]*)/i)?.[1] || "").trim(),
-    };
-};
-
-const cleanAndSplitText = (text: string) => {
-    if (!text) return [];
-    return text
-        .split(/\n|\. /)
-        .map(item => item.replace(/\*\*|^-|\d+$/g, "").trim())
-        .filter(item => item.length > 0);
-};
 
 const ShowRisks = () => {
     const [show_risks, setShow_risks] = useState<showRisks[]>([]);
@@ -170,6 +150,41 @@ const ShowRisks = () => {
         }
     }, [alertQueue, currentAlert]);
 
+    const handleDownloadExcel = () => {
+        const dataToExport = filteredRisks.map(item => ({
+            "Full Name": item.fullName,
+            "Customer": item.customer,
+            "Perception": item.calification,
+            "Analysis Result": item.clasification,
+            "Attrition Probability": item.attrition_probability,
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+        // Aplica color al header (primera fila)
+        const header = Object.keys(dataToExport[0]);
+        header.forEach((col, idx) => {
+            const cellAddress = XLSX.utils.encode_cell({ r: 0, c: idx });
+            if (!worksheet[cellAddress]) return;
+            worksheet[cellAddress].s = {
+                fill: { fgColor: { rgb: "B8CCE4" } }, // Fondo #B8CCE4
+                font: { color: { rgb: "222222" }, bold: false }, // Letra oscura normal
+                alignment: { horizontal: "center", vertical: "center" },
+                border: {
+                    top: { style: "thin", color: { rgb: "CCCCCC" } },
+                    bottom: { style: "thin", color: { rgb: "CCCCCC" } },
+                    left: { style: "thin", color: { rgb: "CCCCCC" } },
+                    right: { style: "thin", color: { rgb: "CCCCCC" } }
+                }
+            };
+        });
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Predictive Analysis");
+
+        XLSX.writeFile(workbook, "report_per_risk.xlsx", { bookType: "xlsx" });
+    };
+
     const handleAlertClose = (_?: unknown, reason?: string) => {
         if (reason === 'clickaway') return;
         setAlertOpen(false);
@@ -243,9 +258,35 @@ const ShowRisks = () => {
             )}
 
             <BaseCard title={
-                <Box sx={{ display: "flex", alignItems: "center", width: "100%", gap: { xs: 2, sm: 4 }, flexDirection: { xs: "column", sm: "row" }, justifyContent: "space-between" }}>
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        width: "100%",
+                        gap: { xs: 2, sm: 4 },
+                        flexDirection: { xs: "column", sm: "row" },
+                        justifyContent: "space-between"
+                    }}
+                >
                     <Typography variant="h5">Show Risks</Typography>
-                    <InputSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} onClearSearch={() => setSearchTerm("")} placeholder="Search by Name or Customer" width={250} />
+                    <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
+                        <InputSearch
+                            searchTerm={searchTerm}
+                            onSearchChange={setSearchTerm}
+                            onClearSearch={() => setSearchTerm("")}
+                            placeholder="Search by Name or Customer"
+                            width={250}
+                        />
+                    </Box>
+                    <Button
+                        variant="contained"
+                        color="success"
+                        size="small"
+                        onClick={handleDownloadExcel}
+                        sx={{ minWidth: 140 }}
+                    >
+                        Download Excel
+                    </Button>
                 </Box>
             }>
                 <TableContainer sx={{ width: '100%', overflowX: 'auto' }}>

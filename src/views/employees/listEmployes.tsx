@@ -7,6 +7,7 @@ import {
     TableHead,
     TableRow,
     Chip,
+    Button,
     TableContainer,
     Stack
 } from "@mui/material";
@@ -15,6 +16,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import config from "src/config/config";
 import InputSearch from "src/components/forms/inputSearch/search";
+import * as XLSX from "xlsx-js-style";
 
 interface Employee {
     id: string;
@@ -108,7 +110,7 @@ const ListEmployes = () => {
                             pbg: pbg,
                         };
                     })
-                );                
+                );
                 setEmployees(formattedEmployees);
                 setFilteredEmployees(formattedEmployees);
             })
@@ -128,6 +130,48 @@ const ListEmployes = () => {
         }
     }, [searchTerm, employees]);
 
+    const handleDownloadExcel = () => {
+        const dataToExport = filteredEmployees.map(emp => ({
+            "Full Name": emp.full_name,
+            "Document Type": emp.document_type,
+            "Document Number": emp.document_number,
+            "Gender": emp.gender,
+            "Birthday": emp.birthday,
+            "Civil Status": emp.civil_status,
+            "Nationality": emp.nationality,
+            "Active Since": emp.active_since,
+            "Active Until": emp.active_until,
+            "Status": emp.status,
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+        // Aplica color al header (primera fila)
+        if (dataToExport.length > 0) {
+            const header = Object.keys(dataToExport[0]);
+            header.forEach((col, idx) => {
+                const cellAddress = XLSX.utils.encode_cell({ r: 0, c: idx });
+                if (!worksheet[cellAddress]) return;
+                worksheet[cellAddress].s = {
+                    fill: { fgColor: { rgb: "B8CCE4" } }, // Fondo #B8CCE4
+                    font: { color: { rgb: "222222" }, bold: false }, // Letra oscura normal
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: {
+                        top: { style: "thin", color: { rgb: "CCCCCC" } },
+                        bottom: { style: "thin", color: { rgb: "CCCCCC" } },
+                        left: { style: "thin", color: { rgb: "CCCCCC" } },
+                        right: { style: "thin", color: { rgb: "CCCCCC" } }
+                    }
+                };
+            });
+        }
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Employees");
+
+        XLSX.writeFile(workbook, "employees_list.xlsx", { bookType: "xlsx" });
+    };
+
     const handleSearchChange = (term: string) => {
         setSearchTerm(term);
     }
@@ -135,19 +179,6 @@ const ListEmployes = () => {
     const handleClearSearch = () => {
         setSearchTerm("");
     };
-
-    // Función para calcular diferencia en años y meses
-    // function calcularAniosMeses(fechaInicioStr: string): string {
-    //     const fechaInicio = new Date(fechaInicioStr);
-    //     const fechaActual = new Date();
-    //     let anios = fechaActual.getFullYear() - fechaInicio.getFullYear();
-    //     let meses = fechaActual.getMonth() - fechaInicio.getMonth();
-    //     if (meses < 0) {
-    //         anios--;
-    //         meses += 12;
-    //     }
-    //     return `${anios} years and ${meses} months`;
-    // }
 
     const showEmployee = (id: string) => {
         //console.log("ID del empleado:", id);
@@ -172,27 +203,43 @@ const ListEmployes = () => {
 
     return (
         <BaseCard title={
-            <Box sx={{
-                display: "flex",
-                alignItems: "center",
-                width: "100%",
-                grap: { xs: 2, sm: 4 },
-                flexDirection: { xs: "column", sm: "row" },
-            }}>
-                <Typography variant="h5" sx={{
-                    width: { xs: "100%", sm: "auto" },
-                    textAlign: { xs: "left", sm: "inherit" }
-                }}>
+            <Box
+                sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    gap: { xs: 2, sm: 4 },
+                    flexDirection: { xs: "column", sm: "row" },
+                    justifyContent: "space-between", // Esto separa los extremos
+                }}
+            >
+                <Typography
+                    variant="h5"
+                    sx={{
+                        width: { xs: "100%", sm: "auto" },
+                        textAlign: { xs: "left", sm: "inherit" }
+                    }}
+                >
                     EMPLOYEES
                 </Typography>
-
-                <InputSearch
-                    searchTerm={searchTerm}
-                    onSearchChange={handleSearchChange}
-                    onClearSearch={handleClearSearch}
-                    placeholder="Buscar empleados..."
-                    width={{ xs: "100%", sm: 300, md: 400 }}
-                />
+                <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
+                    <InputSearch
+                        searchTerm={searchTerm}
+                        onSearchChange={handleSearchChange}
+                        onClearSearch={handleClearSearch}
+                        placeholder="Buscar empleados..."
+                        width={{ xs: "100%", sm: 300, md: 400 }}
+                    />
+                </Box>
+                <Button
+                    variant="contained"
+                    color="success"
+                    size="small"
+                    onClick={handleDownloadExcel}
+                    sx={{ minWidth: 140 }}
+                >
+                    Download Excel
+                </Button>
             </Box>
         }>
             <TableContainer
@@ -275,7 +322,7 @@ const ListEmployes = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredEmployees.map((employee, index) => (                            
+                        {filteredEmployees.map((employee, index) => (
                             <TableRow key={employee.id}>
                                 <TableCell>
                                     <Typography fontSize="15px" fontWeight={500}>

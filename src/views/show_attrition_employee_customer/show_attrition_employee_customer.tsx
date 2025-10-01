@@ -21,6 +21,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import InputSearch from "src/components/forms/inputSearch/search";
 import config from "src/config/config";
+import * as XLSX from "xlsx-js-style";
 
 interface attritionEmployeeCustomer {
     id: number;
@@ -141,6 +142,41 @@ const ShowAttritionEmployeeCustomer = () => {
         }
     }, [alertQueue, currentAlert]);
 
+    const handleDownloadExcel = () => {
+        const dataToExport = filteredData.map(item => ({
+            "Full Name": item.fullName,
+            "Customer": item.customer,
+            "Perception": item.calification,
+            "Analysis Result": item.clasification,
+            "Attrition Probability": item.attrition_probability,
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+        // Aplica color al header (primera fila)
+        const header = Object.keys(dataToExport[0]);
+        header.forEach((col, idx) => {
+            const cellAddress = XLSX.utils.encode_cell({ r: 0, c: idx });
+            if (!worksheet[cellAddress]) return;
+            worksheet[cellAddress].s = {
+                fill: { fgColor: { rgb: "B8CCE4" } }, // Fondo #B8CCE4
+                font: { color: { rgb: "222222" }, bold: false }, // Letra oscura normal
+                alignment: { horizontal: "center", vertical: "center" },
+                border: {
+                    top: { style: "thin", color: { rgb: "CCCCCC" } },
+                    bottom: { style: "thin", color: { rgb: "CCCCCC" } },
+                    left: { style: "thin", color: { rgb: "CCCCCC" } },
+                    right: { style: "thin", color: { rgb: "CCCCCC" } }
+                }
+            };
+        });
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Predictive Analysis");
+
+        XLSX.writeFile(workbook, "report_risk_per_customer.xlsx", { bookType: "xlsx" });
+    };
+
     const handleAlertClose = (_?: unknown, reason?: string) => {
         if (reason === "clickaway") return;
         setAlertOpen(false);
@@ -237,12 +273,31 @@ const ShowAttritionEmployeeCustomer = () => {
             </Box>
 
             {/* Tabla principal */}
-            <BaseCard title={
-                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
-                    <Typography variant="h5">Predictive Attrition Analysis</Typography>
-                    <InputSearch searchTerm={searchTerm} onSearchChange={setSearchTerm} onClearSearch={() => setSearchTerm("")} placeholder="Search employee..." width={{ xs: "100%", sm: 300, md: 400 }} />
-                </Box>
-            }>
+            <BaseCard
+                title={
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
+                        <Typography variant="h5">Predictive Attrition Analysis</Typography>
+                        <Box sx={{ flex: 1, display: "flex", justifyContent: "center" }}>
+                            <InputSearch
+                                searchTerm={searchTerm}
+                                onSearchChange={setSearchTerm}
+                                onClearSearch={() => setSearchTerm("")}
+                                placeholder="Search employee..."
+                                width={{ xs: "100%", sm: 300, md: 400 }}
+                            />
+                        </Box>
+                        <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            onClick={handleDownloadExcel}
+                            sx={{ minWidth: 140 }}
+                        >
+                            Download Excel
+                        </Button>
+                    </Box>
+                }
+            >
                 <TableContainer>
                     <Table>
                         <TableHead>

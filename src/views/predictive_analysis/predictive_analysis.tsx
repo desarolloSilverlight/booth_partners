@@ -22,6 +22,7 @@ import config from "src/config/config";
 import InputSearch from "src/components/forms/inputSearch/search";
 import { useNavigate } from "react-router";
 import dayjs from "dayjs";
+import * as XLSX from "xlsx-js-style";
 
 interface Predictive_Analysis {
     id: number;
@@ -143,6 +144,41 @@ const PredictiveAnalytics = () => {
         setAlertQueue(prev => [...prev, { msg, severity }]);
     };
 
+    const handleDownloadExcel = () => {
+        const dataToExport = filtereredData.map(item => ({
+            "Full Name": item.fullName,
+            "Customer": item.customer,
+            "Perception": item.calification,
+            "Analysis Result": item.clasification,
+            "Attrition Probability": item.attrition_probability,
+        }));
+
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+
+        // Aplica color al header (primera fila)
+        const header = Object.keys(dataToExport[0]);
+        header.forEach((col, idx) => {
+            const cellAddress = XLSX.utils.encode_cell({ r: 0, c: idx });
+            if (!worksheet[cellAddress]) return;
+            worksheet[cellAddress].s = {
+                fill: { fgColor: { rgb: "B8CCE4" } }, // Fondo #B8CCE4
+                font: { color: { rgb: "222222" }, bold: false }, // Letra oscura normal
+                alignment: { horizontal: "center", vertical: "center" }, // Opcional: centra el texto
+                border: {
+                    top: { style: "thin", color: { rgb: "CCCCCC" } },
+                    bottom: { style: "thin", color: { rgb: "CCCCCC" } },
+                    left: { style: "thin", color: { rgb: "CCCCCC" } },
+                    right: { style: "thin", color: { rgb: "CCCCCC" } }
+                }
+            };
+        });
+
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Predictive Analysis");
+
+        XLSX.writeFile(workbook, "report_predictive_analysis.xlsx", { bookType: "xlsx" });
+    };
+
     const handleAlertClose = (_?: unknown, reason?: string) => {
         if (reason === 'clickaway') return;
         setAlertOpen(false);
@@ -154,6 +190,8 @@ const PredictiveAnalytics = () => {
         navigate("/auth/login");
         throw new Error("Unauthorized");
     };
+
+
 
     useEffect(() => {
         if (searchTerm === "") {
@@ -243,7 +281,22 @@ const PredictiveAnalytics = () => {
 
             {/* Conteo de riesgos */}
             <Box mb={3}>
-                <BaseCard title="Overview of the analysis prediction">
+                <BaseCard
+                    title={
+                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                            <Typography variant="h5">Overview of the analysis prediction</Typography>
+                            <Button
+                                variant="contained"
+                                color="success" // Cambia a verde
+                                size="small"
+                                onClick={handleDownloadExcel}
+                                sx={{ ml: 2, minWidth: 140 }} // Margen izquierdo y ancho mínimo opcional
+                            >
+                                Download Excel
+                            </Button>
+                        </Box>
+                    }
+                >
                     <TableContainer>
                         <Table aria-label="risk counts" sx={{ whiteSpace: "nowrap" }}>
                             <TableHead>
