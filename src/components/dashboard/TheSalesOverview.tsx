@@ -75,8 +75,7 @@ const SalesOverview = () => {
 
     allClients.forEach(client => {
       const clientEmployees = employees.filter(emp => (emp.customer || "Unknown Client") === client);
-
-      // agrupar empleados inactivos por año
+      
       const inactiveByYear: { [year: number]: number } = {};
       const totalByYear: { [year: number]: number } = {};
 

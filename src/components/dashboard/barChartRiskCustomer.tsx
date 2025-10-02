@@ -149,7 +149,7 @@ const BarChartRiskCustomer = () => {
     return (
         <>
             <DashboardCard
-                title="Risk of employee attrition per client"
+                title="Risk per client"
                 subtitle=""
                 action={
                     <Stack spacing={3} mt={5} direction="row">
