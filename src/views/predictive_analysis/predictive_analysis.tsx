@@ -253,7 +253,8 @@ const PredictiveAnalytics = () => {
         return text
             .split(/\n|\. /) // dividimos por salto de línea o punto+espacio
             .map(item => item.replace(/\*\*|^-|\d+$/g, "").trim()) // quitamos **, -, números sueltos
-            .filter(item => item.length > 0); // eliminamos vacíos
+            .filter(item => item.length > 0) // eliminamos vacíos
+            .map(item => item.endsWith('.') ? item : item + '.'); // aseguramos punto final
     };
 
     const parsed = selectedEmployee?.text_ai ? parseTextAI(selectedEmployee.text_ai) : null;
