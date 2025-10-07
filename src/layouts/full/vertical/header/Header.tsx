@@ -18,12 +18,12 @@ const Header = () => {
     background: '#ffff',
     justifyContent: 'center',
     position: "fixed",
-    top: "64px", // posición por defecto
+    top: "60px", // posición por defecto
 
     backdropFilter: 'blur(4px)',
 
     [theme.breakpoints.down('lg')]: {
-      minHeight: '64px',
+      minHeight: '60px',
       top: "0px", // 🔼 AJUSTE: subimos el navbar
     },
     [theme.breakpoints.down('sm')]: {

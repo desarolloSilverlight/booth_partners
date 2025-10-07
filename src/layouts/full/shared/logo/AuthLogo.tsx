@@ -3,7 +3,7 @@ import { styled } from '@mui/material';
 import Logo from 'src/assets/images/logos/booth_logo.png'; // tu logo principal
 
 const LinkStyled = styled(Link)(() => ({
-  height: '64px',
+  height: '60px',
   width: '180px',
   overflow: 'hidden',
   display: 'block',

@@ -101,7 +101,7 @@ const Profile = () => {
                     <Icon
                       icon={profile.iconName}
                       height={50}
-                      color="#b81f3c"
+                      color="#0D4B3B"
                       style={{
                         marginRight: '8px',
                       }}
@@ -132,15 +132,23 @@ const Profile = () => {
               px: 2,
               py: '10px',
               '&:hover': {
-                backgroundColor: 'error.light',
+                backgroundColor: '#D9EDE3',
               },
             }}
             className="hover-text-primary"
           >
             <Button
               variant="outlined"
-              color="error"
-              sx={{ width: '100%' }}
+              sx={{
+                width: '100%',
+                color: '#0D4B3B',
+                borderColor: '#0D4B3B',
+                '&:hover': {
+                  backgroundColor: '#0D4B3B',
+                  color: '#fff',
+                  borderColor: '#0D4B3B',
+                },
+              }}
               onClick={handleLogout}
             >
               Log Out

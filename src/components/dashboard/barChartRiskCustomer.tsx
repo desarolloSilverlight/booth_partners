@@ -151,23 +151,6 @@ const BarChartRiskCustomer = () => {
             <DashboardCard
                 title="Risk per client"
                 subtitle=""
-                action={
-                    <Stack spacing={3} mt={5} direction="row">
-                        <Stack direction="row" spacing={1} alignItems="center">
-                            <Avatar
-                                sx={{
-                                    width: 9,
-                                    height: 9,
-                                    bgcolor: primary,
-                                    svg: { display: "none" },
-                                }}
-                            ></Avatar>
-                            <Typography variant="subtitle2" color="primary.main">
-                                Risk Attritions
-                            </Typography>
-                        </Stack>
-                    </Stack>
-                }
             >
                 <Box height="400px">
                     <Chart

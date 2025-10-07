@@ -87,7 +87,7 @@ const SidebarItems = () => {
 
   return (
     <Box sx={{ px: "20px", overflowX: 'hidden' }}>
-      <MUI_Sidebar width={"100%"} showProfile={false} themeColor={"#b81f3c"} themeSecondaryColor={'#1b84ff1a'}>
+      <MUI_Sidebar width={"100%"} showProfile={false} themeColor={"#0D4B3B"} themeSecondaryColor={'#1b84ff1a'}>
         {renderMenuItems(Menuitems, pathDirect)}
       </MUI_Sidebar>
     </Box>

@@ -17,7 +17,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
         e.preventDefault();
 
         if (!username || !password) {
-            setAlertMsg('Por favor ingrese su usuario y contraseña');
+            setAlertMsg('Please enter your username and password');
             setOpen(true);
             return;
         }
@@ -44,13 +44,13 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                     sessionStorage.setItem('name_user', data.name_user);
                 }
 
-                setAlertMsg('¡Bienvenido, Ingreso Exitoso!');
+                setAlertMsg('Welcome, Successful Login!');
                 setOpen(true);
                 setTimeout(() => {
                     navigate('/dashboard');
                 }, 2000); // Redirigir después de 2 segundos
             } else {
-                setAlertMsg('Usuario o contraseña incorrectos');
+                setAlertMsg('Incorrect username or password');
                 setOpen(true);
             }
         } catch (error) {
@@ -64,12 +64,12 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
         <>
             <Snackbar
                 open={open}
-                autoHideDuration={alertMsg === '¡Bienvenido, Ingreso Exitoso!' ? 2000 : 4000}
+                autoHideDuration={alertMsg === 'Welcome, Successful Login!' ? 2000 : 4000}
                 onClose={() => setOpen(false)}
             >
                 <Alert
                     onClose={() => setOpen(false)}
-                    severity={alertMsg === '¡Bienvenido, Ingreso Exitoso!' ? 'success' : 'warning'}
+                    severity={alertMsg === 'Welcome, Successful Login!' ? 'success' : 'warning'}
                     sx={{ width: '100%' }}
                 >
                     {alertMsg}
@@ -131,11 +131,16 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
 
                 <Box mt={3}>
                     <Button
-                        color="error"
                         variant="contained"
                         size="large"
                         fullWidth
                         type="submit"
+                        sx={{
+                            backgroundColor: '#0D4B3B',
+                            '&:hover': {
+                                backgroundColor: '#093828'
+                            }
+                        }}
                     >
                         Log In
                     </Button>
