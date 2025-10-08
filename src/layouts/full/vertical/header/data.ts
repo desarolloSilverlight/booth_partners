@@ -9,12 +9,11 @@ const profile: ProfileType[] = [
     title: 'Profile',
     iconName: 'solar:user-circle-line-duotone',
   },
-  /*
-  {
-    href: '/tables/basic-table',
-    title: 'Notas',
-    iconName: 'solar:notes-line-duotone',
-  },
-  */
+  // {
+  //   href: '',
+  //   title: 'Update Password',
+  //   iconName: 'solar:lock-password-line-duotone',
+  // },
+
 ];
 export { profile };

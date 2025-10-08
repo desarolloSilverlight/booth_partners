@@ -29,12 +29,7 @@ export default function Dashboard() {
                         xs: 12,
                         lg: 4
                     }}>
-                    <Box
-                        sx={{ cursor: "pointer" }}
-                        onClick={() => navigate("/predictive_analysis/predictive_analysis")}
-                    >
-                        <OurVisitors />
-                    </Box>
+                    <OurVisitors />
                 </Grid>
                 <Grid
                     size={{

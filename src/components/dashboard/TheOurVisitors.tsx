@@ -16,7 +16,6 @@ const OurVisitors = () => {
   const info = theme.palette.info.main;
   const warning = theme.palette.warning.main;
 
-  // Estados
   const [seriesData, setSeriesData] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,13 +43,6 @@ const OurVisitors = () => {
           requestOptions
         );
 
-        // if (res.status === 401) {
-        //   sessionStorage.removeItem("token");
-        //   alert("Sesión expirada, por favor ingresa nuevamente");
-        //   navigate("/auth/login");
-        //   return;
-        // }
-
         const data = await res.json();
 
         // Inicializamos los contadores
@@ -58,12 +50,14 @@ const OurVisitors = () => {
           Positive: 0,
           Negative: 0,
           Neutral: 0,
+          "No comment": 0,
         };
 
+        // Procesar cada empleado
         data.forEach((emp: any) => {
           if (emp.calification) {
             try {
-              // arreglar el JSON (comillas simples -> dobles)
+              // Arreglar el JSON (por si usa comillas simples)
               const fixedJson = emp.calification
                 .replace(/'/g, '"')
                 .replace(/([a-zA-Záéíóúñ]+):/g, '"$1":');
@@ -77,23 +71,25 @@ const OurVisitors = () => {
 
               if (nivel && counts.hasOwnProperty(nivel)) {
                 counts[nivel] += 1;
+              } else {
+                counts["No comment"] += 1;
               }
             } catch (err) {
-              console.error("Error parsing calification", err);
+              counts["No comment"] += 1; // JSON mal formado
             }
+          } else {
+            counts["No comment"] += 1; // Sin calificación
           }
         });
 
         // Calcular porcentajes
         const total = Object.values(counts).reduce((a, b) => a + b, 0);
-
         const percentages = Object.values(counts).map((val) =>
           total > 0 ? parseFloat(((val / total) * 100).toFixed(1)) : 0
         );
 
         setSeriesData(percentages);
         setLoading(false);
-
       } catch (error) {
         console.error(error);
         setLoading(false);
@@ -103,19 +99,33 @@ const OurVisitors = () => {
     fetchData();
   }, [navigate]);
 
-  // Opciones de la gráfica
+  const labels = ["Positive", "Negative", "Neutral", "No comment"];
+
+  // Opciones del gráfico
   const optionscolumnchart: any = {
-    labels: ["Positive", "Negative", "Neutral"],
+    labels: labels,
     chart: {
       height: 250,
       type: "donut",
       foreColor: "#adb0bb",
-      fontFamily: `inherit`,
+      fontFamily: "inherit",
+      events: {
+        dataPointSelection: (event: any, chartContext: any, config: any) => {
+          const selectedLabel = labels[config.dataPointIndex];
+          if (selectedLabel) {
+            const param = selectedLabel.toLowerCase().replace(" ", "_");
+            navigate(
+              `/show_attrition_employee_customer/show_attrition_perspective?pers=${param}`
+            );
+          }
+        },
+      },
     },
     colors: [
-      theme.palette.success.main, // verde
-      theme.palette.error.main,   // rojo
-      theme.palette.info.main,    // azul
+      theme.palette.success.main,  // Verde
+      theme.palette.error.main,    // Rojo
+      theme.palette.info.main,     // Azul
+      theme.palette.grey[700],     // Gris para No comment
     ],
     dataLabels: { enabled: false },
     legend: { show: false },
@@ -169,6 +179,7 @@ const OurVisitors = () => {
               { label: "Positive", color: theme.palette.success.main },
               { label: "Negative", color: theme.palette.error.main },
               { label: "Neutral", color: theme.palette.info.main },
+              { label: "No comment", color: theme.palette.grey[700] },
             ].map((item, index) => (
               <Stack
                 key={index}

@@ -1,221 +1,221 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
-
   TextField,
-  FormControlLabel,
-  Checkbox,
   Button,
-  Grid2 as Grid,
-  RadioGroup,
-  Radio,
-  FormControl,
-  MenuItem,
+  IconButton,
+  InputAdornment,
+  Snackbar,
+  Alert,
 } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import config from "src/config/config";
 import BaseCard from "../../../components/BaseCard/BaseCard";
-
-const numbers = [
-  {
-    value: "1",
-    label: "Enable",
-  },
-  {
-    value: "2",
-    label: "Disable",
-  },
-];
+import { useNavigate, useLocation } from "react-router-dom";
 
 const FbDefaultForm = () => {
-  const [state, setState] = React.useState({
-    checkedA: false,
-    checkedB: false,
-    checkedC: false,
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [alertQueue, setAlertQueue] = useState<{ msg: string, severity: "info" | "success" | "error" }[]>([]);
+  const [currentAlert, setCurrentAlert] = useState<{ msg: string, severity: "info" | "success" | "error" } | null>(null);
+
+  const [userData, setUserData] = useState({
+    id_userSystem: "",
+    first_name: "",
+    last_name: "",
+    emailLog: "",
+    passLog: "",
+    contry: "",
+    systemProfile: "",
+    userStatus: "",
   });
 
-  const handleChange = (event: any) => {
-    setState({ ...state, [event.target.name]: event.target.checked });
+  const [confirmPass, setConfirmPass] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const token = sessionStorage.getItem("token");
+  const username = sessionStorage.getItem('username');
+  if (!token) {
+    navigate("/auth/login");
+    return;
+  }
+
+  useEffect(() => {
+    if (username) {
+      fetch(`${config.rutaApi}data_user_system`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'authToken': token },
+        body: JSON.stringify({ username }),
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.dataUser) setUserData(data.dataUser);
+        });
+    }
+  }, [username]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserData({ ...userData, [e.target.name]: e.target.value });
   };
 
-  const [value, setValue] = React.useState("");
+  const handleSave = async () => {
+    try {
+      const res = await fetch(`${config.rutaApi}updata_data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'authToken': token },
+        body: JSON.stringify(userData),
+      });
 
-  const handleChange2 = (event: any) => {
-    setValue(event.target.value);
+      if (res.ok) {
+        setAlertQueue(q => [...q, { msg: "Data saved successfully", severity: "success" }]);
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        setAlertQueue(q => [...q, { msg: "Error saving the data", severity: "error" }]);
+      }
+    } catch (error) {
+      setAlertQueue(q => [...q, { msg: "Network error while saving", severity: "error" }]);
+    }
   };
 
-  const [number, setNumber] = React.useState("");
+  useEffect(() => {
+    if (!currentAlert && alertQueue.length > 0) {
+      setCurrentAlert(alertQueue[0]);
+      setAlertQueue(q => q.slice(1));
+    }
+  }, [alertQueue, currentAlert]);
 
-  const handleChange3 = (event: any) => {
-    setNumber(event.target.value);
+  const handleCloseAlert = () => {
+    setCurrentAlert(null);
   };
+
+  const passwordsMatch = userData.passLog === confirmPass;
 
   return (
     <div>
-      {/* ------------------------------------------------------------------------------------------------ */}
-      {/* Basic Checkbox */}
-      {/* ------------------------------------------------------------------------------------------------ */}
+      <Snackbar
+        open={!!currentAlert}
+        autoHideDuration={2000}
+        onClose={handleCloseAlert}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        {currentAlert ? (
+          <Alert
+            onClose={handleCloseAlert}
+            severity={currentAlert.severity}
+            sx={{ width: '100%' }}
+          >
+            {currentAlert.msg}
+          </Alert>
+        ) : (
+          <span />
+        )}
+      </Snackbar>
+
       <BaseCard title="My Profile">
         <form>
           <TextField
-            id="default-value"
-            label="Full Name"
+            name="first_name"
+            label="First Name"
             variant="outlined"
-            defaultValue="Andres Felipe Criales Cortes"
+            value={userData.first_name}
+            onChange={handleChange}
             fullWidth
-            sx={{
-              mb: 2,
-            }}
+            sx={{ mb: 2 }}
           />
           <TextField
-            id="email-text"
+            name="last_name"
+            label="Last Name"
+            variant="outlined"
+            value={userData.last_name}
+            onChange={handleChange}
+            fullWidth
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            name="emailLog"
             label="Email"
             type="email"
             variant="outlined"
+            value={userData.emailLog}
+            onChange={handleChange}
             fullWidth
-            sx={{
-              mb: 2,
-            }}
+            sx={{ mb: 2 }}
           />
           <TextField
-            id="outlined-password-input"
+            name="passLog"
             label="Password"
-            type="password"
-            autoComplete="current-password"
+            type={showPassword ? "text" : "password"}
             variant="outlined"
+            value={userData.passLog}
+            onChange={handleChange}
             fullWidth
-            sx={{
-              mb: 2,
+            sx={{ mb: 2 }}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword((show) => !show)}
+                    edge="end"
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
             }}
           />
           <TextField
-            id="profile-text"
-            label="Profile"
-            type="outlined"
+            name="confirmPass"
+            label="Confirm Password"
+            type={showConfirm ? "text" : "password"}
             variant="outlined"
+            value={confirmPass}
+            onChange={(e) => setConfirmPass(e.target.value)}
             fullWidth
-            sx={{
-              mb: 2,
+            sx={{ mb: 2 }}
+            error={confirmPass.length > 0 && !passwordsMatch}
+            helperText={
+              confirmPass.length > 0 && !passwordsMatch
+                ? "Passwords do not match"
+                : ""
+            }
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowConfirm((show) => !show)}
+                    edge="end"
+                  >
+                    {showConfirm ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
             }}
           />
           <TextField
-            fullWidth
-            id="standard-select-number"
+            name="contry"
+            label="Country"
             variant="outlined"
-            select
-            label="User Status"
-            value={number}
-            onChange={handleChange3}
-            sx={{
-              mb: 2,
-            }}
-          >
-            {numbers.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
-          {/*
-          <TextField
-            id="outlined-multiline-static"
-            label="Textarea"
-            multiline
-            rows={4}
-            variant="outlined"
+            value={userData.contry}
+            onChange={handleChange}
             fullWidth
-            sx={{
-              mb: 2,
-            }}
-          />          
-          <TextField
-            id="readonly-text"
-            label="Read Only"
-            defaultValue="Hello World"
-            slotProps={{
-              input: {
-                readOnly: true,
-              },
-            }}
-            variant="outlined"
-            fullWidth
-            sx={{
-              mb: 2,
-            }}
+            sx={{ mb: 2 }}
           />
-          */}
-          <Grid
-            container
-            spacing={0}
-            sx={{
-              mb: 2,
-            }}
-          >
-            <Grid size={{ lg: 4, md: 6, sm: 12 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={state.checkedA}
-                    onChange={handleChange}
-                    name="checkedA"
-                    color="primary"
-                  />
-                }
-                label="Full Access"
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={state.checkedB}
-                    onChange={handleChange}
-                    name="checkedB"
-                    color="primary"
-                  />
-                }
-                label="Read"
-              />
-              {/*
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={state.checkedC}
-                    onChange={handleChange}
-                    name="checkedC"
-                    color="primary"
-                  />
-                }
-                label="Check this custom checkbox"
-              />
-              */}
-            </Grid>
-            {/*       
-            <Grid size={{ lg: 4, md: 6, sm: 12 }}>
-              <FormControl component="fieldset">
-                <RadioGroup
-                  aria-label="gender"
-                  name="gender1"
-                  value={value}
-                  onChange={handleChange2}
-                >
-                  <FormControlLabel
-                    value="radio1"
-                    control={<Radio />}
-                    label="Toggle this custom radio"
-                  />
-                  <FormControlLabel
-                    value="radio2"
-                    control={<Radio />}
-                    label="Toggle this custom radio"
-                  />
-                  <FormControlLabel
-                    value="radio3"
-                    control={<Radio />}
-                    label="Toggle this custom radio"
-                  />
-                </RadioGroup>
-              </FormControl>
-            </Grid>
-            */}
-          </Grid>
+          {/* Puedes agregar más campos si lo necesitas */}
           <div>
-            <Button color="error" variant="contained">
+            <Button
+              variant="contained"
+              onClick={handleSave}
+              sx={{
+                backgroundColor: '#093828',
+                '&:hover': {
+                  backgroundColor: '#06281a'
+                }
+              }}
+              disabled={!passwordsMatch || userData.passLog === ""}
+            >
               Save
             </Button>
           </div>

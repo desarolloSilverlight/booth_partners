@@ -1,5 +1,3 @@
-
-
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import { chain } from 'lodash';
@@ -20,6 +18,7 @@ const ShowEmploye = lazy(() => import("../views/employees/showEmploye"));
 const ShowAttritionEmployeeCustomer = lazy(() => import("../views/show_attrition_employee_customer/show_attrition_employee_customer"));
 const ShowRisks = lazy(() => import("../views/show_attrition_employee_customer/show_risk"));
 const PredictiveAnalysis = lazy(() => import("../views/predictive_analysis/predictive_analysis"));
+const ShowAttritionPerspective = lazy(() => import("../views/show_attrition_employee_customer/show_attrition_perspective"));
 const Reports = lazy(() => import("../views/reports/reportsPage"));
 const PrivateRoute = lazy(() => import("./PrivateRoute"));
 /*Pages Proeyecto Booths*/
@@ -62,6 +61,7 @@ const Router = [
           { path: '/show_attrition_employee_customer/show_attrition_employee_customer', exact: true, element: <ShowAttritionEmployeeCustomer /> },
           { path: '/show_attrition_employee_customer/show_risk', exact: true, element: <ShowRisks /> },
           { path: '/predictive_analysis/predictive_analysis', exact: true, element: <PredictiveAnalysis /> },
+          { path: '/show_attrition_employee_customer/show_attrition_perspective', exact: true, element: <ShowAttritionPerspective /> },
           { path: '/reports/reportsPage', exact: true, element: <Reports /> },
           /*Fin Rutas Proyecto*/
           { path: '/ui/typography', exact: true, element: <TypographyPage /> },

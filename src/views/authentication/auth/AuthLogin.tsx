@@ -42,6 +42,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                 if (data.token) {
                     setToken(data.token);
                     sessionStorage.setItem('name_user', data.name_user);
+                    sessionStorage.setItem('username', username);
                 }
 
                 setAlertMsg('Welcome, Successful Login!');
