@@ -23,24 +23,26 @@ interface reportsPage {
 
 const buttonData = [
     {
-        label: "Report Attrition\nPerspective",
+        label: "Employee\nPerspective Report",
         columns: ["full_name", "calification", "text_ai"],
         fileName: "Report_Attrition_Perspective.xlsx",
     },
     {
-        label: "Report Attrition Risk\nper Client",
-        columns: ["full_name", "clasification" ,"customer", "text_ai"],
+        label: "Attrition Risk\nReport per Client",
+        columns: ["full_name", "clasification", "customer", "text_ai"],
         fileName: "Report_Attrition_Risk_per_Client.xlsx",
     },
     {
-        label: "Report 3",
-        columns: ["full_name", "calification", "clasification"],
-        fileName: "Report_3.xlsx",
+        label: "Risk Count\nReport per Client",
+        columns: [],
+        fileName: "Risk_Count_Report_per_Client.xlsx",
+        isCountReport: true,
     },
     {
-        label: "Report 4",
-        columns: ["full_name", "customer", "text_ai"],
-        fileName: "Report_4.xlsx",
+        label: "Risk\nby Percentage Report",
+        columns: [],
+        fileName: "Risk_by_Percentage_Report.xlsx",
+        isPercentageReport: true,
     },
 ];
 
@@ -104,9 +106,62 @@ const ReportsPage = () => {
         throw new Error("Unauthorized");
     };
 
-    const handleDownload = (columns: string[], fileName: string) => {
+    const handleDownload = (columns: string[], fileName: string, isCountReport?: boolean, isPercentageReport?: boolean) => {
         if (!data || data.length === 0) {
             showAlert("No hay datos para descargar", "error");
+            return;
+        }
+
+        if (isCountReport) {
+            // Agrupar por customer y contar clasification
+            const counts: Record<string, { Low: number; Medium: number; High: number }> = {};
+            data.forEach(item => {
+                const customer = item.customer || "Sin Cliente";
+                const clas = (item.clasification || "").toLowerCase();
+                if (!counts[customer]) counts[customer] = { Low: 0, Medium: 0, High: 0 };
+                if (clas.includes("low")) counts[customer].Low += 1;
+                else if (clas.includes("medium")) counts[customer].Medium += 1;
+                else if (clas.includes("high")) counts[customer].High += 1;
+            });
+            const filteredData = Object.entries(counts).map(([customer, val]) => ({
+                customer,
+                Low: val.Low,
+                Medium: val.Medium,
+                High: val.High,
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(filteredData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+            XLSX.writeFile(workbook, fileName);
+
+            showAlert("Descarga exitosa", "success");
+            return;
+        }
+
+        if (isPercentageReport) {
+            // Calcular porcentajes globales de Low, Medium y High
+            let low = 0, medium = 0, high = 0, total = 0;
+            data.forEach(item => {
+                const clas = (item.clasification || "").toLowerCase();
+                if (clas.includes("low")) low += 1;
+                else if (clas.includes("medium")) medium += 1;
+                else if (clas.includes("high")) high += 1;
+                total += 1;
+            });
+            const percent = (val: number) => total > 0 ? ((val / total) * 100).toFixed(2) + '%' : '0%';
+            const filteredData = [{
+                Low: percent(low),
+                Medium: percent(medium),
+                High: percent(high),
+            }];
+
+            const worksheet = XLSX.utils.json_to_sheet(filteredData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+            XLSX.writeFile(workbook, fileName);
+
+            showAlert("Descarga exitosa", "success");
             return;
         }
 
@@ -121,10 +176,8 @@ const ReportsPage = () => {
                     } catch {
                         obj[col] = "";
                     }
-                } else if (col === "calification") {
-                    obj[col] = item.calification; // Ejemplo: "{'Positivo': '60%', ...}"
                 } else if (col === "clasification") {
-                    obj[col] = item.clasification; // Ejemplo: "Low Risk"
+                    obj[col] = item.clasification;
                 } else if (col === "full_name") {
                     obj[col] = item.full_name;
                 } else {
@@ -134,7 +187,6 @@ const ReportsPage = () => {
             return obj;
         });
 
-        // Crear hoja de Excel
         const worksheet = XLSX.utils.json_to_sheet(filteredData);
         const workbook = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
@@ -150,7 +202,7 @@ const ReportsPage = () => {
                     <Button
                         key={idx}
                         variant="contained"
-                        onClick={() => handleDownload(btn.columns, btn.fileName)}
+                        onClick={() => handleDownload(btn.columns, btn.fileName, btn.isCountReport, btn.isPercentageReport)}
                         sx={{
                             backgroundColor: "#0D4B3B",
                             color: "#fff",
