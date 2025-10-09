@@ -19,7 +19,7 @@ const ShowAttritionEmployeeCustomer = lazy(() => import("../views/show_attrition
 const ShowRisks = lazy(() => import("../views/show_attrition_employee_customer/show_risk"));
 const PredictiveAnalysis = lazy(() => import("../views/predictive_analysis/predictive_analysis"));
 const ShowAttritionPerspective = lazy(() => import("../views/show_attrition_employee_customer/show_attrition_perspective"));
-const Reports = lazy(() => import("../views/reports/reportsPage"));
+const ReportsPage = lazy(() => import("../views/reports/reportsPage"));
 const PrivateRoute = lazy(() => import("./PrivateRoute"));
 /*Pages Proeyecto Booths*/
 
@@ -62,7 +62,7 @@ const Router = [
           { path: '/show_attrition_employee_customer/show_risk', exact: true, element: <ShowRisks /> },
           { path: '/predictive_analysis/predictive_analysis', exact: true, element: <PredictiveAnalysis /> },
           { path: '/show_attrition_employee_customer/show_attrition_perspective', exact: true, element: <ShowAttritionPerspective /> },
-          { path: '/reports/reportsPage', exact: true, element: <Reports /> },
+          { path: '/reports/reportsPage', exact: true, element: <ReportsPage /> },
           /*Fin Rutas Proyecto*/
           { path: '/ui/typography', exact: true, element: <TypographyPage /> },
           { path: '/ui/shadow', exact: true, element: <Shadow /> },
