@@ -25,6 +25,7 @@
     "@tabler/icons-react": "^2.39.0",
     "apexcharts": "4.4.0",
     "dayjs": "^1.11.13",
+    "dompurify": "^3.3.0",
     "file-saver": "^2.0.5",
     "i18next": "24.0.5",
     "lodash": "4.17.21",

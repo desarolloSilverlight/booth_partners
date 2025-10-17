@@ -5,11 +5,11 @@ import DashboardCard from "../shared/DashboardCard";
 
 const Chart = React.lazy(() => import("react-apexcharts"));
 
-const PieChart = () => {
+const PieChartCommonVariables = () => {
     const theme = useTheme();
 
     const series = [35, 30, 20, 15];
-    const labels = ["Excellent", "Good", "Average", "Poor"];
+    const labels = ["Variable SHAP 1", "Variable SHAP 2", "Variable SHAP 3", "Variable SHAP 4"];
     const colors = ["#00E396", "#FEB019", "#008FFB", "#FF4560"];
 
     const options: any = {
@@ -47,7 +47,7 @@ const PieChart = () => {
     };
 
     return (
-        <DashboardCard title="Performance" subtitle="">
+        <DashboardCard title="Reason Atrittion Shap" subtitle="">
             <Box height="300px">
                 <Suspense fallback={<div>Cargando gráfico...</div>}>
                     <Chart options={options} series={series} type="pie" height={300} />
@@ -57,4 +57,4 @@ const PieChart = () => {
     );
 };
 
-export default PieChart;
+export default PieChartCommonVariables;

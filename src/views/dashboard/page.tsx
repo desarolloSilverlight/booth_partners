@@ -2,7 +2,6 @@
 import { Grid2 as Grid, Box } from "@mui/material";
 import SalesOverview from "src/components/dashboard/TheSalesOverview";
 import OurVisitors from "src/components/dashboard/TheOurVisitors";
-import PieChart from "src/components/dashboard/pieChart";
 import RadarChart from "src/components/dashboard/radarChart";
 import BarChartRiskCustomer from "src/components/dashboard/barChartRiskCustomer";
 import { useNavigate } from "react-router";

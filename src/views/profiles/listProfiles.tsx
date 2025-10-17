@@ -13,7 +13,7 @@ import {
 import BaseCard from "src/components/BaseCard/BaseCard";
 
 
-const ListEmployes = () => {
+const ListProfile = () => {
     return (
         <BaseCard title="Profiles">
             <TableContainer>
@@ -23,4 +23,4 @@ const ListEmployes = () => {
     );
 };
 
-export default ListEmployes;
+export default ListProfile;

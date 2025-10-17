@@ -23,6 +23,7 @@ import InputSearch from "src/components/forms/inputSearch/search";
 import { useNavigate } from "react-router";
 import dayjs from "dayjs";
 import * as XLSX from "xlsx-js-style";
+import DOMPurify from "dompurify";
 
 interface Predictive_Analysis {
     id: number;
@@ -236,25 +237,33 @@ const PredictiveAnalytics = () => {
     }
 
     const parseTextAI = (text: string) => {
-        if (!text) return {};
+    if (!text) return {};
 
-        return {
+    return {
             brief: (text.match(/Attrition Risk Brief:([\s\S]*?)(?=\*\*Risk Level|Risk Level:)/i)?.[1] || "").trim(),
             riskLevel: (text.match(/Risk Level:([\s\S]*?)(?=\*\*Prioritized|Prioritized Risk Drivers:)/i)?.[1] || "").trim(),
             drivers: (text.match(/Prioritized Risk Drivers:([\s\S]*?)(?=\*\*Sentiment|Sentiment Analysis:)/i)?.[1] || "").trim(),
             sentiment: (text.match(/Sentiment Analysis:([\s\S]*?)(?=\*\*Overall|Overall Situation Assessment:)/i)?.[1] || "").trim(),
             assessment: (text.match(/Overall Situation Assessment:([\s\S]*?)(?=\*\*Recommended|Recommended Actions:)/i)?.[1] || "").trim(),
-            actions: (text.match(/Recommended Actions:([\s\S]*)/i)?.[1] || "").trim(),
+            actions: formatActions((text.match(/Recommended Actions:([\s\S]*)/i)?.[1] || "").trim()),
         };
+    };
+
+    const formatActions = (text: string) => {
+    if (!text) return "";
+    return text
+        .replace(/(Controllable by Us:)/gi, "<b>$1</b>")
+        .replace(/(Controllable by the Client:)/gi, "<b>$1</b>")
+        .trim();
     };
 
     const cleanAndSplitText = (text: string) => {
         if (!text) return [];
         return text
-            .split(/\n|\. /) // dividimos por salto de línea o punto+espacio
-            .map(item => item.replace(/\*\*|^-|\d+$/g, "").trim()) // quitamos **, -, números sueltos
-            .filter(item => item.length > 0) // eliminamos vacíos
-            .map(item => item.endsWith('.') ? item : item + '.'); // aseguramos punto final
+            .split(/\n|\. /)
+            .map(item => item.replace(/\*\*|^-|\d+$/g, "").trim())
+            .filter(item => item.length > 0)
+            .map(item => item.endsWith('.') ? item : item + '.');
     };
 
     const parsed = selectedEmployee?.text_ai ? parseTextAI(selectedEmployee.text_ai) : null;
@@ -586,7 +595,11 @@ const PredictiveAnalytics = () => {
                                         </Typography>
                                         <ul style={{ margin: 0, paddingLeft: "20px" }}>
                                             {actionsList.map((item, index) => (
-                                                <li key={index}>{item}</li>
+                                                <li
+                                                    key={index}
+                                                    // sanitiza y renderiza HTML (aquí tus <b> aparecerán en negrilla)
+                                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }}
+                                                />
                                             ))}
                                         </ul>
                                     </Box>
