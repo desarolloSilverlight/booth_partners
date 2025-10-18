@@ -237,9 +237,9 @@ const PredictiveAnalytics = () => {
     }
 
     const parseTextAI = (text: string) => {
-    if (!text) return {};
+        if (!text) return {};
 
-    return {
+        return {
             brief: (text.match(/Attrition Risk Brief:([\s\S]*?)(?=\*\*Risk Level|Risk Level:)/i)?.[1] || "").trim(),
             riskLevel: (text.match(/Risk Level:([\s\S]*?)(?=\*\*Prioritized|Prioritized Risk Drivers:)/i)?.[1] || "").trim(),
             drivers: (text.match(/Prioritized Risk Drivers:([\s\S]*?)(?=\*\*Sentiment|Sentiment Analysis:)/i)?.[1] || "").trim(),
@@ -250,11 +250,16 @@ const PredictiveAnalytics = () => {
     };
 
     const formatActions = (text: string) => {
-    if (!text) return "";
-    return text
-        .replace(/(Controllable by Us:)/gi, "<b>$1</b>")
-        .replace(/(Controllable by the Client:)/gi, "<b>$1</b>")
-        .trim();
+        if (!text) return "";
+        let out = String(text);
+        const labelPattern = /(?:\*\*|__|<b>|<strong>)?\s*(Controllable by\s+(?:the\s+Client|Client|Us))\s*:?\s*(?:\*\*|__|<\/b>|<\/strong>)?/gi;
+
+        out = out.replace(labelPattern, (_match, label) => {
+            const normalized = label.trim();
+            return `<b>${normalized}:</b> `;
+        });
+
+        return out.trim();
     };
 
     const cleanAndSplitText = (text: string) => {
