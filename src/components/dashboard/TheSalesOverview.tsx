@@ -225,7 +225,7 @@ const SalesOverview: React.FC = () => {
   const chartWidth = Math.max(categories.length * categoryWidth, 600);
 
   return (
-    <DashboardCard title="Historic Attrition Risk" subtitle="Comparativo Año Actual vs. Anterior">
+    <DashboardCard title="Historic Attrition Risk">
       <Box sx={{ height: 360, width: "100%", display: "flex", flexDirection: "column" }}>
         {!loading ? (
           <Box sx={{ overflowX: "auto", px: 1, py: 0.5 }}>

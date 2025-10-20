@@ -20,11 +20,9 @@ const CustomerProfile = () => {
   const [searchParams] = useSearchParams();
   const nameCustomer = searchParams.get("nameCustomer") ?? "";
   const navigate = useNavigate();
-
+  const [attritionData, setAttritionData] = useState<any[]>([]);  
   const [shapData, setShapData] = useState<{ variable: string; score: number }[]>([]);
-  const [alertQueue, setAlertQueue] = useState<
-    { msg: string; severity: "info" | "success" | "error" }[]
-  >([]);
+  const [alertQueue, setAlertQueue] = useState<{ msg: string; severity: "info" | "success" | "error" }[]>([]);
 
   const handleUnauthorized = () => {
     showAlert("Session expired. Please log in again.", "error");
@@ -83,6 +81,27 @@ const CustomerProfile = () => {
         console.error("Error fetching data:", error);
         showAlert("An error occurred while fetching data.", "error");
       });
+
+    fetch(`${config.rutaApi}show_attrition_category`, requestOptions)
+    .then((response) => {
+        if (response.status === 401) return handleUnauthorized();
+        return response.json();
+    })
+    .then((res) => {
+        // console.log("Result fetch show_attrition_category:", res);
+        if (Array.isArray(res)) {
+            setAttritionData(res);
+        } else if (res && Array.isArray(res.data)) {
+            setAttritionData(res.data);
+        } else {
+            showAlert("Unexpected data format for attrition category.", "error");
+        }
+    })
+    .catch((error) => {
+        console.error("Error fetching attrition category:", error);
+        showAlert("An error occurred while fetching attrition category.", "error");
+    });
+
   }, [nameCustomer, navigate]);
 
   return (
@@ -104,38 +123,77 @@ const CustomerProfile = () => {
             </Box>
           }
         >
-          <TableContainer>
-            <Table aria-label="main table" sx={{ whiteSpace: "nowrap" }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Variable</TableCell>
-                  <TableCell>Attrition Score</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {shapData.length > 0 ? (
-                  shapData.map((item, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{item.variable}</TableCell>
-                      <TableCell>{item.score.toFixed(6)}</TableCell>
+            <TableContainer>
+                <Table aria-label="main table" sx={{ whiteSpace: "nowrap" }}>
+                <TableHead>
+                    <TableRow>
+                    <TableCell>Variable</TableCell>
+                    <TableCell>Attrition Score</TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={2}>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        textAlign="center"
-                      >
-                        No data available
-                      </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                    {shapData.length > 0 ? (
+                    shapData.map((item, index) => (
+                        <TableRow key={index}>
+                        <TableCell>{item.variable}</TableCell>
+                        <TableCell>{item.score.toFixed(6)}</TableCell>
+                        </TableRow>
+                    ))
+                    ) : (
+                    <TableRow>
+                        <TableCell colSpan={2}>
+                        <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            textAlign="center"
+                        >
+                            No data available
+                        </Typography>
+                        </TableCell>
+                    </TableRow>
+                    )}
+                </TableBody>
+                </Table>
+            </TableContainer>
+
+            <TableContainer>
+                <Table aria-label="attrition category table" sx={{ whiteSpace: "nowrap" }}>
+                    <TableHead>
+                    <TableRow>
+                        <TableCell>Employee Name</TableCell>
+                        <TableCell>Attrition Type</TableCell>
+                        <TableCell>Attrition Category</TableCell>
+                        <TableCell>Attrition Reason</TableCell>
+                    </TableRow>
+                    </TableHead>
+                    <TableBody>
+                    {attritionData.length > 0 ? (
+                        attritionData.map((item, index) => (
+                        <TableRow key={index}>
+                            <TableCell>{item.full_name}</TableCell>
+                            <TableCell>{item.attrition_type}</TableCell>
+                            <TableCell>{item.attrition_category}</TableCell>
+                            <TableCell>{item.attrition_specific_reason}</TableCell>
+                        </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                        <TableCell colSpan={4}>
+                            <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            textAlign="center"
+                            >
+                            No data available
+                            </Typography>
+                        </TableCell>
+                        </TableRow>
+                    )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+
+
         </BaseCard>
         
       </Box>

@@ -35,7 +35,7 @@ const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataS
     fetch(`${config.rutaApi}show_top_shap`, requestOptions)
       .then((response) => response.json())
       .then((result) => {
-        console.log("Result PieChartCommonVariables:", result);
+        // console.log("Result PieChartCommonVariables:", result);
         if (result && Array.isArray(result.dataTopShap)) {
           const vars = result.dataTopShap.map((item: any) => item.shap_variable_name);
           const scores = result.dataTopShap.map((item: any) => item.avg_shap_score);
