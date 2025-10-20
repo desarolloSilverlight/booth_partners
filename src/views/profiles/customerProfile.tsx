@@ -83,24 +83,24 @@ const CustomerProfile = () => {
       });
 
     fetch(`${config.rutaApi}show_attrition_category`, requestOptions)
-    .then((response) => {
-        if (response.status === 401) return handleUnauthorized();
-        return response.json();
-    })
-    .then((res) => {
-        // console.log("Result fetch show_attrition_category:", res);
-        if (Array.isArray(res)) {
-            setAttritionData(res);
-        } else if (res && Array.isArray(res.data)) {
-            setAttritionData(res.data);
-        } else {
-            showAlert("Unexpected data format for attrition category.", "error");
-        }
-    })
-    .catch((error) => {
-        console.error("Error fetching attrition category:", error);
-        showAlert("An error occurred while fetching attrition category.", "error");
-    });
+        .then((response) => {
+            if (response.status === 401) return handleUnauthorized();
+            return response.json();
+        })
+        .then((res) => {
+            console.log("Result fetch show_attrition_category:", res);
+
+            if (res && Array.isArray(res.dataCategory)) {
+            setAttritionData(res.dataCategory);
+            } else {
+            showAlert("Unexpected data format from API.", "error");
+            setAttritionData([]);
+            }
+        })
+        .catch((error) => {
+            console.error("Error fetching attrition category:", error);
+            showAlert("An error occurred while fetching attrition category.", "error");
+        });
 
   }, [nameCustomer, navigate]);
 
@@ -154,10 +154,25 @@ const CustomerProfile = () => {
                     )}
                 </TableBody>
                 </Table>
-            </TableContainer>
-
+            </TableContainer>            
+        </BaseCard>
+        <BaseCard
+          title={
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography variant="h5">
+                {nameCustomer} - Attrition Reason
+              </Typography>
+            </Box>
+          }
+        >
             <TableContainer>
-                <Table aria-label="attrition category table" sx={{ whiteSpace: "nowrap" }}>
+                <Table aria-label="attrition table" sx={{ whiteSpace: "nowrap" }}>
                     <TableHead>
                     <TableRow>
                         <TableCell>Employee Name</TableCell>
@@ -192,8 +207,6 @@ const CustomerProfile = () => {
                     </TableBody>
                 </Table>
             </TableContainer>
-
-
         </BaseCard>
         
       </Box>
