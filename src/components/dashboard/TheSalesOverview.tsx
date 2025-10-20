@@ -69,6 +69,18 @@ const SalesOverview: React.FC = () => {
     return null;
   };
 
+  // Helper: si el año es el actual usamos hoy, sino usamos 31-dic del año (final del año)
+  const getEndOfPeriodForYear = (year: number) => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    if (year === currentYear) {
+      // usar la fecha de hoy (porque el año no ha terminado)
+      return today;
+    }
+    // último instante del 31 dic del año solicitado
+    return new Date(year, 11, 31, 23, 59, 59, 999);
+  };
+
   const processData = () => {
     const today = new Date();
     const currentYear = today.getFullYear();
@@ -86,57 +98,80 @@ const SalesOverview: React.FC = () => {
       return emp?.id ?? emp?.employee_id ?? emp?.document_number ?? `${emp?.email ?? ""}__${idx}`;
     };
 
+    // cuenta empleados activos en una fecha D (únicos por key)
+    const countActiveAtDate = (clientEmps: any[], D: Date) => {
+      const seen = new Set<string>();
+      let count = 0;
+      clientEmps.forEach((emp, idx) => {
+        const key = getEmployeeKey(emp, idx);
+        if (seen.has(key)) return;
+        const start = parseDateFromFields(emp, startFields);
+        const end = parseDateFromFields(emp, endFields);
+
+        const startedBeforeOrOn = !start || start.getTime() <= D.getTime();
+        const endedBeforeOrOn = end && end.getTime() <= D.getTime(); // si end <= D entonces ya no está activo en D
+
+        if (startedBeforeOrOn && !endedBeforeOrOn) {
+          count++;
+          seen.add(key);
+        }
+      });
+      return count;
+    };
+
+    // número de personas que terminaron (tienen endDate) dentro del año (únicos por key)
+    const countLeaversInYear = (clientEmps: any[], year: number) => {
+      const leaverKeys = new Set<string>();
+      clientEmps.forEach((emp, idx) => {
+        const key = getEmployeeKey(emp, idx);
+        const end = parseDateFromFields(emp, endFields);
+        if (!end) return;
+        if (end.getFullYear() === year) {
+          leaverKeys.add(key);
+        }
+      });
+      return leaverKeys.size;
+    };
+
     for (const customer of allCustomers) {
       const clientEmployees = employees.filter((e) => (e.customer || "Unknown Client") === customer);
 
-      const countActiveAt = (D: Date) => {
-        const seen = new Set<string>();
-        let count = 0;
+      // empleados al 1 de enero
+      const empJan1Prev = countActiveAtDate(clientEmployees, new Date(prevYear, 0, 1));
+      const empJan1Curr = countActiveAtDate(clientEmployees, new Date(currentYear, 0, 1));
 
-        clientEmployees.forEach((emp, idx) => {
-          const key = getEmployeeKey(emp, idx);
-          if (seen.has(key)) return;
-          const start = parseDateFromFields(emp, startFields);
-          const end = parseDateFromFields(emp, endFields);
+      // empleados al final del periodo (31-dic si año pasado, hoy si año actual)
+      const endPrev = getEndOfPeriodForYear(prevYear);
+      const endCurr = getEndOfPeriodForYear(currentYear);
 
-          const startedBeforeOrOn = !start || start.getTime() <= D.getTime();
-          const endedBeforeOrOn = end && end.getTime() <= D.getTime();
+      const empEndPrev = countActiveAtDate(clientEmployees, endPrev);
+      const empEndCurr = countActiveAtDate(clientEmployees, endCurr);
 
-          if (startedBeforeOrOn && !endedBeforeOrOn) {
-            count++;
-            seen.add(key);
-          }
-        });
+      const leaversPrev = countLeaversInYear(clientEmployees, prevYear);
+      const leaversCurr = countLeaversInYear(clientEmployees, currentYear);
 
-        return count;
+      // promedio simple de personal (1-ene y final del periodo)
+      const avgPrev = (empJan1Prev + empEndPrev) / 2;
+      const avgCurr = (empJan1Curr + empEndCurr) / 2;
+
+      const calcAttritionPercent = (leavers: number, avgWorkforce: number) => {
+        if (avgWorkforce > 0) {
+          const raw = (leavers / avgWorkforce) * 100;
+          // limitar a 100%
+          const capped = Math.min(raw, 100);
+          return parseFloat(capped.toFixed(1));
+        } else {
+          // si promedio es 0 pero hubo salidas -> 100% (todo se fue)
+          if (leavers > 0) return 100.0;
+          return 0.0;
+        }
       };
 
-      const countLeaversInYear = (year: number) => {
-        const leaverKeys = new Set<string>();
-        clientEmployees.forEach((emp, idx) => {
-          const key = getEmployeeKey(emp, idx);
-          const end = parseDateFromFields(emp, endFields);
-          if (!end) return;
-          if (end.getFullYear() === year) {
-            leaverKeys.add(key);
-          }
-        });
-        return leaverKeys.size;
-      };
+      const attrPrev = calcAttritionPercent(leaversPrev, avgPrev);
+      const attrCurr = calcAttritionPercent(leaversCurr, avgCurr);
 
-      const empJan1Prev = countActiveAt(new Date(prevYear, 0, 1));
-      const empJan1Curr = countActiveAt(new Date(currentYear, 0, 1));
-
-      const leaversPrev = countLeaversInYear(prevYear);
-      const leaversCurr = countLeaversInYear(currentYear);
-
-      // ✅ Nueva fórmula:
-      // attrition = (empleados que salieron durante el año / empleados al 1 enero) * 100
-      const attrPrev = empJan1Prev > 0 ? (leaversPrev / empJan1Prev) * 100 : 0;
-      const attrCurr = empJan1Curr > 0 ? (leaversCurr / empJan1Curr) * 100 : 0;
-
-      seriesPrev.push(parseFloat(attrPrev.toFixed(1)));
-      seriesCurr.push(parseFloat(attrCurr.toFixed(1)));
+      seriesPrev.push(attrPrev);
+      seriesCurr.push(attrCurr);
     }
 
     setCategories(allCustomers);
@@ -156,7 +191,7 @@ const SalesOverview: React.FC = () => {
         dataPointSelection: (event: any, chartContext: any, config: any) => {
           const clientName = categories[config.dataPointIndex];
           if (clientName) {
-            navigate(`/profiles/customerProfile?name=${encodeURIComponent(clientName)}`);
+            navigate(`/profiles/customerProfile?nameCustomer=${encodeURIComponent(clientName)}`);
           }
         },
       },

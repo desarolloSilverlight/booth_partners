@@ -1,141 +1,259 @@
 import {
-    Typography,
-    Box,
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableRow,
-    Chip,
-    TableContainer,
+  Typography,
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableContainer,
 } from "@mui/material";
 import { Grid2 as Grid } from "@mui/material";
 import PieCharReasonDeparture from "src/components/dashboard/pieCharReasonDeparture";
 import PieChartCommonVariables from "src/components/dashboard/pieChartCommonVariables";
 import BaseCard from "src/components/BaseCard/BaseCard";
-
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import config from "src/config/config";
 
 const CustomerProfile = () => {
-    return (
-        <>  
-            <Box mb={3}>
-                <BaseCard
-                    title={
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <Typography variant="h5">Customer Name</Typography>                           
-                        </Box>
-                    }
-                >
-                
-                </BaseCard>
-            </Box>
+  const [searchParams] = useSearchParams();
+  const nameCustomer = searchParams.get("nameCustomer") ?? "";
+  const navigate = useNavigate();
 
-            <Box mb={3}>
-                <BaseCard
-                    title={
-                        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <Typography variant="h5">Overview of the analysis prediction</Typography>
-                            {/*
-                            <Button
-                                variant="contained"
-                                color="success" // Cambia a verde
-                                size="small"
-                                onClick={handleDownloadExcel}
-                                sx={{ ml: 2, minWidth: 140 }} // Margen izquierdo y ancho mínimo opcional
-                            >
-                                Download Excel
-                            </Button>
-                            */}
-                        </Box>
-                    }
-                >
-                    <TableContainer>
-                        <Table aria-label="risk counts" sx={{ whiteSpace: "nowrap" }}>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell><Typography variant="subtitle1">Low Risks</Typography></TableCell>
-                                    <TableCell><Typography variant="subtitle1">Medium Risks</Typography></TableCell>
-                                    <TableCell><Typography variant="subtitle1">High Risks</Typography></TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                <TableRow>
-                                    <TableCell><Typography fontWeight={600} color="success.main">{0}</Typography></TableCell>
-                                    <TableCell><Typography fontWeight={600} color="warning.main">{0}</Typography></TableCell>
-                                    <TableCell><Typography fontWeight={600} color="error.main">{0}</Typography></TableCell>
-                                </TableRow>
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </BaseCard>
-            </Box>
+  const [shapData, setShapData] = useState<{ variable: string; score: number }[]>([]);
+  const [alertQueue, setAlertQueue] = useState<
+    { msg: string; severity: "info" | "success" | "error" }[]
+  >([]);
 
-            <Box mb={3}>
-                <BaseCard title={
-                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
-                        <Typography variant="h5">aqui va el search</Typography>
-                    </Box>
-                }>
-                    <TableContainer>
-                        <Table aria-label="main table" sx={{ whiteSpace: "nowrap" }}>
-                            <TableHead>
-                                <TableRow>
-                                    <TableCell>No.</TableCell>
-                                    <TableCell>Full Name</TableCell>
-                                    <TableCell>Customer</TableCell>
-                                    <TableCell>Perception</TableCell>
-                                    <TableCell>Analysis result</TableCell>
-                                    <TableCell>Predictive analysis</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {/*
-                                {filtereredData.map((dataAnalysis, index) => (
-                                    <TableRow key={dataAnalysis.id}>
-                                        <TableCell>{index + 1}</TableCell>
-                                        <TableCell>{dataAnalysis.fullName}</TableCell>
-                                        <TableCell>{dataAnalysis.customer}</TableCell>
-                                        <TableCell>{dataAnalysis.calification}</TableCell>
-                                        <TableCell>{dataAnalysis.clasification}</TableCell>
-                                        <TableCell>
-                                            <Button
-                                                size="small"
-                                                variant="outlined"
-                                                sx={{ mt: 1 }}
-                                                onClick={() => handleOpen(dataAnalysis)}
-                                            >
-                                                Show Risk
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                                */}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
-                </BaseCard>
-            </Box>
+  const handleUnauthorized = () => {
+    showAlert("Session expired. Please log in again.", "error");
+    sessionStorage.removeItem("token");
+    navigate("/auth/login");
+    throw new Error("Unauthorized");
+  };
 
-            <Box mb={3}>
-                <Grid container spacing={2}>                    
-                    <Grid
-                        size={{
-                            xs: 12,
-                            lg: 6
-                        }}>
-                        <PieCharReasonDeparture />
-                    </Grid>
-                    <Grid
-                        size={{
-                            xs: 12,
-                            lg: 6
-                        }}>
-                        <PieChartCommonVariables />
-                    </Grid>                      
-                </Grid>
-            </Box>        
-        </>
-    );
+  const showAlert = (msg: string, severity: "info" | "success" | "error") => {
+    setAlertQueue((prev) => [...prev, { msg, severity }]);
+  };
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+
+    if (!token) {
+      alert("Token defeated, enter again");
+      navigate("/auth/login");
+      return;
+    }
+
+    const myHeaders = new Headers();
+    myHeaders.append("authToken", token);
+    myHeaders.append("Content-Type", "application/json");
+
+    const sendBody = { nameCustomer: nameCustomer };
+
+    const requestOptions: RequestInit = {
+      method: "POST",
+      headers: myHeaders,
+      body: JSON.stringify(sendBody),
+      redirect: "follow",
+    };
+
+    fetch(`${config.rutaApi}show_top_shap`, requestOptions)
+      .then((response) => {
+        if (response.status === 401) return handleUnauthorized();
+        return response.json();
+      })
+      .then((result) => {
+        // console.log("Result fetch show_top_shap:", result);
+
+        // ✅ Verificamos que dataTopShap exista y sea un array
+        if (result && Array.isArray(result.dataTopShap)) {
+          const formattedData = result.dataTopShap.map((item: any) => ({
+            variable: item.shap_variable_name,
+            score: item.avg_shap_score,
+          }));
+
+          setShapData(formattedData);
+        } else {
+          showAlert("Unexpected data format from API.", "error");
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+        showAlert("An error occurred while fetching data.", "error");
+      });
+  }, [nameCustomer, navigate]);
+
+  return (
+    <>
+      {/* Tabla de SHAP */}
+      <Box mb={3}>
+        <BaseCard
+          title={
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography variant="h5">
+                {nameCustomer} - Attrition Risk By S.H.A.P
+              </Typography>
+            </Box>
+          }
+        >
+          <TableContainer>
+            <Table aria-label="main table" sx={{ whiteSpace: "nowrap" }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Variable</TableCell>
+                  <TableCell>Attrition Score</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {shapData.length > 0 ? (
+                  shapData.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{item.variable}</TableCell>
+                      <TableCell>{item.score.toFixed(6)}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={2}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        textAlign="center"
+                      >
+                        No data available
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </BaseCard>
+        
+      </Box>
+
+      {/*
+      <Box mb={3}>
+        <BaseCard
+          title={
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography variant="h5">
+                Overview of the analysis prediction
+              </Typography>
+            </Box>
+          }
+        >
+          <TableContainer>
+            <Table aria-label="risk counts" sx={{ whiteSpace: "nowrap" }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>
+                    <Typography variant="subtitle1">Low Risks</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="subtitle1">Medium Risks</Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography variant="subtitle1">High Risks</Typography>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                <TableRow>
+                  <TableCell>
+                    <Typography fontWeight={600} color="success.main">
+                      {0}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight={600} color="warning.main">
+                      {0}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography fontWeight={600} color="error.main">
+                      {0}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </BaseCard>
+      </Box>
+            
+      <Box mb={3}>
+        <BaseCard
+          title={
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 2,
+              }}
+            >
+              <Typography variant="h5">aquí va el search</Typography>
+            </Box>
+          }
+        >
+          <TableContainer>
+            <Table aria-label="main table" sx={{ whiteSpace: "nowrap" }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>No.</TableCell>
+                  <TableCell>Full Name</TableCell>
+                  <TableCell>Customer</TableCell>
+                  <TableCell>Perception</TableCell>
+                  <TableCell>Analysis result</TableCell>
+                  <TableCell>Predictive analysis</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody></TableBody>
+            </Table>
+          </TableContainer>
+        </BaseCard>
+      </Box>
+      */}
+
+      {/* Gráficos */}
+      <Box mb={3}>
+        <Grid container spacing={2}>
+          <Grid
+            size={{
+              xs: 12,
+              lg: 6,
+            }}
+          >
+            <PieCharReasonDeparture />
+          </Grid>
+          <Grid
+            size={{
+              xs: 12,
+              lg: 6,
+            }}
+          >
+            <PieChartCommonVariables dataShap={nameCustomer} />
+          </Grid>
+        </Grid>
+      </Box>
+    </>
+  );
 };
 
 export default CustomerProfile;

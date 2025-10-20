@@ -2,8 +2,14 @@ import React, { Suspense } from "react";
 import { useTheme } from "@mui/material/styles";
 import { Box } from "@mui/material";
 import DashboardCard from "../shared/DashboardCard";
+import config from "src/config/config";
+
 
 const Chart = React.lazy(() => import("react-apexcharts"));
+
+interface PieCharReasonDepartureProps {
+  dataShap: string;
+}
 
 const PieChartReasonDeparture = () => {
     const theme = useTheme();
@@ -47,7 +53,7 @@ const PieChartReasonDeparture = () => {
     };
 
     return (
-        <DashboardCard title="Reason Departure" subtitle="">
+        <DashboardCard title="Attrition Reason" subtitle="">
             <Box height="300px">
                 <Suspense fallback={<div>Cargando gráfico...</div>}>
                     <Chart options={options} series={series} type="pie" height={300} />
