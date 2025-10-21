@@ -25,6 +25,7 @@ import { useEffect, useState } from "react";
 import InputSearch from "src/components/forms/inputSearch/search";
 import config from "src/config/config";
 import * as XLSX from "xlsx-js-style";
+import DOMPurify from "dompurify";
 
 interface showRisks {
     id: number;
@@ -227,8 +228,21 @@ const ShowRisks = () => {
             drivers: (text.match(/Prioritized Risk Drivers:([\s\S]*?)(?=\*\*Sentiment|Sentiment Analysis:)/i)?.[1] || "").trim(),
             sentiment: (text.match(/Sentiment Analysis:([\s\S]*?)(?=\*\*Overall|Overall Situation Assessment:)/i)?.[1] || "").trim(),
             assessment: (text.match(/Overall Situation Assessment:([\s\S]*?)(?=\*\*Recommended|Recommended Actions:)/i)?.[1] || "").trim(),
-            actions: (text.match(/Recommended Actions:([\s\S]*)/i)?.[1] || "").trim(),
+            actions: formatActions((text.match(/Recommended Actions:([\s\S]*)/i)?.[1] || "").trim()),
         };
+    };
+
+    const formatActions = (text: string) => {
+        if (!text) return "";
+        let out = String(text);
+        const labelPattern = /(?:\*\*|__|<b>|<strong>)?\s*(Controllable by\s+(?:the\s+Client|Client|Us))\s*:?\s*(?:\*\*|__|<\/b>|<\/strong>)?/gi;
+
+        out = out.replace(labelPattern, (_match, label) => {
+            const normalized = label.trim();
+            return `<b>${normalized}:</b> `;
+        });
+
+        return out.trim();
     };
 
     const cleanAndSplitText = (text: string) => {
@@ -322,6 +336,7 @@ const ShowRisks = () => {
             </BaseCard>
 
             {/* Modal con parsing de texto */}
+            {/* Modal global */}
             <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
                 {selectedEmployee && (
                     <>
@@ -330,30 +345,31 @@ const ShowRisks = () => {
                             <Chip
                                 label={selectedEmployee.clasification}
                                 color={
-                                    selectedEmployee.clasification.toLowerCase().includes("high")
-                                        ? "error"
-                                        : selectedEmployee.clasification.toLowerCase().includes("medium")
-                                            ? "warning"
+                                    selectedEmployee.clasification.toLowerCase().includes("high") ? "error"
+                                        : selectedEmployee.clasification.toLowerCase().includes("medium") ? "warning"
                                             : "success"
                                 }
                                 sx={{ ml: 2 }}
                             />
                         </DialogTitle>
                         <DialogContent dividers>
-                            {/* Sección principal: Cliente + Sentiment + Risk Drivers */}
-                            <Box sx={{ display: "flex", gap: 2, mb: 2, flexWrap: "wrap" }}>
-                                {/* Cliente */}
+                            {/* Título */}
+                            <Typography variant="h6" fontWeight="bold" gutterBottom>Prioritized Risk Drivers</Typography>
+
+                            {/* Contenedor en fila */}
+                            <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+                                {/* Recuadro 1: Nombre */}
                                 <Box
                                     sx={{
                                         display: "flex",
-                                        flexDirection: "column",
+                                        flexDirection: "column", // Cambia a columna
                                         alignItems: "center",
                                         justifyContent: "center",
                                         p: 2,
                                         bgcolor: "grey.100",
                                         borderRadius: 2,
                                         flex: 1,
-                                        minWidth: 120
+                                        minWidth: 100
                                     }}
                                 >
                                     <Typography sx={{ fontSize: "2rem", mb: 1 }}>🏢</Typography>
@@ -362,7 +378,7 @@ const ShowRisks = () => {
                                     </Typography>
                                 </Box>
 
-                                {/* Sentiment */}
+                                {/* Recuadro 2: Carita + Sentiment */}
                                 <Box
                                     sx={{
                                         display: "flex",
@@ -374,30 +390,47 @@ const ShowRisks = () => {
                                         flex: 2
                                     }}
                                 >
-                                    <Typography sx={{ fontSize: "2rem", flexShrink: 0 }}>
-                                        {selectedEmployee.calification === "Positive"
-                                            ? "😀"
-                                            : selectedEmployee.calification === "Negative"
-                                                ? "😞"
-                                                : selectedEmployee.calification === "Neutral"
-                                                    ? "😐"
-                                                    : "🤨"}
+                                    {/* Carita */}
+                                    <Typography
+                                        sx={{
+                                            fontSize: "2rem",
+                                            flexShrink: 0,
+                                            display: "flex",
+                                            alignItems: "center"
+                                        }}
+                                    >
+                                        {selectedEmployee.calification === "Positive" ? "😀" :
+                                            selectedEmployee.calification === "Negative" ? "😞" :
+                                                selectedEmployee.calification === "Neutral" ? "😐" :
+                                                    "🤨"}
                                     </Typography>
+
+                                    {/* Texto: Calificación + Sentiment Analysis */}
                                     <Box sx={{ flex: 1 }}>
                                         <Typography variant="body1" fontWeight="bold" gutterBottom>
-                                            {selectedEmployee.calification || "No comments to analyze"}
+                                            {selectedEmployee.calification === "Positive" ? "Positive" :
+                                                selectedEmployee.calification === "Negative" ? "Negative" :
+                                                    selectedEmployee.calification === "Neutral" ? "Neutral" :
+                                                        "No comments to analyze"}
                                         </Typography>
-                                        {sentimentList.length > 0 &&
-                                            sentimentList.map((item, i) => (
-                                                <Typography key={i} variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
-                                                    {item}
-                                                </Typography>
-                                            ))}
+                                        {sentimentList.length > 0 && (
+                                            <Box>
+                                                {sentimentList.map((item, index) => (
+                                                    <Typography
+                                                        key={index}
+                                                        variant="body2"
+                                                        sx={{ color: "text.secondary", mb: 0.5 }}
+                                                    >
+                                                        {item}
+                                                    </Typography>
+                                                ))}
+                                            </Box>
+                                        )}
                                     </Box>
                                 </Box>
 
-                                {/* Risk Drivers */}
-                                {driversList.length > 0 && (
+                                {/* Recuadro 3: Prioritized Risk Drivers */}
+                                {parsed && driversList.length > 0 && (
                                     <Box
                                         sx={{
                                             display: "flex",
@@ -410,19 +443,32 @@ const ShowRisks = () => {
                                             minWidth: 280
                                         }}
                                     >
-                                        <Typography sx={{ fontSize: "2rem", flexShrink: 0 }}>
-                                            {selectedEmployee.clasification.toLowerCase().includes("high")
-                                                ? "❌"
-                                                : selectedEmployee.clasification.toLowerCase().includes("medium")
-                                                    ? "⚠️"
-                                                    : "✅"}
+                                        {/* Emoji de riesgo */}
+                                        <Typography
+                                            sx={{
+                                                fontSize: "2rem",
+                                                flexShrink: 0,
+                                                display: "flex",
+                                                alignItems: "center"
+                                            }}
+                                        >
+                                            {selectedEmployee.clasification.toLowerCase().includes("high") ? "❌" :
+                                                selectedEmployee.clasification.toLowerCase().includes("medium") ? "⚠️" :
+                                                    selectedEmployee.clasification.toLowerCase().includes("low") ? "✅" :
+                                                        "⚪"}
                                         </Typography>
+
+                                        {/* Texto y lista de drivers */}
                                         <Box sx={{ flex: 1 }}>
                                             <Typography variant="body1" fontWeight="bold" gutterBottom>
                                                 Prioritized Risk Drivers
                                             </Typography>
-                                            {driversList.map((item, i) => (
-                                                <Typography key={i} variant="body2" sx={{ color: "text.secondary", mb: 1 }}>
+                                            {driversList.map((item, index) => (
+                                                <Typography
+                                                    key={index}
+                                                    variant="body2"
+                                                    sx={{ color: "text.secondary", mb: 1 }}
+                                                >
                                                     • {item}
                                                 </Typography>
                                             ))}
@@ -432,16 +478,37 @@ const ShowRisks = () => {
                             </Box>
 
                             {/* Overall Situation Assessment */}
-                            {assessmentList.length > 0 && (
-                                <Box sx={{ display: "flex", gap: 2, p: 2, bgcolor: "grey.100", borderRadius: 2, mb: 2 }}>
-                                    <Typography sx={{ fontSize: "2rem", flexShrink: 0 }}>📝</Typography>
+                            {parsed && assessmentList.length > 0 && (
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        alignItems: "flex-start",
+                                        gap: 2,
+                                        p: 2,
+                                        bgcolor: "grey.100",
+                                        borderRadius: 2,
+                                        mb: 2
+                                    }}
+                                >
+                                    {/* Emoji de assessment */}
+                                    <Typography
+                                        sx={{
+                                            fontSize: "2rem",
+                                            flexShrink: 0,
+                                            display: "flex",
+                                            alignItems: "center"
+                                        }}
+                                    >
+                                        📝
+                                    </Typography>
+                                    {/* Texto y lista de assessment */}
                                     <Box sx={{ flex: 1 }}>
                                         <Typography variant="h6" gutterBottom>
                                             Overall Situation Assessment
                                         </Typography>
                                         <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                                            {assessmentList.map((item, i) => (
-                                                <li key={i}>{item}</li>
+                                            {assessmentList.map((item, index) => (
+                                                <li key={index}>{item}</li>
                                             ))}
                                         </ul>
                                     </Box>
@@ -449,16 +516,41 @@ const ShowRisks = () => {
                             )}
 
                             {/* Recommended Actions */}
-                            {actionsList.length > 0 && (
-                                <Box sx={{ display: "flex", gap: 2, p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
-                                    <Typography sx={{ fontSize: "2rem", flexShrink: 0 }}>📊</Typography>
+                            {parsed && actionsList.length > 0 && (
+                                <Box
+                                    sx={{
+                                        display: "flex",
+                                        alignItems: "flex-start",
+                                        gap: 2,
+                                        p: 2,
+                                        bgcolor: "grey.100",
+                                        borderRadius: 2,
+                                        mb: 2
+                                    }}
+                                >
+                                    {/* Emoji de acción */}
+                                    <Typography
+                                        sx={{
+                                            fontSize: "2rem",
+                                            flexShrink: 0,
+                                            display: "flex",
+                                            alignItems: "center"
+                                        }}
+                                    >
+                                        📊
+                                    </Typography>
+                                    {/* Texto y lista de acciones */}
                                     <Box sx={{ flex: 1 }}>
                                         <Typography variant="h6" gutterBottom>
                                             Recommended Actions
                                         </Typography>
                                         <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                                            {actionsList.map((item, i) => (
-                                                <li key={i}>{item}</li>
+                                            {actionsList.map((item, index) => (
+                                                <li
+                                                    key={index}
+                                                    // sanitiza y renderiza HTML (aquí tus <b> aparecerán en negrilla)
+                                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }}
+                                                />
                                             ))}
                                         </ul>
                                     </Box>

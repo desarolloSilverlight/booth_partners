@@ -192,8 +192,6 @@ const PredictiveAnalytics = () => {
         throw new Error("Unauthorized");
     };
 
-
-
     useEffect(() => {
         if (searchTerm === "") {
             setFilteredData(predictive_analitics);

@@ -119,16 +119,14 @@ const SalesOverview: React.FC = () => {
       return count;
     };
 
-    // número de personas que terminaron (tienen endDate) dentro del año (únicos por key)
+    // número de personas que terminaron dentro del año
     const countLeaversInYear = (clientEmps: any[], year: number) => {
       const leaverKeys = new Set<string>();
       clientEmps.forEach((emp, idx) => {
         const key = getEmployeeKey(emp, idx);
         const end = parseDateFromFields(emp, endFields);
         if (!end) return;
-        if (end.getFullYear() === year) {
-          leaverKeys.add(key);
-        }
+        if (end.getFullYear() === year) leaverKeys.add(key);
       });
       return leaverKeys.size;
     };
@@ -136,32 +134,34 @@ const SalesOverview: React.FC = () => {
     for (const customer of allCustomers) {
       const clientEmployees = employees.filter((e) => (e.customer || "Unknown Client") === customer);
 
-      // empleados al 1 de enero
-      const empJan1Prev = countActiveAtDate(clientEmployees, new Date(prevYear, 0, 1));
-      const empJan1Curr = countActiveAtDate(clientEmployees, new Date(currentYear, 0, 1));
+      // Año anterior: 1 enero → 31 diciembre
+      const startPrev = new Date(prevYear, 0, 1);
+      const endPrev = new Date(prevYear, 11, 31, 23, 59, 59, 999);
 
-      // empleados al final del periodo (31-dic si año pasado, hoy si año actual)
-      const endPrev = getEndOfPeriodForYear(prevYear);
-      const endCurr = getEndOfPeriodForYear(currentYear);
+      // Año actual: 1 enero → hoy
+      const startCurr = new Date(currentYear, 0, 1);
+      const endCurr = today; // hasta hoy
 
+      // empleados al inicio y final
+      const empJan1Prev = countActiveAtDate(clientEmployees, startPrev);
       const empEndPrev = countActiveAtDate(clientEmployees, endPrev);
+
+      const empJan1Curr = countActiveAtDate(clientEmployees, startCurr);
       const empEndCurr = countActiveAtDate(clientEmployees, endCurr);
 
       const leaversPrev = countLeaversInYear(clientEmployees, prevYear);
       const leaversCurr = countLeaversInYear(clientEmployees, currentYear);
 
-      // promedio simple de personal (1-ene y final del periodo)
+      // promedio simple
       const avgPrev = (empJan1Prev + empEndPrev) / 2;
       const avgCurr = (empJan1Curr + empEndCurr) / 2;
 
       const calcAttritionPercent = (leavers: number, avgWorkforce: number) => {
         if (avgWorkforce > 0) {
           const raw = (leavers / avgWorkforce) * 100;
-          // limitar a 100%
           const capped = Math.min(raw, 100);
           return parseFloat(capped.toFixed(1));
         } else {
-          // si promedio es 0 pero hubo salidas -> 100% (todo se fue)
           if (leavers > 0) return 100.0;
           return 0.0;
         }
@@ -170,8 +170,9 @@ const SalesOverview: React.FC = () => {
       const attrPrev = calcAttritionPercent(leaversPrev, avgPrev);
       const attrCurr = calcAttritionPercent(leaversCurr, avgCurr);
 
-      seriesPrev.push(attrPrev);
-      seriesCurr.push(attrCurr);
+      // 🔹 segundo ajuste → fuerza una barra visible aunque sea 0%
+      seriesPrev.push(attrPrev > 0 ? attrPrev : 0.1);
+      seriesCurr.push(attrCurr > 0 ? attrCurr : 0.1);
     }
 
     setCategories(allCustomers);
