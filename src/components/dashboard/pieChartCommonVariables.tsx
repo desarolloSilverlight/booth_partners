@@ -7,7 +7,7 @@ import config from "src/config/config";
 const Chart = React.lazy(() => import("react-apexcharts"));
 
 interface PieChartCommonVariablesProps {
-  dataShap: string; 
+  dataShap: string;
 }
 
 const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataShap }) => {
@@ -85,7 +85,7 @@ const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataS
   };
 
   return (
-    <DashboardCard title="Attrition Risk by S.H.A.P" subtitle="">
+    <DashboardCard title="Major Risk Drivers" subtitle="">
       <Box height="300px">
         <Suspense fallback={<div>Cargando gráfico...</div>}>
           <Chart
