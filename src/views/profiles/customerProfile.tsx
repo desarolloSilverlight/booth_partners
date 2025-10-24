@@ -241,6 +241,9 @@ const CustomerProfile = () => {
     high: filtereredData.filter(item => item.clasification.toLowerCase().includes("high")).length,
   }
 
+  // Total de empleados activos considerados en el conteo de riesgo
+  const totalEmpleados = riskCounts.low + riskCounts.medium + riskCounts.high;
+
   const parseTextAI = (text: string) => {
     if (!text) return {};
 
@@ -285,37 +288,160 @@ const CustomerProfile = () => {
 
   const handleDownloadPdf = async () => {
     try {
-      const element = document.getElementById('report-root');
-      if (!element) return;
+      // Definición de páginas: cada sub-arreglo son elementos a ubicar en la misma página
+      const pageDefs: string[][] = [
+        ['pdf-shap'],
+        ['pdf-attrition-charts'],
+        ['pdf-attrition-table'],
+        ['pdf-risk-count'],
+        ['pdf-predictive-table'],
+      ];
 
-      // Increase scale for better quality
-      const canvas = await html2canvas(element as HTMLElement, { scale: 2, useCORS: true, scrollY: -window.scrollY });
-      const imgData = canvas.toDataURL('image/png');
+      // Crear PDF en horizontal A4
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
 
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
+      let isFirstPage = true;
 
-      const imgProps = { width: canvas.width, height: canvas.height };
-      const imgWidth = pdfWidth;
-      const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+      const margin = 10;
+      const gap = 6;
 
-      let heightLeft = imgHeight;
-      let position = 0;
+      const needsHeaderColor = (id: string) => (
+        id === 'pdf-attrition-table' || id === 'pdf-risk-count' || id === 'pdf-predictive-table'
+      );
+      const applyTableHeadStyles = (root: HTMLElement, bg: string, color: string) => {
+        const cells = root.querySelectorAll('thead th, thead td');
+        cells.forEach((c: any) => {
+          const cell = c as HTMLElement & { dataset: any };
+          cell.dataset.prevBg = cell.style.backgroundColor || '';
+          cell.dataset.prevColor = cell.style.color || '';
+          cell.style.backgroundColor = bg;
+          cell.style.color = color;
+        });
+      };
+      const revertTableHeadStyles = (root: HTMLElement) => {
+        const cells = root.querySelectorAll('thead th, thead td');
+        cells.forEach((c: any) => {
+          const cell = c as HTMLElement & { dataset: any };
+          if (cell.dataset.prevBg !== undefined) cell.style.backgroundColor = cell.dataset.prevBg;
+          if (cell.dataset.prevColor !== undefined) cell.style.color = cell.dataset.prevColor;
+          delete cell.dataset.prevBg;
+          delete cell.dataset.prevColor;
+        });
+      };
 
-      // Add first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
+      
+      const applyHideColumn = (root: HTMLElement, colIndex: number) => {
+        const selector = `thead tr > *:nth-child(${colIndex}), tbody tr > *:nth-child(${colIndex})`;
+        const cells = root.querySelectorAll(selector);
+        cells.forEach((c: any) => {
+          const cell = c as HTMLElement & { dataset: any };
+          cell.dataset.prevDisplay = cell.style.display || '';
+          cell.style.display = 'none';
+        });
+      };
+      const revertHideColumn = (root: HTMLElement, colIndex: number) => {
+        const selector = `thead tr > *:nth-child(${colIndex}), tbody tr > *:nth-child(${colIndex})`;
+        const cells = root.querySelectorAll(selector);
+        cells.forEach((c: any) => {
+          const cell = c as HTMLElement & { dataset: any };
+          if (cell.dataset.prevDisplay !== undefined) cell.style.display = cell.dataset.prevDisplay;
+          delete cell.dataset.prevDisplay;
+        });
+      };
 
-      // Add extra pages if the content spans multiple pages
-      while (heightLeft > -1) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
+      // Helper: mostrar bloques solo-PDF (marcados dentro del contenedor) durante captura
+      const showPdfOnlyBlocks = (root: HTMLElement) => {
+        const blocks = root.querySelectorAll('[data-pdf-only="true"]') as NodeListOf<HTMLElement>;
+        blocks.forEach((b) => {
+          (b as any).dataset.prevDisplay = b.style.display || '';
+          b.style.display = 'block';
+        });
+      };
+      const hidePdfOnlyBlocks = (root: HTMLElement) => {
+        const blocks = root.querySelectorAll('[data-pdf-only="true"]') as NodeListOf<HTMLElement>;
+        blocks.forEach((b) => {
+          const el = b as HTMLElement & { dataset: any };
+          if (el.dataset.prevDisplay !== undefined) el.style.display = el.dataset.prevDisplay;
+          delete el.dataset.prevDisplay;
+        });
+      };
+
+      for (const group of pageDefs) {
+        const elements = await Promise.all(
+          group.map(async (id) => {
+            const el = document.getElementById(id);
+            if (!el) return null;
+
+            if (needsHeaderColor(id)) {
+              applyTableHeadStyles(el, '#0D4B3B', '#ffffff');
+            }
+            let hidCol = false;
+            if (id === 'pdf-predictive-table') {
+              applyHideColumn(el, 6);
+              hidCol = true;
+            }
+            // Mostrar bloques solo-PDF dentro del contenedor (ej. total empleados en Risk Count)
+            showPdfOnlyBlocks(el);
+            const canvas = await html2canvas(el as HTMLElement, {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: '#ffffff',
+              scrollY: -window.scrollY,
+              ignoreElements: (node) => (node as HTMLElement)?.classList?.contains('no-print') || false,
+            });
+            if (needsHeaderColor(id)) {
+              revertTableHeadStyles(el);
+            }
+            if (hidCol) {
+              revertHideColumn(el, 6);
+            }
+            hidePdfOnlyBlocks(el);
+            return { id, canvas, img: canvas.toDataURL('image/png') };
+          })
+        );
+
+        const valid = elements.filter((e): e is { id: string; canvas: HTMLCanvasElement; img: string } => !!e);
+        if (valid.length === 0) continue;
+
+        if (!isFirstPage) {
+          pdf.addPage();
+        } else {
+          isFirstPage = false;
+        }
+
+        if (valid.length === 1) {
+          const { canvas, img } = valid[0];
+          const maxW = pageWidth - margin * 2;
+          const maxH = pageHeight - margin * 2;
+          const ratio = Math.min(maxW / canvas.width, maxH / canvas.height);
+          const w = canvas.width * ratio;
+          const h = canvas.height * ratio;
+          const x = (pageWidth - w) / 2;
+          const y = (pageHeight - h) / 2;
+          pdf.addImage(img, 'PNG', x, y, w, h);
+        } else {
+          // Distribuir verticalmente 2 bloques en la misma página con márgenes y gap
+          const maxW = pageWidth - margin * 2;
+          const scaledHeights = valid.map(({ canvas }) => canvas.height * (maxW / canvas.width));
+          const totalH = scaledHeights.reduce((a, b) => a + b, 0);
+          const availableH = pageHeight - margin * 2 - gap * (valid.length - 1);
+          const scaleFactor = totalH > availableH ? availableH / totalH : 1;
+
+          let yCursor = margin;
+          for (let i = 0; i < valid.length; i++) {
+            const { img, canvas } = valid[i];
+            const w = maxW * scaleFactor;
+            const h = scaledHeights[i] * scaleFactor;
+            const x = margin + (maxW - w) / 2;
+            pdf.addImage(img, 'PNG', x, yCursor, w, h);
+            yCursor += h + (i < valid.length - 1 ? gap : 0);
+          }
+        }
       }
 
-      // Build filename
+     
       const dayjs = (await import('dayjs')).default;
       const safeName = (nameCustomer || 'Customer').replace(/[^a-z0-9-_]/gi, '_');
       const filename = `Report_PDF_${safeName}_${dayjs().format('YYYYMMDD')}.pdf`;
@@ -343,22 +469,9 @@ const CustomerProfile = () => {
                 px: 2,
               }}
             >
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: "bold",
-                  color: "text.primary",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  flexGrow: 1,
-                }}
-              >
-                {nameCustomer}
-              </Typography>
-
               <Box sx={{ flexShrink: 0 }}>
                 <Button
+                  className="no-print"
                   variant="contained"
                   size="small"
                   onClick={handleDownloadPdf}
@@ -378,32 +491,63 @@ const CustomerProfile = () => {
           }
         >
 
+          {/* Página 1: Gráfica SHAP + Tabla */}
           <Box
+            id="pdf-shap"
             sx={{
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              alignItems: "stretch",
-              justifyContent: "space-between",
-              gap: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'stretch',
+              gap: 2,
             }}
           >
+            {/* Banner de título de la página 1 */}
+            <Box sx={{
+              position: 'relative',
+              width: '100%',
+              gridColumn: '1 / -1',
+              mb: 2,
+            }}>
+              <Box sx={{
+                backgroundColor: '#0D4B3B',
+                color: '#ffffff',
+                borderRadius: 1,
+                px: 2,
+                py: 1.5,
+                textAlign: 'left',
+              }}>
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                  Report Profile {nameCustomer}
+                </Typography>
+              </Box>
+            </Box>
 
+            {/* Fila: gráfica y tabla */}
             <Box
               sx={{
-                flex: 1,
-                minWidth: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 400,
-                "& > *": {
-                  width: "100% !important",
-                  height: "100% !important",
-                },
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                alignItems: 'stretch',
+                justifyContent: 'space-between',
+                gap: 3,
               }}
             >
-              <PieChartCommonVariables dataShap={nameCustomer} />
-            </Box>
+              <Box
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minHeight: 400,
+                  "& > *": {
+                    width: "100% !important",
+                    height: "100% !important",
+                  },
+                }}
+              >
+                <PieChartCommonVariables dataShap={nameCustomer} />
+              </Box>
 
             {/* Derecha: tabla */}
             <Box
@@ -413,7 +557,7 @@ const CustomerProfile = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                minHeight: 400, // ✅ Igual altura que la gráfica
+                minHeight: 400, 
               }}
             >
               <TableContainer
@@ -421,11 +565,11 @@ const CustomerProfile = () => {
                   boxShadow: "none",
                   border: "1px solid #eee",
                   borderRadius: 2,
-                  width: "100%", // ✅ Que use todo el espacio del Box
-                  height: "100%", // ✅ Que llene la altura del Box
+                  width: "100%", 
+                  height: "100%", 
                   display: "flex",
                   flexDirection: "column",
-                  justifyContent: "center", // ✅ Centra verticalmente el contenido
+                  justifyContent: "center", 
                 }}
               >
                 <Table
@@ -433,13 +577,13 @@ const CustomerProfile = () => {
                   sx={{
                     whiteSpace: "nowrap",
                     "& th, & td": {
-                      textAlign: "center", // ✅ Centra todas las celdas
+                      textAlign: "center", 
                       verticalAlign: "middle",
                     },
                     "& th": {
-                      fontWeight: "bold", // ✅ Negrita en encabezados
+                      fontWeight: "bold", 
                       fontSize: "0.95rem",
-                      backgroundColor: "#f9f9f9", // 🎨 Opcional: sutil fondo al header
+                      backgroundColor: "#f9f9f9", 
                     },
                   }}
                 >
@@ -475,6 +619,8 @@ const CustomerProfile = () => {
               </TableContainer>
             </Box>
           </Box>
+          {/* cierre contenedor pdf-shap */}
+        </Box>
         </BaseCard>
       </Box>
 
@@ -494,44 +640,55 @@ const CustomerProfile = () => {
             </Box>
           }
         >
-          {/* Contenedor principal */}
+          {/* Contenedor principal: 3 gráficas arriba y tabla debajo */}
           <Box
             sx={{
-              display: "flex",
-              flexDirection: { xs: "column", md: "row" },
-              alignItems: "stretch",
-              justifyContent: "space-between",
+              display: 'flex',
+              flexDirection: 'column',
               gap: 3,
             }}
           >
-            {/* Izquierda: gráfica */}
+            {/* Gráficas de Attrition */}
             <Box
+              id="pdf-attrition-charts"
               sx={{
-                flex: 1,
-                minWidth: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 400,
-                "& > *": {
-                  width: "100% !important",
-                  height: "100% !important",
-                },
+                width: '100%',
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' },
+                gap: 2,
+                alignItems: 'stretch',
+                justifyItems: 'stretch',
               }}
             >
-              <PieCharReasonDeparture dataAttrition={nameCustomer} />
+              <PieCharReasonDeparture
+                dataAttrition={nameCustomer}
+                fieldToAnalyzeProp="attrition_specific_reason"
+                showSelector={false}
+                height={420}
+                title="Attrition Reason"
+              />
+              <PieCharReasonDeparture
+                dataAttrition={nameCustomer}
+                fieldToAnalyzeProp="attrition_type"
+                showSelector={false}
+                height={300}
+                title="Attrition Type"
+              />
+              <PieCharReasonDeparture
+                dataAttrition={nameCustomer}
+                fieldToAnalyzeProp="attrition_category"
+                showSelector={false}
+                height={300}
+                title="Attrition Category"
+              />
             </Box>
 
-            {/* Derecha: tabla con paginación */}
+            {/* Tabla debajo */}
             <Box
               sx={{
-                flex: 1,
-                minWidth: 0,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 400,
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <TableContainer
@@ -540,7 +697,6 @@ const CustomerProfile = () => {
                   border: "1px solid #eee",
                   borderRadius: 2,
                   width: "100%",
-                  height: "100%",
                   display: "flex",
                   flexDirection: "column",
                   justifyContent: "space-between",
@@ -627,105 +783,185 @@ const CustomerProfile = () => {
                 )}
               </TableContainer>
             </Box>
-          </Box>
-        </BaseCard>
-      </Box>
-
-      <Box mb={3}>
-        <BaseCard
-          title={
+            {/* Tabla completa (todas las filas) SOLO para PDF, fuera de pantalla */}
             <Box
               sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
+                position: 'fixed',
+                left: '-10000px',
+                top: 0,
+                width: '1000px',
+                bgcolor: '#fff',
+                p: 1,
+                zIndex: -1,
               }}
             >
-              <Typography variant="h5">
-              </Typography>
+              <TableContainer sx={{ boxShadow: 'none', border: '1px solid #eee', borderRadius: 2 }}>
+                <Table id="pdf-attrition-table" aria-label="attrition table full" sx={{ whiteSpace: 'nowrap', minWidth: 600 }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>EMPLOYEE NAME</TableCell>
+                      <TableCell>ATTRITION TYPE</TableCell>
+                      <TableCell>ATTRITION CATEGORY</TableCell>
+                      <TableCell>ATTRITION REASON</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {attritionData.length > 0 ? (
+                      attritionData.map((item, index) => (
+                        <TableRow key={`full-${index}`}>
+                          <TableCell>{item.full_name}</TableCell>
+                          <TableCell>{item.attrition_type}</TableCell>
+                          <TableCell>{item.attrition_category}</TableCell>
+                          <TableCell>{item.attrition_specific_reason}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={4}>
+                          <Typography variant="body2" color="text.secondary" textAlign="center">
+                            No data available
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             </Box>
-          }
-        >
-          <TableContainer>
-            <Table aria-label="risk counts" sx={{ whiteSpace: "nowrap" }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell><Typography variant="subtitle1">Low Risks</Typography></TableCell>
-                  <TableCell><Typography variant="subtitle1">Medium Risks</Typography></TableCell>
-                  <TableCell><Typography variant="subtitle1">High Risks</Typography></TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                <TableRow>
-                  <TableCell><Typography fontWeight={600} color="success.main">{riskCounts.low}</Typography></TableCell>
-                  <TableCell><Typography fontWeight={600} color="warning.main">{riskCounts.medium}</Typography></TableCell>
-                  <TableCell><Typography fontWeight={600} color="error.main">{riskCounts.high}</Typography></TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
+          </Box>
         </BaseCard>
       </Box>
 
-      <Box mb={3}>
-        <BaseCard title={
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
-            <Box>
-              <Typography variant="h5">Predictive Attrition Analysis</Typography>
-            </Box>
-            <InputSearch
-              searchTerm={searchTerm}
-              onSearchChange={handleSearchChange}
-              onClearSearch={handleClearSearch}
-              placeholder="Analyzing ...."
-              width={{ xs: '100%', sm: 300, md: 400 }}
-            />
-
-          </Box>
-        }>
-          <TableContainer>
-            <Table aria-label="main table" sx={{ whiteSpace: "nowrap" }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>No.</TableCell>
-                  <TableCell>Full Name</TableCell>
-                  <TableCell>Customer</TableCell>
-                  <TableCell>Perception</TableCell>
-                  <TableCell>Analysis result</TableCell>
-                  <TableCell>Predictive analysis</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filtereredData.map((dataAnalysis, index) => (
-                  <TableRow key={dataAnalysis.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{dataAnalysis.fullName}</TableCell>
-                    <TableCell>{dataAnalysis.customer}</TableCell>
-                    <TableCell>{dataAnalysis.calification}</TableCell>
-                    <TableCell>{dataAnalysis.clasification}</TableCell>
-                    <TableCell>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        sx={{ mt: 1 }}
-                        onClick={() => handleOpen(dataAnalysis)}
-                      >
-                        Show Risk
-                      </Button>
-                    </TableCell>
+      {/* Contenedor combinado para PDF: Risk Count + Predictive Attrition */}
+      <Box id="pdf-risk-predictive" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {/* Risk Count */}
+        <Box mb={3}>
+          <BaseCard
+            title={
+              <Box sx={{ width: '100%' }}>
+                <Box
+                  sx={{
+                    color: '#ffffff',
+                    borderRadius: 1,
+                    px: 2,
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                  }}
+                >
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: '#3A4752' }}>
+                    Risk Count | Total employees analyzed: {totalEmpleados}
+                  </Typography>
+                </Box>
+              </Box>
+            }
+          >
+            <TableContainer id="pdf-risk-count">
+              {/* Solo PDF: total de empleados analizados */}
+              <Box data-pdf-only="true" sx={{ display: 'none', textAlign: 'right', px: 2, py: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#3A4752' }}>
+                  Total employees analyzed: {totalEmpleados}
+                </Typography>
+              </Box>
+              <Table aria-label="risk counts" sx={{ whiteSpace: "nowrap" }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell><Typography variant="subtitle1">Low Risks</Typography></TableCell>
+                    <TableCell><Typography variant="subtitle1">Medium Risks</Typography></TableCell>
+                    <TableCell><Typography variant="subtitle1">High Risks</Typography></TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </BaseCard>
+                </TableHead>
+                <TableBody>
+                  <TableRow>
+                    <TableCell><Typography fontWeight={600} color="success.main">{riskCounts.low}</Typography></TableCell>
+                    <TableCell><Typography fontWeight={600} color="warning.main">{riskCounts.medium}</Typography></TableCell>
+                    <TableCell><Typography fontWeight={600} color="error.main">{riskCounts.high}</Typography></TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </BaseCard>
+        </Box>
+
+        {/* Predictive Attrition */}
+        <Box mb={3}>
+          <BaseCard title={
+            <Box sx={{ width: '100%' }}>
+              <Box
+                sx={{
+                  color: '#ffffff',
+                  borderRadius: 1,
+                  px: 2,
+                  py: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 2,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#3A4752' }}>
+                  Predictive Attrition Analysis
+                </Typography>
+                {/* Ocultar en PDF */}
+                <Box className="no-print">
+                  <InputSearch
+                    searchTerm={searchTerm}
+                    onSearchChange={handleSearchChange}
+                    onClearSearch={handleClearSearch}
+                    placeholder="Analyzing ...."
+                    width={{ xs: '100%', sm: 300, md: 400 }}
+                  />
+                </Box>
+              </Box>
+            </Box>
+          }>
+            <TableContainer id="pdf-predictive-table">
+              <Table aria-label="main table" sx={{ whiteSpace: "nowrap" }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>No.</TableCell>
+                    <TableCell>Full Name</TableCell>
+                    <TableCell>Customer</TableCell>
+                    <TableCell>Perception</TableCell>
+                    <TableCell>Analysis result</TableCell>
+                    <TableCell>Predictive analysis</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {filtereredData.map((dataAnalysis, index) => (
+                    <TableRow key={dataAnalysis.id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{dataAnalysis.fullName}</TableCell>
+                      <TableCell>{dataAnalysis.customer}</TableCell>
+                      <TableCell>{dataAnalysis.calification}</TableCell>
+                      <TableCell>{dataAnalysis.clasification}</TableCell>
+                      <TableCell>
+                        <Button
+                          className="no-print"
+                          size="small"
+                          variant="outlined"
+                          sx={{ mt: 1 }}
+                          onClick={() => handleOpen(dataAnalysis)}
+                        >
+                          Show Risk
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </BaseCard>
+        </Box>
       </Box>
 
       {/* Modal global */}
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         {selectedEmployee && (
           <>
-            <DialogTitle sx={{ bgcolor: "#2a3547", color: "white", borderRadius: "8px 8px 0 0" }}>
+            <DialogTitle sx={{ bgcolor: "#0D4B3B", color: "white", borderRadius: "8px 8px 0 0" }}>
               ATTRITION RISK INSIGHTS - {selectedEmployee.fullName}
               <Chip
                 label={selectedEmployee.clasification}

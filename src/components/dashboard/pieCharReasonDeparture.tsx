@@ -14,6 +14,13 @@ const Chart = React.lazy(() => import("react-apexcharts"));
 
 interface PieCharReasonDepartureProps {
   dataAttrition: string;
+  fieldToAnalyzeProp?:
+    | "attrition_type"
+    | "attrition_category"
+    | "attrition_specific_reason";
+  showSelector?: boolean;
+  height?: number; // Altura mínima del contenedor del gráfico
+  title?: string; // Título opcional sobre el gráfico
 }
 
 interface AttritionItem {
@@ -25,6 +32,10 @@ interface AttritionItem {
 
 const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
   dataAttrition,
+  fieldToAnalyzeProp,
+  showSelector = true,
+  height = 400,
+  title,
 }) => {
   const theme = useTheme();
   const [chartSeries, setChartSeries] = useState<number[]>([]);
@@ -32,7 +43,12 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
   const [loading, setLoading] = useState(true);
   const [fieldToAnalyze, setFieldToAnalyze] = useState<
     "attrition_type" | "attrition_category" | "attrition_specific_reason"
-  >("attrition_specific_reason");
+  >(fieldToAnalyzeProp || "attrition_specific_reason");
+
+  // Sincroniza el estado si el prop cambia
+  useEffect(() => {
+    if (fieldToAnalyzeProp) setFieldToAnalyze(fieldToAnalyzeProp);
+  }, [fieldToAnalyzeProp]);
 
   useEffect(() => {
     const token = sessionStorage.getItem("token");
@@ -57,21 +73,24 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
         if (res && Array.isArray(res.dataCategory)) {
           const data: AttritionItem[] = res.dataCategory;
 
+          const normalizeLabel = (val: any) => {
+            const base = (val === null || val === undefined) ? 'Unknown' : String(val);
+            const cleaned = base.replace(/[\u0000-\u001f\u007f]/g, '').replace(/\s+/g, ' ').trim();
+            return cleaned === '' ? 'Unknown' : cleaned;
+          };
+
           const counts: Record<string, number> = {};
           data.forEach((item) => {
-            const value =
-              item[fieldToAnalyze as keyof AttritionItem] || "Unknown";
+            const rawVal = item[fieldToAnalyze as keyof AttritionItem];
+            const value = normalizeLabel(rawVal);
             counts[value] = (counts[value] || 0) + 1;
           });
 
-          const total = Object.values(counts).reduce((a, b) => a + b, 0);
           const labels = Object.keys(counts);
-          const series = Object.values(counts).map((v) =>
-            Number(((v / total) * 100).toFixed(2))
-          );
+          const seriesCounts = Object.values(counts);
 
           setChartLabels(labels);
-          setChartSeries(series);
+          setChartSeries(seriesCounts);
         } else {
           setChartLabels([]);
           setChartSeries([]);
@@ -84,7 +103,7 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
   const colors = [
     "#3608df",
     "#920a80",
-    "#00fbfb",
+    "#d16983ff",
     "#dd4719",
     "#ffb347",
     "#6fcf97",
@@ -118,76 +137,111 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
         vertical: 5,
       },
     },
-    dataLabels: { enabled: false },
+    dataLabels: {
+      enabled: true,
+      formatter: (_val: number, opts: any) => {
+        try {
+          const series: number[] = opts?.w?.globals?.series || [];
+          const total = series.reduce((a, b) => a + b, 0);
+          const idx = (typeof opts?.seriesIndex === 'number' && opts.seriesIndex >= 0)
+            ? opts.seriesIndex
+            : (typeof opts?.dataPointIndex === 'number' && opts.dataPointIndex >= 0)
+              ? opts.dataPointIndex
+              : 0;
+          const raw = series[idx] ?? 0;
+          const pct = total ? (raw / total) * 100 : 0;
+          return `${pct.toFixed(1)}%`;
+        } catch {
+          return ``;
+        }
+      },
+      style: {
+        colors: ["#ffffff"],
+        fontSize: "12px",
+        fontWeight: 600,
+      },
+      dropShadow: { enabled: false },
+    },
     tooltip: {
-      y: { formatter: (val: number) => `${val.toFixed(2)}%` },
+      theme: 'dark',
+      fillSeriesColor: false,
+      custom: function({ seriesIndex, w }: any) {
+        try {
+          const label = w?.config?.labels?.[seriesIndex] ?? '';
+          const color = w?.config?.colors?.[seriesIndex] ?? '#999';
+          return `\n            <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;">\n              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color}"></span>\n              <span>${label}</span>\n            </div>\n          `;
+        } catch {
+          return '';
+        }
+      },
     },
     stroke: { show: false },
   };
 
   return (
     <DashboardCard>
+      {/* Título opcional */}
+      {title && (
+        <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
+          {title}
+        </Typography>
+      )}
+
+      {showSelector && (
         <Box
-            sx={{
+          sx={{
             display: "flex",
-            justifyContent: "flex-end", // Alinea el select a la derecha
+            justifyContent: "flex-end",
             alignItems: "center",
-            mb: 2, // Margen inferior para separar del gráfico
-            }}
+            mb: 2,
+          }}
         >
-            <Select
-                value={fieldToAnalyze}
-                onChange={(e) =>
-                    setFieldToAnalyze(
-                    e.target.value as
-                        | "attrition_type"
-                        | "attrition_category"
-                        | "attrition_specific_reason"
-                    )
-                }
-                size="small"
-                sx={{ minWidth: 220 }}
-                >
-                <MenuItem value="attrition_type">Attrition Type</MenuItem>
-                <MenuItem value="attrition_category">Attrition Category</MenuItem>
-                <MenuItem value="attrition_specific_reason">
-                    Attrition Reason
-                </MenuItem>
-            </Select>
+          <Select
+            value={fieldToAnalyze}
+            onChange={(e) =>
+              setFieldToAnalyze(
+                e.target.value as
+                  | "attrition_type"
+                  | "attrition_category"
+                  | "attrition_specific_reason"
+              )
+            }
+            size="small"
+            sx={{ minWidth: 220 }}
+          >
+            <MenuItem value="attrition_type">Attrition Type</MenuItem>
+            <MenuItem value="attrition_category">Attrition Category</MenuItem>
+            <MenuItem value="attrition_specific_reason">Attrition Reason</MenuItem>
+          </Select>
         </Box>
-        
-        <Box
-            sx={{
-            flex: 1,
-            minWidth: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            minHeight: 400,
-            "& > *": {
-                width: "100% !important",
-                height: "100% !important",
-            },
-            }}
-        >
-            <Suspense fallback={<CircularProgress />}>
-            {loading ? (
-                <CircularProgress />
-            ) : chartSeries.length > 0 ? (
-                <Chart
-                options={options}
-                series={chartSeries}
-                type="pie"
-                height="100%"
-                width="100%"
-                />
-            ) : (
-                <Typography variant="body2" color="text.secondary">
-                No data available
-                </Typography>
-            )}
-            </Suspense>
-        </Box>
+      )}
+
+      <Box
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: height,
+          "& > *": {
+            width: "100% !important",
+            height: "100% !important",
+          },
+        }}
+      >
+        <Suspense fallback={<CircularProgress />}>
+          {loading ? (
+            <CircularProgress />
+          ) : chartSeries.length > 0 ? (
+            <Chart options={options} series={chartSeries} type="pie" height="100%" width="100%" />
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              No data available
+            </Typography>
+          )}
+        </Suspense>
+      </Box>
     </DashboardCard>
   );
 };
