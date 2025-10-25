@@ -9,7 +9,8 @@ import {
     Chip,
     Button,
     TableContainer,
-    Stack
+    Stack,
+    TablePagination
 } from "@mui/material";
 import BaseCard from "src/components/BaseCard/BaseCard";
 import { useEffect, useState } from "react";
@@ -53,6 +54,8 @@ const ListEmployes = () => {
     const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(15);
 
     useEffect(() => {
         const token = sessionStorage.getItem("token");
@@ -178,6 +181,15 @@ const ListEmployes = () => {
 
     const handleClearSearch = () => {
         setSearchTerm("");
+    };
+
+    const handleChangePage = (_event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
     };
 
     const showEmployee = (id: string) => {
@@ -322,91 +334,104 @@ const ListEmployes = () => {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {filteredEmployees.map((employee, index) => (
-                            <TableRow key={employee.id}>
-                                <TableCell>
-                                    <Typography fontSize="15px" fontWeight={500}>
-                                        {index + 1}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" fontSize="14px">
-                                        {employee.full_name}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" fontSize="14px">
-                                        {employee.document_type}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" fontSize="14px">
-                                        {employee.document_number}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" fontSize="14px">
-                                        {employee.gender}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" fontSize="14px">
-                                        {employee.birthday}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" fontSize="14px">
-                                        {employee.civil_status}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" fontSize="14px">
-                                        {employee.nationality}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" fontSize="14px">
-                                        {employee.active_since}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Typography color="textSecondary" fontSize="14px">
-                                        {employee.active_until}
-                                    </Typography>
-                                </TableCell>
-                                <TableCell>
-                                    <Stack direction="row" spacing={1}>
-                                        <Chip
-                                            label={employee.status}
-                                            sx={{
-                                                backgroundColor: employee.pbg,
-                                                color: "white",
-                                                fontWeight: "600",
-                                                fontSize: "0.75rem",
-                                            }}
-                                        />
-                                    </Stack>
-                                </TableCell>
-                                <TableCell>
-                                    <Stack direction="row" spacing={1}>
-                                        <Chip
-                                            label="Show"
-                                            onClick={() => showEmployee(employee.id)}
-                                            sx={{
-                                                backgroundColor: "primary.main",
-                                                color: "white",
-                                                fontWeight: "600",
-                                                fontSize: "0.75rem",
-                                                cursor: "pointer",
-                                            }}
-                                        />
-                                    </Stack>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        {filteredEmployees
+                            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                            .map((employee, index) => (
+                                <TableRow key={employee.id}>
+                                    <TableCell>
+                                        <Typography fontSize="15px" fontWeight={500}>
+                                            {index + 1 + page * rowsPerPage}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" fontSize="14px">
+                                            {employee.full_name}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" fontSize="14px">
+                                            {employee.document_type}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" fontSize="14px">
+                                            {employee.document_number}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" fontSize="14px">
+                                            {employee.gender}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" fontSize="14px">
+                                            {employee.birthday}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" fontSize="14px">
+                                            {employee.civil_status}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" fontSize="14px">
+                                            {employee.nationality}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" fontSize="14px">
+                                            {employee.active_since}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Typography color="textSecondary" fontSize="14px">
+                                            {employee.active_until}
+                                        </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Stack direction="row" spacing={1}>
+                                            <Chip
+                                                label={employee.status}
+                                                sx={{
+                                                    backgroundColor: employee.pbg,
+                                                    color: "white",
+                                                    fontWeight: "600",
+                                                    fontSize: "0.75rem",
+                                                }}
+                                            />
+                                        </Stack>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Stack direction="row" spacing={1}>
+                                            <Chip
+                                                label="Show"
+                                                onClick={() => showEmployee(employee.id)}
+                                                sx={{
+                                                    backgroundColor: "#0D4B3B",
+                                                    color: "white",
+                                                    fontWeight: "600",
+                                                    fontSize: "0.75rem",
+                                                    cursor: "pointer",
+                                                    '&:hover': { backgroundColor: '#0a3d32' },
+                                                }}
+                                            />
+                                        </Stack>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
                     </TableBody>
                 </Table>
             </TableContainer>
+            <TablePagination
+                component="div"
+                count={filteredEmployees.length}
+                page={page}
+                onPageChange={handleChangePage}
+                rowsPerPage={rowsPerPage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+                rowsPerPageOptions={[15, 30, 50]}
+                sx={{ mt: 1 }}
+            />
         </BaseCard>
     );
 };

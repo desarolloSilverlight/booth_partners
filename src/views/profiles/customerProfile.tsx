@@ -286,6 +286,21 @@ const CustomerProfile = () => {
   const assessmentList = parsed?.assessment ? cleanAndSplitText(parsed.assessment) : [];
   const actionsList = parsed?.actions ? cleanAndSplitText(parsed.actions) : [];
 
+  // Extract raw HTML sections from Recommended Actions to render in separate boxes
+  const extractActionsSection = (html: string, labelPattern: RegExp) => {
+    if (!html) return '';
+    const match = html.match(labelPattern);
+    if (!match || match.index === undefined) return '';
+    const start = match.index + match[0].length;
+    const rest = html.slice(start);
+    const nextIdx = rest.search(/<b>\s*Controllable by\s+(?:the\s+Client|Client|Us)\s*:<\/b>/i);
+    const section = nextIdx >= 0 ? rest.slice(0, nextIdx) : rest;
+    return section.trim();
+  };
+
+  const actionsUsHtml = extractActionsSection(parsed?.actions || '', /<b>\s*Controllable by\s+Us\s*:<\/b>/i);
+  const actionsClientHtml = extractActionsSection(parsed?.actions || '', /<b>\s*Controllable by\s+(?:the\s+Client|Client)\s*:<\/b>/i);
+
   const handleDownloadPdf = async () => {
     try {
       // Definición de páginas: cada sub-arreglo son elementos a ubicar en la misma página
@@ -331,7 +346,7 @@ const CustomerProfile = () => {
         });
       };
 
-      
+
       const applyHideColumn = (root: HTMLElement, colIndex: number) => {
         const selector = `thead tr > *:nth-child(${colIndex}), tbody tr > *:nth-child(${colIndex})`;
         const cells = root.querySelectorAll(selector);
@@ -441,7 +456,7 @@ const CustomerProfile = () => {
         }
       }
 
-     
+
       const dayjs = (await import('dayjs')).default;
       const safeName = (nameCustomer || 'Customer').replace(/[^a-z0-9-_]/gi, '_');
       const filename = `Report_PDF_${safeName}_${dayjs().format('YYYYMMDD')}.pdf`;
@@ -549,78 +564,78 @@ const CustomerProfile = () => {
                 <PieChartCommonVariables dataShap={nameCustomer} />
               </Box>
 
-            {/* Derecha: tabla */}
-            <Box
-              sx={{
-                flex: 1,
-                minWidth: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                minHeight: 400, 
-              }}
-            >
-              <TableContainer
+              {/* Derecha: tabla */}
+              <Box
                 sx={{
-                  boxShadow: "none",
-                  border: "1px solid #eee",
-                  borderRadius: 2,
-                  width: "100%", 
-                  height: "100%", 
+                  flex: 1,
+                  minWidth: 0,
                   display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center", 
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minHeight: 400,
                 }}
               >
-                <Table
-                  aria-label="main table"
+                <TableContainer
                   sx={{
-                    whiteSpace: "nowrap",
-                    "& th, & td": {
-                      textAlign: "center", 
-                      verticalAlign: "middle",
-                    },
-                    "& th": {
-                      fontWeight: "bold", 
-                      fontSize: "0.95rem",
-                      backgroundColor: "#f9f9f9", 
-                    },
+                    boxShadow: "none",
+                    border: "1px solid #eee",
+                    borderRadius: 2,
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
                   }}
                 >
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>VARIABLE</TableCell>
-                      <TableCell>ATTRITION SCORE</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {shapData.length > 0 ? (
-                      shapData.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{item.variable}</TableCell>
-                          <TableCell>{item.score.toFixed(6)}</TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
+                  <Table
+                    aria-label="main table"
+                    sx={{
+                      whiteSpace: "nowrap",
+                      "& th, & td": {
+                        textAlign: "center",
+                        verticalAlign: "middle",
+                      },
+                      "& th": {
+                        fontWeight: "bold",
+                        fontSize: "0.95rem",
+                        backgroundColor: "#f9f9f9",
+                      },
+                    }}
+                  >
+                    <TableHead>
                       <TableRow>
-                        <TableCell colSpan={2}>
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            textAlign="center"
-                          >
-                            No data available
-                          </Typography>
-                        </TableCell>
+                        <TableCell>VARIABLE</TableCell>
+                        <TableCell>ATTRITION SCORE</TableCell>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {shapData.length > 0 ? (
+                        shapData.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{item.variable}</TableCell>
+                            <TableCell>{item.score.toFixed(6)}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={2}>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              textAlign="center"
+                            >
+                              No data available
+                            </Typography>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
             </Box>
+            {/* cierre contenedor pdf-shap */}
           </Box>
-          {/* cierre contenedor pdf-shap */}
-        </Box>
         </BaseCard>
       </Box>
 
@@ -941,8 +956,13 @@ const CustomerProfile = () => {
                         <Button
                           className="no-print"
                           size="small"
-                          variant="outlined"
-                          sx={{ mt: 1 }}
+                          variant="contained"
+                          sx={{
+                            mt: 1,
+                            backgroundColor: "#0D4B3B",
+                            color: "#ffffff",
+                            "&:hover": { backgroundColor: "#0a3d32" },
+                          }}
                           onClick={() => handleOpen(dataAnalysis)}
                         >
                           Show Risk
@@ -1136,52 +1156,66 @@ const CustomerProfile = () => {
                 </Box>
               )}
 
-              {/* Recommended Actions */}
-              {parsed && actionsList.length > 0 && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 2,
-                    p: 2,
-                    bgcolor: "grey.100",
-                    borderRadius: 2,
-                    mb: 2
-                  }}
-                >
-                  {/* Emoji de acción */}
-                  <Typography
-                    sx={{
-                      fontSize: "2rem",
-                      flexShrink: 0,
-                      display: "flex",
-                      alignItems: "center"
-                    }}
-                  >
-                    📊
-                  </Typography>
-                  {/* Texto y lista de acciones */}
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6" gutterBottom>
-                      Recommended Actions
-                    </Typography>
-                    <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                      {actionsList.map((item, index) => (
-                        <li
-                          key={index}
-                          // sanitiza y renderiza HTML (aquí tus <b> aparecerán en negrilla)
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }}
+              {/* Recommended Actions: split into two boxes with spacing */}
+              {parsed && (actionsUsHtml || actionsClientHtml || actionsList.length > 0) && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2 }}>
+                  {actionsUsHtml && (
+                    <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2, display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                      <Typography sx={{ fontSize: '2rem', flexShrink: 0, display: 'flex', alignItems: 'center' }}>🛠️</Typography>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 800 }}>
+                          Controllable by Us
+                        </Typography>
+                        <Box
+                          sx={{ whiteSpace: 'pre-line' }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(actionsUsHtml) }}
                         />
-                      ))}
-                    </ul>
-                  </Box>
+                      </Box>
+                    </Box>
+                  )}
+                  {actionsClientHtml && (
+                    <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2, display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                      <Typography sx={{ fontSize: '2rem', flexShrink: 0, display: 'flex', alignItems: 'center' }}>🤝</Typography>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 800 }}>
+                          Controllable by the Client
+                        </Typography>
+                        <Box
+                          sx={{ whiteSpace: 'pre-line' }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(actionsClientHtml) }}
+                        />
+                      </Box>
+                    </Box>
+                  )}
+                  {!actionsUsHtml && !actionsClientHtml && actionsList.length > 0 && (
+                    <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+                      <Typography variant="h6" gutterBottom>
+                        Recommended Actions
+                      </Typography>
+                      <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                        {actionsList.map((item, index) => (
+                          <li key={index} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }} />
+                        ))}
+                      </ul>
+                    </Box>
+                  )}
                 </Box>
               )}
 
               {!parsed && <Typography>No analysis available.</Typography>}
             </DialogContent>
             <DialogActions>
-              <Button onClick={handleClose} variant="contained" color="primary">Close</Button>
+              <Button
+                onClick={handleClose}
+                variant="contained"
+                sx={{
+                  backgroundColor: "#0D4B3B",
+                  color: "#ffffff",
+                  "&:hover": { backgroundColor: "#0a3d32" },
+                }}
+              >
+                Close
+              </Button>
             </DialogActions>
           </>
         )}

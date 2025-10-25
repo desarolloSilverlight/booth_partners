@@ -239,11 +239,12 @@ const ListUsers = () => {
                                             label={user.href}
                                             onClick={() => editClick(user.id)}
                                             sx={{
-                                                backgroundColor: user.pbg_href,
+                                                backgroundColor: "#0D4B3B",
                                                 color: "white",
                                                 fontWeight: "600",
                                                 fontSize: "0.75rem",
                                                 cursor: "pointer",
+                                                '&:hover': { backgroundColor: '#0a3d32' },
                                             }}
                                         />
                                     </Stack>

@@ -253,12 +253,26 @@ const ShowRisks = () => {
             .filter(item => item.length > 0); // eliminamos vacíos
     };
 
+    // Extrae un bloque HTML perteneciente a una etiqueta específica (Controllable by Us / the Client)
+    const extractActionsSection = (html: string, label: string) => {
+        if (!html) return "";
+        const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = new RegExp(
+            `<b>\\s*${escaped}\\s*:<\\/b>([\\s\\S]*?)(?=<b>\\s*Controllable\\s+by\\s+(?:Us|the\\s+Client)\\s*:<\\/b>|$)`,
+            'i'
+        );
+        const match = html.match(regex);
+        return match ? match[1].trim() : "";
+    };
+
     const parsed = selectedEmployee?.text_ai ? parseTextAI(selectedEmployee.text_ai) : null;
 
     const driversList = parsed?.drivers ? cleanAndSplitText(parsed.drivers) : [];
     const sentimentList = parsed?.sentiment ? cleanAndSplitText(parsed.sentiment) : [];
     const assessmentList = parsed?.assessment ? cleanAndSplitText(parsed.assessment) : [];
     const actionsList = parsed?.actions ? cleanAndSplitText(parsed.actions) : [];
+    const actionsUsHtml = parsed?.actions ? extractActionsSection(parsed.actions, "Controllable by Us") : "";
+    const actionsClientHtml = parsed?.actions ? extractActionsSection(parsed.actions, "Controllable by the Client") : "";
 
     return (
         <>
@@ -324,7 +338,17 @@ const ShowRisks = () => {
                                     <TableCell>{risk.calification}</TableCell>
                                     <TableCell>{risk.clasification}</TableCell>
                                     <TableCell>
-                                        <Button size="small" variant="outlined" sx={{ mt: 1 }} onClick={() => handleOpen(risk)}>
+                                        <Button
+                                            size="small"
+                                            variant="contained"
+                                            sx={{
+                                                mt: 1,
+                                                backgroundColor: "#0D4B3B",
+                                                color: "#ffffff",
+                                                "&:hover": { backgroundColor: "#0a3d32" },
+                                            }}
+                                            onClick={() => handleOpen(risk)}
+                                        >
                                             Show Text
                                         </Button>
                                     </TableCell>
@@ -340,7 +364,7 @@ const ShowRisks = () => {
             <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
                 {selectedEmployee && (
                     <>
-                        <DialogTitle sx={{ bgcolor: "#2a3547", color: "white", borderRadius: "8px 8px 0 0" }}>
+                        <DialogTitle sx={{ bgcolor: "#0D4B3B", color: "white", borderRadius: "8px 8px 0 0" }}>
                             ATTRITION RISK INSIGHTS - {selectedEmployee.fullName}
                             <Chip
                                 label={selectedEmployee.clasification}
@@ -516,51 +540,129 @@ const ShowRisks = () => {
                             )}
 
                             {/* Recommended Actions */}
-                            {parsed && actionsList.length > 0 && (
-                                <Box
-                                    sx={{
-                                        display: "flex",
-                                        alignItems: "flex-start",
-                                        gap: 2,
-                                        p: 2,
-                                        bgcolor: "grey.100",
-                                        borderRadius: 2,
-                                        mb: 2
-                                    }}
-                                >
-                                    {/* Emoji de acción */}
-                                    <Typography
+                            {parsed && (actionsUsHtml || actionsClientHtml) ? (
+                                <Box>
+                                    {actionsUsHtml && (
+                                        <Box
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "flex-start",
+                                                gap: 2,
+                                                p: 2,
+                                                bgcolor: "grey.100",
+                                                borderRadius: 2,
+                                                mb: 2
+                                            }}
+                                        >
+                                            <Typography
+                                                sx={{
+                                                    fontSize: "2rem",
+                                                    flexShrink: 0,
+                                                    display: "flex",
+                                                    alignItems: "center"
+                                                }}
+                                            >
+                                                🛠️
+                                            </Typography>
+                                            <Box sx={{ flex: 1 }}>
+                                                <Typography variant="h6" gutterBottom sx={{ fontWeight: 800 }}>
+                                                    Controllable by Us
+                                                </Typography>
+                                                <Box
+                                                    sx={{ whiteSpace: "pre-line" }}
+                                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(actionsUsHtml) }}
+                                                />
+                                            </Box>
+                                        </Box>
+                                    )}
+                                    {actionsClientHtml && (
+                                        <Box
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "flex-start",
+                                                gap: 2,
+                                                p: 2,
+                                                bgcolor: "grey.100",
+                                                borderRadius: 2,
+                                                mb: 2
+                                            }}
+                                        >
+                                            <Typography
+                                                sx={{
+                                                    fontSize: "2rem",
+                                                    flexShrink: 0,
+                                                    display: "flex",
+                                                    alignItems: "center"
+                                                }}
+                                            >
+                                                🤝
+                                            </Typography>
+                                            <Box sx={{ flex: 1 }}>
+                                                <Typography variant="h6" gutterBottom sx={{ fontWeight: 800 }}>
+                                                    Controllable by the Client
+                                                </Typography>
+                                                <Box
+                                                    sx={{ whiteSpace: "pre-line" }}
+                                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(actionsClientHtml) }}
+                                                />
+                                            </Box>
+                                        </Box>
+                                    )}
+                                </Box>
+                            ) : (
+                                parsed && actionsList.length > 0 && (
+                                    <Box
                                         sx={{
-                                            fontSize: "2rem",
-                                            flexShrink: 0,
                                             display: "flex",
-                                            alignItems: "center"
+                                            alignItems: "flex-start",
+                                            gap: 2,
+                                            p: 2,
+                                            bgcolor: "grey.100",
+                                            borderRadius: 2,
+                                            mb: 2
                                         }}
                                     >
-                                        📊
-                                    </Typography>
-                                    {/* Texto y lista de acciones */}
-                                    <Box sx={{ flex: 1 }}>
-                                        <Typography variant="h6" gutterBottom>
-                                            Recommended Actions
+                                        <Typography
+                                            sx={{
+                                                fontSize: "2rem",
+                                                flexShrink: 0,
+                                                display: "flex",
+                                                alignItems: "center"
+                                            }}
+                                        >
+                                            📊
                                         </Typography>
-                                        <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                                            {actionsList.map((item, index) => (
-                                                <li
-                                                    key={index}
-                                                    // sanitiza y renderiza HTML (aquí tus <b> aparecerán en negrilla)
-                                                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }}
-                                                />
-                                            ))}
-                                        </ul>
+                                        <Box sx={{ flex: 1 }}>
+                                            <Typography variant="h6" gutterBottom>
+                                                Recommended Actions
+                                            </Typography>
+                                            <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                                                {actionsList.map((item, index) => (
+                                                    <li
+                                                        key={index}
+                                                        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }}
+                                                    />
+                                                ))}
+                                            </ul>
+                                        </Box>
                                     </Box>
-                                </Box>
+                                )
                             )}
 
                             {!parsed && <Typography>No analysis available.</Typography>}
                         </DialogContent>
                         <DialogActions>
-                            <Button onClick={handleClose} variant="contained" color="primary">Close</Button>
+                            <Button
+                                onClick={handleClose}
+                                variant="contained"
+                                sx={{
+                                    backgroundColor: "#0D4B3B",
+                                    color: "#ffffff",
+                                    "&:hover": { backgroundColor: "#0a3d32" },
+                                }}
+                            >
+                                Close
+                            </Button>
                         </DialogActions>
                     </>
                 )}

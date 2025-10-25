@@ -13,7 +13,8 @@ const Topbar = () => {
 
   const AppBarStyled = styled(AppBar)(({ theme }) => ({
     boxShadow: 'none',
-    background: theme.palette.grey[600],
+    backgroundColor: '#0D4B3B',
+    color: '#ffffff',
     justifyContent: 'center',
     backdropFilter: 'blur(4px)',
     [theme.breakpoints.up('lg')]: {
