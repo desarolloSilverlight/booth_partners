@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { useTheme } from "@mui/material/styles";
 import { Box } from "@mui/material";
 import DashboardCard from "../shared/DashboardCard";
@@ -14,6 +14,35 @@ const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataS
   const theme = useTheme();
   const [series, setSeries] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
+
+  // Formatea labels del modelo: quita prefijos num__/cat__, reemplaza '_' por espacio y aplica Title Case
+  const prettyLabel = (raw: string): string => {
+    if (!raw) return raw;
+    let t = raw.replace(/^(num__|cat__)/, "");
+    // Reemplazar conectores comunes
+    t = t.replace(/=/g, ": ");
+    t = t.replace(/_/g, " ");
+    // Colapsar espacios múltiples
+    t = t.replace(/\s+/g, " ").trim();
+    // Title Case básico
+    t = t
+      .split(" ")
+      .map((w) => (w.length ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+      .join(" ");
+    return t;
+  };
+
+  const displayLabels = useMemo(() => labels.map(prettyLabel), [labels]);
+
+  // Calcula una altura dinámica para que la leyenda debajo no se corte
+  const chartHeight = useMemo(() => {
+    const count = Math.max(labels.length || 1, 1);
+    const cols = 3; // aprox. 3 elementos por fila en la leyenda
+    const rows = Math.ceil(count / cols);
+    const base = 260; // altura base del pie
+    const perRow = 28; // espacio por fila de leyenda
+    return base + rows * perRow;
+  }, [labels]);
 
   useEffect(() => {
     const token = sessionStorage.getItem("token");
@@ -53,22 +82,25 @@ const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataS
   const options: any = {
     chart: {
       type: "pie",
-      height: 300,
+      height: chartHeight,
       toolbar: { show: false },
     },
-    labels: labels.length > 0 ? labels : ["Loading..."],
+    labels: displayLabels.length > 0 ? displayLabels : ["Loading..."],
     colors: colors,
     legend: {
       show: true,
-      position: "right",
+      position: "bottom",
+      horizontalAlign: "center",
+      floating: false,
+      fontSize: "12px",
       markers: {
         width: 12,
         height: 12,
         radius: 12,
       },
       itemMargin: {
-        horizontal: 10,
-        vertical: 5,
+        horizontal: 12,
+        vertical: 6,
       },
     },
     dataLabels: {
@@ -86,13 +118,13 @@ const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataS
 
   return (
     <DashboardCard title="Major Risk Drivers" subtitle="">
-      <Box height="300px">
+      <Box height={`${chartHeight}px`}>
         <Suspense fallback={<div>Cargando gráfico...</div>}>
           <Chart
             options={options}
             series={series.length > 0 ? series : [0, 0, 0, 0]}
             type="pie"
-            height={300}
+            height={chartHeight}
           />
         </Suspense>
       </Box>

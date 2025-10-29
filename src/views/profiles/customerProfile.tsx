@@ -59,6 +59,19 @@ const CustomerProfile = () => {
   const [open, setOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Predictive_Analysis | null>(null);
 
+  // Helper: formatea nombres de variables (quita num__/cat__, reemplaza '_' y Title Case)
+  const prettyLabel = (raw: string): string => {
+    if (!raw) return raw;
+    let t = raw.replace(/^(num__|cat__)/, "");
+    t = t.replace(/_/g, " ").replace(/\s+/g, " ").trim();
+    // Title Case básico
+    t = t
+      .split(" ")
+      .map((w) => (w.length ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+      .join(" ");
+    return t;
+  };
+
   const handleChangePage = (event: any, newPage: number) => {
     setPage(newPage);
   };
@@ -116,7 +129,7 @@ const CustomerProfile = () => {
         // console.log("Result fetch show_top_shap:", result);
         if (result && Array.isArray(result.dataTopShap)) {
           const formattedData = result.dataTopShap.map((item: any) => ({
-            variable: item.shap_variable_name,
+            variable: prettyLabel(item.shap_variable_name),
             score: item.avg_shap_score,
           }));
 
@@ -677,13 +690,6 @@ const CustomerProfile = () => {
             >
               <PieCharReasonDeparture
                 dataAttrition={nameCustomer}
-                fieldToAnalyzeProp="attrition_specific_reason"
-                showSelector={false}
-                height={420}
-                title="Attrition Reason"
-              />
-              <PieCharReasonDeparture
-                dataAttrition={nameCustomer}
                 fieldToAnalyzeProp="attrition_type"
                 showSelector={false}
                 height={300}
@@ -695,6 +701,13 @@ const CustomerProfile = () => {
                 showSelector={false}
                 height={300}
                 title="Attrition Category"
+              />
+              <PieCharReasonDeparture
+                dataAttrition={nameCustomer}
+                fieldToAnalyzeProp="attrition_specific_reason"
+                showSelector={false}
+                height={350}
+                title="Attrition Reason"
               />
             </Box>
 

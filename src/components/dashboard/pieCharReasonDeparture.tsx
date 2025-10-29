@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
 import { useTheme } from "@mui/material/styles";
 import {
   Box,
@@ -15,9 +15,9 @@ const Chart = React.lazy(() => import("react-apexcharts"));
 interface PieCharReasonDepartureProps {
   dataAttrition: string;
   fieldToAnalyzeProp?:
-    | "attrition_type"
-    | "attrition_category"
-    | "attrition_specific_reason";
+  | "attrition_type"
+  | "attrition_category"
+  | "attrition_specific_reason";
   showSelector?: boolean;
   height?: number; // Altura mínima del contenedor del gráfico
   title?: string; // Título opcional sobre el gráfico
@@ -100,6 +100,17 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
       .finally(() => setLoading(false));
   }, [dataAttrition, fieldToAnalyze]);
 
+  // Altura dinámica: asegura espacio para leyenda inferior con pocas o muchas categorías
+  const chartHeight = useMemo(() => {
+    const count = Math.max(chartLabels.length || 1, 1);
+    // Estimación: 2 elementos por fila de leyenda para evitar cortes con textos largos
+    const cols = 2;
+    const rows = Math.ceil(count / cols);
+    const base = Math.max(height - 100, 220); // área base para el pie
+    const perRow = 28; // alto estimado por fila de leyenda
+    return base + rows * perRow;
+  }, [chartLabels, height]);
+
   const colors = [
     "#3608df",
     "#920a80",
@@ -118,13 +129,16 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
     chart: {
       type: "pie",
       toolbar: { show: false },
-      height: "100%",
+      height: chartHeight,
     },
     labels: chartLabels,
     colors: colors,
     legend: {
       show: true,
       position: "bottom", // ✅ Todas las leyendas van debajo
+      showForSingleSeries: true,
+      showForNullSeries: true,
+      showForZeroSeries: true,
       fontSize: "13px",
       horizontalAlign: "center",
       markers: {
@@ -165,7 +179,7 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
     tooltip: {
       theme: 'dark',
       fillSeriesColor: false,
-      custom: function({ seriesIndex, w }: any) {
+      custom: function ({ seriesIndex, w }: any) {
         try {
           const label = w?.config?.labels?.[seriesIndex] ?? '';
           const color = w?.config?.colors?.[seriesIndex] ?? '#999';
@@ -188,22 +202,12 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
       )}
 
       {showSelector && (
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            mb: 2,
-          }}
-        >
+        <Box sx={{ display: "flex", justifyContent: "flex-end", alignItems: "center", mb: 2 }}>
           <Select
             value={fieldToAnalyze}
             onChange={(e) =>
               setFieldToAnalyze(
-                e.target.value as
-                  | "attrition_type"
-                  | "attrition_category"
-                  | "attrition_specific_reason"
+                e.target.value as "attrition_type" | "attrition_category" | "attrition_specific_reason"
               )
             }
             size="small"
@@ -223,18 +227,14 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          minHeight: height,
-          "& > *": {
-            width: "100% !important",
-            height: "100% !important",
-          },
+          minHeight: chartHeight,
         }}
       >
         <Suspense fallback={<CircularProgress />}>
           {loading ? (
             <CircularProgress />
           ) : chartSeries.length > 0 ? (
-            <Chart options={options} series={chartSeries} type="pie" height="100%" width="100%" />
+            <Chart options={options} series={chartSeries} type="pie" height={chartHeight} width="100%" />
           ) : (
             <Typography variant="body2" color="text.secondary">
               No data available
