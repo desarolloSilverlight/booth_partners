@@ -121,11 +121,13 @@ const OurVisitors = () => {
         },
       },
     },
+    // Lus brand mapping:
+    // Positive → Lake Green, Negative → Mauve, Neutral → Violet, No comment → Blue
     colors: [
-      theme.palette.success.main,  // Verde
-      theme.palette.error.main,    // Rojo
-      theme.palette.info.main,     // Azul
-      theme.palette.grey[700],     // Gris para No comment
+      '#589992', // Positive - Lake Green
+      '#C9ADCD', // Negative - Mauve
+      '#8581B5', // Neutral  - Violet
+      '#255C82', // No comment - Blue
     ],
     dataLabels: { enabled: false },
     legend: { show: false },
@@ -176,10 +178,10 @@ const OurVisitors = () => {
             flexWrap="wrap"
           >
             {[
-              { label: "Positive", color: theme.palette.success.main },
-              { label: "Negative", color: theme.palette.error.main },
-              { label: "Neutral", color: theme.palette.info.main },
-              { label: "No comment", color: theme.palette.grey[700] },
+              { label: "Positive", color: '#589992' }, // Lake Green
+              { label: "Negative", color: '#C9ADCD' }, // Mauve
+              { label: "Neutral", color: '#8581B5' },  // Violet
+              { label: "No comment", color: '#255C82' }, // Blue
             ].map((item, index) => (
               <Stack
                 key={index}

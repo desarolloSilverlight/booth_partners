@@ -197,7 +197,7 @@ const SalesOverview: React.FC = () => {
         },
       },
     },
-    colors: ["#589992", "#0D4B3B"],
+    colors: ["#EDD9ED", "#CD9ACD"],
     plotOptions: {
       bar: {
         horizontal: false,

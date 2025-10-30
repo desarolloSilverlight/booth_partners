@@ -58,6 +58,7 @@ const CustomerProfile = () => {
 
   const [open, setOpen] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState<Predictive_Analysis | null>(null);
+  const [employeeSalaryLevel, setEmployeeSalaryLevel] = useState<string | null>(null);
 
   // Helper: formatea nombres de variables (quita num__/cat__, reemplaza '_' y Title Case)
   const prettyLabel = (raw: string): string => {
@@ -246,6 +247,150 @@ const CustomerProfile = () => {
   const handleOpen = (employee: Predictive_Analysis) => {
     setSelectedEmployee(employee);
     setOpen(true);
+
+    // Reset salary level and fetch from API using employee id (fkid_employe)
+    setEmployeeSalaryLevel(null);
+    try {
+      const token = sessionStorage.getItem("token");
+      if (!token) return handleUnauthorized();
+
+      const myHeaders = new Headers();
+      myHeaders.append("authToken", token);
+      myHeaders.append("Content-Type", "application/json");
+
+      const requestOptions: RequestInit = {
+        method: "POST",
+        headers: myHeaders,
+        body: JSON.stringify({ id: employee.id }), // backend expects id from item.fkid_employe
+        redirect: "follow",
+      };
+
+      fetch(`${config.rutaApi}employees_profile`, requestOptions)
+        .then((response) => {
+          if (response.status === 401) return handleUnauthorized();
+          return response.json();
+        })
+        .then((result) => {
+          const dataEmp = result?.dataEmployee;
+          if (dataEmp) {
+            // Try common property names
+            const sl = dataEmp.salary_level ?? dataEmp.salaryLevel ?? null;
+            setEmployeeSalaryLevel(sl);
+          }
+        })
+        .catch((err) => {
+          console.error("Error fetching employee profile:", err);
+        });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Generate a standalone PDF of the current modal (title + content) without buttons and without scroll truncation
+  const handleGenerateModalPdf = async () => {
+    try {
+      if (!selectedEmployee) return;
+
+      const printable = document.getElementById('modal-printable');
+      if (!printable) {
+        console.warn('Printable modal container not found');
+        return;
+      }
+
+      // Clone the printable content and expand scrollable areas to capture full content
+      const clone = printable.cloneNode(true) as HTMLElement;
+
+      // Remove any elements marked as no-print inside the clone (safety)
+      clone.querySelectorAll('.no-print').forEach((el) => el.parentElement?.removeChild(el));
+
+      // Ensure DialogContent inside the clone expands fully
+      const dc = clone.querySelector('.MuiDialogContent-root') as HTMLElement | null;
+      if (dc) {
+        dc.style.overflow = 'visible';
+        (dc.style as any).maxHeight = 'none';
+      }
+
+      // Mount off-screen to render layout correctly
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'fixed';
+      wrapper.style.left = '-10000px';
+      wrapper.style.top = '0';
+      wrapper.style.background = '#ffffff';
+      // Let content size itself; ensure enough width so chips/labels don't clip
+      const measuredWidth = Math.max(printable.scrollWidth, Math.ceil(printable.getBoundingClientRect().width), 900);
+      wrapper.style.width = measuredWidth + 'px';
+      clone.style.width = '100%';
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
+
+      // Render to canvas at high resolution and full dimensions
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        width: clone.scrollWidth,
+        height: clone.scrollHeight,
+      });
+
+      // Clean up the temporary DOM
+      document.body.removeChild(wrapper);
+
+      // Prepare PDF (A4 portrait) and paginate the long canvas if needed
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pageWidth; // fill the width
+      const fullImgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      if (fullImgHeight <= pageHeight) {
+        const img = canvas.toDataURL('image/png');
+        pdf.addImage(img, 'PNG', 0, 0, imgWidth, fullImgHeight);
+      } else {
+        // Slice canvas into page-sized chunks (in px) preserving aspect ratio
+        const pageHeightPx = Math.floor((canvas.width * pageHeight) / pageWidth);
+        let sY = 0;
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        const pageCtx = pageCanvas.getContext('2d');
+        if (!pageCtx) throw new Error('Canvas context not available');
+
+        while (sY < canvas.height) {
+          const chunkHeight = Math.min(pageHeightPx, canvas.height - sY);
+          pageCanvas.height = chunkHeight; // reset height each iteration
+          // Clear background to white
+          pageCtx.fillStyle = '#FFFFFF';
+          pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+          // Draw portion from the big canvas
+          pageCtx.drawImage(
+            canvas,
+            0,
+            sY,
+            canvas.width,
+            chunkHeight,
+            0,
+            0,
+            canvas.width,
+            chunkHeight
+          );
+
+          const img = pageCanvas.toDataURL('image/png');
+          const imgHeight = (chunkHeight * imgWidth) / canvas.width;
+          pdf.addImage(img, 'PNG', 0, 0, imgWidth, imgHeight);
+
+          sY += chunkHeight;
+          if (sY < canvas.height) pdf.addPage();
+        }
+      }
+
+      const dayjs = (await import('dayjs')).default;
+      const safeName = (selectedEmployee.fullName || 'Employee').replace(/[^a-z0-9-_]/gi, '_');
+      const filename = `Attrition_Risk_Insights_${safeName}_${dayjs().format('YYYYMMDD')}.pdf`;
+      pdf.save(filename);
+    } catch (error) {
+      console.error('Error generating modal PDF', error);
+      alert('Error generating PDF. Check console for details.');
+    }
   };
 
   const riskCounts = {
@@ -256,6 +401,9 @@ const CustomerProfile = () => {
 
   // Total de empleados activos considerados en el conteo de riesgo
   const totalEmpleados = riskCounts.low + riskCounts.medium + riskCounts.high;
+
+  // Total para calcular % en la tabla de SHAP
+  const shapTotal = shapData.reduce((acc, it) => acc + (Number.isFinite(it.score) ? it.score : 0), 0);
 
   const parseTextAI = (text: string) => {
     if (!text) return {};
@@ -567,14 +715,14 @@ const CustomerProfile = () => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  minHeight: 400,
+                  minHeight: 200,
                   "& > *": {
                     width: "100% !important",
                     height: "100% !important",
                   },
                 }}
               >
-                <PieChartCommonVariables dataShap={nameCustomer} />
+                <PieChartCommonVariables dataShap={nameCustomer} height={400} />
               </Box>
 
               {/* Derecha: tabla */}
@@ -583,9 +731,9 @@ const CustomerProfile = () => {
                   flex: 1,
                   minWidth: 0,
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  minHeight: 400,
+                  alignItems: "flex-start",
+                  justifyContent: "flex-start",
+                  minHeight: 400, // match chart height and avoid vertical centering gap
                 }}
               >
                 <TableContainer
@@ -597,7 +745,7 @@ const CustomerProfile = () => {
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    justifyContent: "center",
+                    justifyContent: "flex-start", // place content at top to remove top blank space
                   }}
                 >
                   <Table
@@ -618,7 +766,7 @@ const CustomerProfile = () => {
                     <TableHead>
                       <TableRow>
                         <TableCell>VARIABLE</TableCell>
-                        <TableCell>ATTRITION SCORE</TableCell>
+                        <TableCell>(%)</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -626,7 +774,7 @@ const CustomerProfile = () => {
                         shapData.map((item, index) => (
                           <TableRow key={index}>
                             <TableCell>{item.variable}</TableCell>
-                            <TableCell>{item.score.toFixed(6)}</TableCell>
+                            <TableCell>{shapTotal > 0 ? `${((item.score / shapTotal) * 100).toFixed(1)}%` : '0.0%'}</TableCell>
                           </TableRow>
                         ))
                       ) : (
@@ -677,37 +825,34 @@ const CustomerProfile = () => {
             }}
           >
             {/* Gráficas de Attrition */}
-            <Box
-              id="pdf-attrition-charts"
-              sx={{
-                width: '100%',
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' },
-                gap: 2,
-                alignItems: 'stretch',
-                justifyItems: 'stretch',
-              }}
-            >
+            <Box id="pdf-attrition-charts" sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
               <PieCharReasonDeparture
                 dataAttrition={nameCustomer}
                 fieldToAnalyzeProp="attrition_type"
                 showSelector={false}
-                height={300}
+                height={460}
                 title="Attrition Type"
+                showTable
+                showPercentLabels={false}
               />
               <PieCharReasonDeparture
                 dataAttrition={nameCustomer}
                 fieldToAnalyzeProp="attrition_category"
                 showSelector={false}
-                height={300}
+                height={460}
                 title="Attrition Category"
+                showTable
+                showPercentLabels={false}
               />
               <PieCharReasonDeparture
                 dataAttrition={nameCustomer}
                 fieldToAnalyzeProp="attrition_specific_reason"
                 showSelector={false}
-                height={350}
+                height={460}
                 title="Attrition Reason"
+                showTable
+                showPercentLabels={false}
+                pdfFullTable
               />
             </Box>
 
@@ -994,97 +1139,60 @@ const CustomerProfile = () => {
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         {selectedEmployee && (
           <>
-            <DialogTitle sx={{ bgcolor: "#0D4B3B", color: "white", borderRadius: "8px 8px 0 0" }}>
-              ATTRITION RISK INSIGHTS - {selectedEmployee.fullName}
-              <Chip
-                label={selectedEmployee.clasification}
-                color={
-                  selectedEmployee.clasification.toLowerCase().includes("high") ? "error"
-                    : selectedEmployee.clasification.toLowerCase().includes("medium") ? "warning"
-                      : "success"
-                }
-                sx={{ ml: 2 }}
-              />
-            </DialogTitle>
-            <DialogContent dividers>
-              {/* Título */}
-              <Typography variant="h6" fontWeight="bold" gutterBottom>Prioritized Risk Drivers</Typography>
-
-              {/* Contenedor en fila */}
-              <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-                {/* Recuadro 1: Nombre */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column", // Cambia a columna
-                    alignItems: "center",
-                    justifyContent: "center",
-                    p: 2,
-                    bgcolor: "grey.100",
-                    borderRadius: 2,
-                    flex: 1,
-                    minWidth: 100
-                  }}
-                >
-                  <Typography sx={{ fontSize: "2rem", mb: 1 }}>🏢</Typography>
-                  <Typography variant="body1" fontWeight="bold" align="center">
-                    {selectedEmployee.customer}
-                  </Typography>
-                </Box>
-
-                {/* Recuadro 2: Carita + Sentiment */}
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 2,
-                    p: 2,
-                    bgcolor: "grey.100",
-                    borderRadius: 2,
-                    flex: 2
-                  }}
-                >
-                  {/* Carita */}
-                  <Typography
-                    sx={{
-                      fontSize: "2rem",
-                      flexShrink: 0,
-                      display: "flex",
-                      alignItems: "center"
-                    }}
-                  >
-                    {selectedEmployee.calification === "Positive" ? "😀" :
-                      selectedEmployee.calification === "Negative" ? "😞" :
-                        selectedEmployee.calification === "Neutral" ? "😐" :
-                          "🤨"}
-                  </Typography>
-
-                  {/* Texto: Calificación + Sentiment Analysis */}
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="body1" fontWeight="bold" gutterBottom>
-                      {selectedEmployee.calification === "Positive" ? "Positive" :
-                        selectedEmployee.calification === "Negative" ? "Negative" :
-                          selectedEmployee.calification === "Neutral" ? "Neutral" :
-                            "No comments to analyze"}
+            {/* Printable area (title + content) */}
+            <Box id="modal-printable">
+              <DialogTitle sx={{ bgcolor: "#0D4B3B", color: "white", borderRadius: "8px 8px 0 0" }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, overflow: 'hidden', minWidth: 0 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      ATTRITION RISK INSIGHTS - {selectedEmployee.fullName}
                     </Typography>
-                    {sentimentList.length > 0 && (
-                      <Box>
-                        {sentimentList.map((item, index) => (
-                          <Typography
-                            key={index}
-                            variant="body2"
-                            sx={{ color: "text.secondary", mb: 0.5 }}
-                          >
-                            {item}
-                          </Typography>
-                        ))}
-                      </Box>
-                    )}
+                    <Chip
+                      label={selectedEmployee.clasification}
+                      color={
+                        selectedEmployee.clasification.toLowerCase().includes("high") ? "error"
+                          : selectedEmployee.clasification.toLowerCase().includes("medium") ? "warning"
+                            : "success"
+                      }
+                      sx={{ ml: 1, flexShrink: 0 }}
+                    />
                   </Box>
                 </Box>
+              </DialogTitle>
+              <DialogContent dividers>
+                {/* Título */}
+                <Typography variant="h6" fontWeight="bold" gutterBottom>Prioritized Risk Drivers</Typography>
 
-                {/* Recuadro 3: Prioritized Risk Drivers */}
-                {parsed && driversList.length > 0 && (
+                {/* Contenedor en fila */}
+                <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+                  {/* Recuadro 1: Nombre */}
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column", // Cambia a columna
+                      alignItems: "center",
+                      justifyContent: "center",
+                      p: 2,
+                      bgcolor: "grey.100",
+                      borderRadius: 2,
+                      flex: 1,
+                      minWidth: 100
+                    }}
+                  >
+                    <Typography sx={{ fontSize: "2rem", mb: 1 }}>🏢</Typography>
+                    <Typography variant="body1" fontWeight="bold" align="center">
+                      {selectedEmployee.customer}
+                    </Typography>
+                    {/* Salary level (sección separada con mayor espacio arriba) */}
+                    <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <Typography sx={{ fontSize: "2rem", mb: 1 }}>💲</Typography>
+                      <Typography variant="body1" fontWeight="bold" align="center">
+                        {employeeSalaryLevel ?? "N/A"}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Recuadro 2: Carita + Sentiment */}
                   <Box
                     sx={{
                       display: "flex",
@@ -1093,11 +1201,10 @@ const CustomerProfile = () => {
                       p: 2,
                       bgcolor: "grey.100",
                       borderRadius: 2,
-                      flex: 2,
-                      minWidth: 280
+                      flex: 2
                     }}
                   >
-                    {/* Emoji de riesgo */}
+                    {/* Carita */}
                     <Typography
                       sx={{
                         fontSize: "2rem",
@@ -1106,119 +1213,186 @@ const CustomerProfile = () => {
                         alignItems: "center"
                       }}
                     >
-                      {selectedEmployee.clasification.toLowerCase().includes("high") ? "❌" :
-                        selectedEmployee.clasification.toLowerCase().includes("medium") ? "⚠️" :
-                          selectedEmployee.clasification.toLowerCase().includes("low") ? "✅" :
-                            "⚪"}
+                      {selectedEmployee.calification === "Positive" ? "😀" :
+                        selectedEmployee.calification === "Negative" ? "😞" :
+                          selectedEmployee.calification === "Neutral" ? "😐" :
+                            "🤨"}
                     </Typography>
 
-                    {/* Texto y lista de drivers */}
+                    {/* Texto: Calificación + Sentiment Analysis */}
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="body1" fontWeight="bold" gutterBottom>
-                        Prioritized Risk Drivers
+                        {selectedEmployee.calification === "Positive" ? "Positive" :
+                          selectedEmployee.calification === "Negative" ? "Negative" :
+                            selectedEmployee.calification === "Neutral" ? "Neutral" :
+                              "No comments to analyze"}
                       </Typography>
-                      {driversList.map((item, index) => (
-                        <Typography
-                          key={index}
-                          variant="body2"
-                          sx={{ color: "text.secondary", mb: 1 }}
-                        >
-                          • {item}
-                        </Typography>
-                      ))}
+                      {sentimentList.length > 0 && (
+                        <Box>
+                          {sentimentList.map((item, index) => (
+                            <Typography
+                              key={index}
+                              variant="body2"
+                              sx={{ color: "text.secondary", mb: 0.5 }}
+                            >
+                              {item}
+                            </Typography>
+                          ))}
+                        </Box>
+                      )}
                     </Box>
                   </Box>
-                )}
-              </Box>
 
-              {/* Overall Situation Assessment */}
-              {parsed && assessmentList.length > 0 && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "flex-start",
-                    gap: 2,
-                    p: 2,
-                    bgcolor: "grey.100",
-                    borderRadius: 2,
-                    mb: 2
-                  }}
-                >
-                  {/* Emoji de assessment */}
-                  <Typography
+                  {/* Recuadro 3: Prioritized Risk Drivers */}
+                  {parsed && driversList.length > 0 && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 2,
+                        p: 2,
+                        bgcolor: "grey.100",
+                        borderRadius: 2,
+                        flex: 2,
+                        minWidth: 280
+                      }}
+                    >
+                      {/* Emoji de riesgo */}
+                      <Typography
+                        sx={{
+                          fontSize: "2rem",
+                          flexShrink: 0,
+                          display: "flex",
+                          alignItems: "center"
+                        }}
+                      >
+                        {selectedEmployee.clasification.toLowerCase().includes("high") ? "❌" :
+                          selectedEmployee.clasification.toLowerCase().includes("medium") ? "⚠️" :
+                            selectedEmployee.clasification.toLowerCase().includes("low") ? "✅" :
+                              "⚪"}
+                      </Typography>
+
+                      {/* Texto y lista de drivers */}
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body1" fontWeight="bold" gutterBottom>
+                          Prioritized Risk Drivers
+                        </Typography>
+                        {driversList.map((item, index) => (
+                          <Typography
+                            key={index}
+                            variant="body2"
+                            sx={{ color: "text.secondary", mb: 1 }}
+                          >
+                            • {item}
+                          </Typography>
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Overall Situation Assessment */}
+                {parsed && assessmentList.length > 0 && (
+                  <Box
                     sx={{
-                      fontSize: "2rem",
-                      flexShrink: 0,
                       display: "flex",
-                      alignItems: "center"
+                      alignItems: "flex-start",
+                      gap: 2,
+                      p: 2,
+                      bgcolor: "grey.100",
+                      borderRadius: 2,
+                      mb: 2
                     }}
                   >
-                    📝
-                  </Typography>
-                  {/* Texto y lista de assessment */}
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6" gutterBottom>
-                      Overall Situation Assessment
+                    {/* Emoji de assessment */}
+                    <Typography
+                      sx={{
+                        fontSize: "2rem",
+                        flexShrink: 0,
+                        display: "flex",
+                        alignItems: "center"
+                      }}
+                    >
+                      📝
                     </Typography>
-                    <ul style={{ margin: 0, paddingLeft: "20px" }}>
-                      {assessmentList.map((item, index) => (
-                        <li key={index}>{item}</li>
-                      ))}
-                    </ul>
-                  </Box>
-                </Box>
-              )}
-
-              {/* Recommended Actions: split into two boxes with spacing */}
-              {parsed && (actionsUsHtml || actionsClientHtml || actionsList.length > 0) && (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2 }}>
-                  {actionsUsHtml && (
-                    <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2, display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                      <Typography sx={{ fontSize: '2rem', flexShrink: 0, display: 'flex', alignItems: 'center' }}>🛠️</Typography>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 800 }}>
-                          Controllable by Us
-                        </Typography>
-                        <Box
-                          sx={{ whiteSpace: 'pre-line' }}
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(actionsUsHtml) }}
-                        />
-                      </Box>
-                    </Box>
-                  )}
-                  {actionsClientHtml && (
-                    <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2, display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                      <Typography sx={{ fontSize: '2rem', flexShrink: 0, display: 'flex', alignItems: 'center' }}>🤝</Typography>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 800 }}>
-                          Controllable by the Client
-                        </Typography>
-                        <Box
-                          sx={{ whiteSpace: 'pre-line' }}
-                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(actionsClientHtml) }}
-                        />
-                      </Box>
-                    </Box>
-                  )}
-                  {!actionsUsHtml && !actionsClientHtml && actionsList.length > 0 && (
-                    <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+                    {/* Texto y lista de assessment */}
+                    <Box sx={{ flex: 1 }}>
                       <Typography variant="h6" gutterBottom>
-                        Recommended Actions
+                        Overall Situation Assessment
                       </Typography>
-                      <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                        {actionsList.map((item, index) => (
-                          <li key={index} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }} />
+                      <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                        {assessmentList.map((item, index) => (
+                          <li key={index}>{item}</li>
                         ))}
                       </ul>
                     </Box>
-                  )}
-                </Box>
-              )}
+                  </Box>
+                )}
 
-              {!parsed && <Typography>No analysis available.</Typography>}
-            </DialogContent>
-            <DialogActions>
+                {/* Recommended Actions: split into two boxes with spacing */}
+                {parsed && (actionsUsHtml || actionsClientHtml || actionsList.length > 0) && (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 2 }}>
+                    {actionsUsHtml && (
+                      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2, display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                        <Typography sx={{ fontSize: '2rem', flexShrink: 0, display: 'flex', alignItems: 'center' }}>🛠️</Typography>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="h6" gutterBottom sx={{ fontWeight: 800 }}>
+                            Controllable by Us
+                          </Typography>
+                          <Box
+                            sx={{ whiteSpace: 'pre-line' }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(actionsUsHtml) }}
+                          />
+                        </Box>
+                      </Box>
+                    )}
+                    {actionsClientHtml && (
+                      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2, display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                        <Typography sx={{ fontSize: '2rem', flexShrink: 0, display: 'flex', alignItems: 'center' }}>🤝</Typography>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="h6" gutterBottom sx={{ fontWeight: 800 }}>
+                            Controllable by the Client
+                          </Typography>
+                          <Box
+                            sx={{ whiteSpace: 'pre-line' }}
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(actionsClientHtml) }}
+                          />
+                        </Box>
+                      </Box>
+                    )}
+                    {!actionsUsHtml && !actionsClientHtml && actionsList.length > 0 && (
+                      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+                        <Typography variant="h6" gutterBottom>
+                          Recommended Actions
+                        </Typography>
+                        <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                          {actionsList.map((item, index) => (
+                            <li key={index} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(item) }} />
+                          ))}
+                        </ul>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {!parsed && <Typography>No analysis available.</Typography>}
+              </DialogContent>
+            </Box>
+            <DialogActions sx={{ position: 'sticky', bottom: 0, bgcolor: '#fff', borderTop: '1px solid #eee', zIndex: 1 }}>
               <Button
+                className="no-print"
+                onClick={handleGenerateModalPdf}
+                variant="contained"
+                sx={{
+                  backgroundColor: "#0D4B3B",
+                  color: "#ffffff",
+                  "&:hover": { backgroundColor: "#0a3d32" },
+                }}
+              >
+                Generate PDF
+              </Button>
+              <Button
+                className="no-print"
                 onClick={handleClose}
                 variant="contained"
                 sx={{

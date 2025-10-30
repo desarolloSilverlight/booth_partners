@@ -49,6 +49,7 @@ const ShowAttritionEmployeeCustomer = () => {
     // estado para el Dialog
     const [open, setOpen] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<attritionEmployeeCustomer | null>(null);
+    const [employeeSalaryLevel, setEmployeeSalaryLevel] = useState<string | null>(null);
 
     const cliente = params.get("cliente");
     const riesgo = params.get("riesgo");
@@ -194,6 +195,42 @@ const ShowAttritionEmployeeCustomer = () => {
     const handleOpen = (employee: attritionEmployeeCustomer) => {
         setSelectedEmployee(employee);
         setOpen(true);
+
+        // Reset salary level and fetch from API using employee id (fkid_employe)
+        setEmployeeSalaryLevel(null);
+        try {
+            const token = sessionStorage.getItem("token");
+            if (!token) return handleUnauthorized();
+
+            const myHeaders = new Headers();
+            myHeaders.append("authToken", token);
+            myHeaders.append("Content-Type", "application/json");
+
+            const requestOptions: RequestInit = {
+                method: "POST",
+                headers: myHeaders,
+                body: JSON.stringify({ id: employee.id }),
+                redirect: "follow",
+            };
+
+            fetch(`${config.rutaApi}employees_profile`, requestOptions)
+                .then((response) => {
+                    if (response.status === 401) return handleUnauthorized();
+                    return response.json();
+                })
+                .then((result) => {
+                    const dataEmp = result?.dataEmployee;
+                    if (dataEmp) {
+                        const sl = dataEmp.salary_level ?? dataEmp.salaryLevel ?? null;
+                        setEmployeeSalaryLevel(sl);
+                    }
+                })
+                .catch((err) => {
+                    console.error("Error fetching employee profile:", err);
+                });
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     const handleClose = () => {
@@ -407,6 +444,13 @@ const ShowAttritionEmployeeCustomer = () => {
                                     <Typography variant="body1" fontWeight="bold" align="center">
                                         {selectedEmployee.customer}
                                     </Typography>
+                                    {/* Salary level (sección separada con mayor espacio arriba) */}
+                                    <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                        <Typography sx={{ fontSize: "2rem", mb: 1 }}>💲</Typography>
+                                        <Typography variant="body1" fontWeight="bold" align="center">
+                                            {employeeSalaryLevel ?? "N/A"}
+                                        </Typography>
+                                    </Box>
                                 </Box>
 
                                 {/* Recuadro 2: Carita + Sentiment */}

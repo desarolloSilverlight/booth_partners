@@ -6,6 +6,12 @@ import {
   Select,
   MenuItem,
   Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableContainer,
 } from "@mui/material";
 import DashboardCard from "../shared/DashboardCard";
 import config from "src/config/config";
@@ -21,6 +27,9 @@ interface PieCharReasonDepartureProps {
   showSelector?: boolean;
   height?: number; // Altura mínima del contenedor del gráfico
   title?: string; // Título opcional sobre el gráfico
+  showTable?: boolean; // Muestra tabla de valores al lado del gráfico
+  showPercentLabels?: boolean; // Muestra porcentajes sobre el gráfico
+  pdfFullTable?: boolean; // Para PDF: renderiza una copia completa de la tabla sin scroll
 }
 
 interface AttritionItem {
@@ -36,6 +45,9 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
   showSelector = true,
   height = 400,
   title,
+  showTable = false,
+  showPercentLabels = true,
+  pdfFullTable = false,
 }) => {
   const theme = useTheme();
   const [chartSeries, setChartSeries] = useState<number[]>([]);
@@ -111,18 +123,20 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
     return base + rows * perRow;
   }, [chartLabels, height]);
 
+  // Brand palette (Lus)
   const colors = [
-    "#3608df",
-    "#920a80",
-    "#d16983ff",
-    "#dd4719",
-    "#ffb347",
-    "#6fcf97",
-    "#2f80ed",
-    "#f2994a",
-    "#27ae60",
-    "#a020f0",
-    "#e91e63",
+    // Primary
+    "#589992", // Lake Green
+    "#D6EDE3", // Mint
+    // Secondary
+    "#C9ADCD", // Mauve
+    "#E1DDED", // Lilac
+    "#8581B5", // Violet
+    "#D9E8F4", // Rain
+    "#255C82", // Blue
+    "#707070", // Stone
+    "#AAAAAA", // Silver
+    "#C7C5C4", // Timberwolf
   ];
 
   const options: any = {
@@ -152,7 +166,7 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
       },
     },
     dataLabels: {
-      enabled: true,
+      enabled: !!showPercentLabels,
       formatter: (_val: number, opts: any) => {
         try {
           const series: number[] = opts?.w?.globals?.series || [];
@@ -179,11 +193,23 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
     tooltip: {
       theme: 'dark',
       fillSeriesColor: false,
+      y: {
+        // Oculta cualquier valor numérico en el tooltip
+        formatter: () => '',
+        title: {
+          formatter: () => '',
+        },
+      },
       custom: function ({ seriesIndex, w }: any) {
         try {
           const label = w?.config?.labels?.[seriesIndex] ?? '';
           const color = w?.config?.colors?.[seriesIndex] ?? '#999';
-          return `\n            <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;">\n              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color}"></span>\n              <span>${label}</span>\n            </div>\n          `;
+          return `
+            <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;color:#ffffff;">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color}"></span>
+              <span style="color:#ffffff;">${label}</span>
+            </div>
+          `;
         } catch {
           return '';
         }
@@ -191,6 +217,16 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
     },
     stroke: { show: false },
   };
+
+  // Tabla de valores (label, %, count)
+  const tableRows = useMemo(() => {
+    const total = chartSeries.reduce((a, b) => a + b, 0) || 1;
+    return chartLabels.map((label, i) => {
+      const count = chartSeries[i] || 0;
+      const pct = (count / total) * 100;
+      return { label, count, pct };
+    }).sort((a, b) => b.count - a.count);
+  }, [chartLabels, chartSeries]);
 
   return (
     <DashboardCard>
@@ -220,28 +256,130 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
         </Box>
       )}
 
-      <Box
-        sx={{
-          flex: 1,
-          minWidth: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: chartHeight,
-        }}
-      >
-        <Suspense fallback={<CircularProgress />}>
-          {loading ? (
-            <CircularProgress />
-          ) : chartSeries.length > 0 ? (
-            <Chart options={options} series={chartSeries} type="pie" height={chartHeight} width="100%" />
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              No data available
-            </Typography>
+      {showTable ? (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: 2,
+            alignItems: 'stretch',
+          }}
+        >
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              minHeight: chartHeight,
+            }}
+          >
+            <Suspense fallback={<CircularProgress />}>
+              {loading ? (
+                <CircularProgress />
+              ) : chartSeries.length > 0 ? (
+                <Chart options={options} series={chartSeries} type="pie" height={chartHeight} width="100%" />
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  No data available
+                </Typography>
+              )}
+            </Suspense>
+          </Box>
+
+          <TableContainer sx={{
+            border: '1px solid #eee',
+            borderRadius: 2,
+            maxHeight: chartHeight,
+            overflow: 'auto',
+          }}>
+            <Table size="small" aria-label="values table" sx={{ whiteSpace: 'nowrap' }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Variable</TableCell>
+                  <TableCell align="right">%</TableCell>
+                  <TableCell align="right">Count</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tableRows.length > 0 ? (
+                  tableRows.map((r, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{r.label}</TableCell>
+                      <TableCell align="right">{r.pct.toFixed(1)}%</TableCell>
+                      <TableCell align="right">{r.count}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={3}>
+                      <Typography variant="body2" color="text.secondary" textAlign="center">No data available</Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Tabla completa SOLO para PDF (sin scroll) */}
+          {pdfFullTable && (
+            <Box data-pdf-only="true" sx={{ display: 'none' }}>
+              <TableContainer sx={{ border: '1px solid #eee', borderRadius: 2 }}>
+                <Table size="small" aria-label="values table full" sx={{ whiteSpace: 'nowrap' }}>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Variable</TableCell>
+                      <TableCell align="right">%</TableCell>
+                      <TableCell align="right">Count</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {tableRows.length > 0 ? (
+                      tableRows.map((r, idx) => (
+                        <TableRow key={`full-${idx}`}>
+                          <TableCell>{r.label}</TableCell>
+                          <TableCell align="right">{r.pct.toFixed(1)}%</TableCell>
+                          <TableCell align="right">{r.count}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3}>
+                          <Typography variant="body2" color="text.secondary" textAlign="center">No data available</Typography>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
           )}
-        </Suspense>
-      </Box>
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            minHeight: chartHeight,
+          }}
+        >
+          <Suspense fallback={<CircularProgress />}>
+            {loading ? (
+              <CircularProgress />
+            ) : chartSeries.length > 0 ? (
+              <Chart options={options} series={chartSeries} type="pie" height={chartHeight} width="100%" />
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                No data available
+              </Typography>
+            )}
+          </Suspense>
+        </Box>
+      )}
     </DashboardCard>
   );
 };

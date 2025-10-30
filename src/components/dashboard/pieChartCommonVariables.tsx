@@ -8,9 +8,10 @@ const Chart = React.lazy(() => import("react-apexcharts"));
 
 interface PieChartCommonVariablesProps {
   dataShap: string;
+  height?: number; // optional override to fix chart height
 }
 
-const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataShap }) => {
+const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataShap, height }) => {
   const theme = useTheme();
   const [series, setSeries] = useState<number[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
@@ -43,6 +44,8 @@ const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataS
     const perRow = 28; // espacio por fila de leyenda
     return base + rows * perRow;
   }, [labels]);
+  // If an explicit height is provided, use it; otherwise use dynamic height
+  const finalHeight = height ?? chartHeight;
 
   useEffect(() => {
     const token = sessionStorage.getItem("token");
@@ -77,12 +80,21 @@ const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataS
       .catch((error) => console.error("Error fetching shap data for chart:", error));
   }, [dataShap]);
 
-  const colors = ["#00E396", "#FEB019", "#008FFB", "#FF4560", "#775DD0"];
+  // Brand palette (Lus)
+  const colors = [
+    // Primary
+    "#589992", // Lake Green
+    // Secondary
+    "#C9ADCD", // Mauve
+    "#E1DDED", // Lilac
+    "#8581B5", // Violet
+    "#255C82", // Blue
+  ];
 
   const options: any = {
     chart: {
       type: "pie",
-      height: chartHeight,
+      height: finalHeight,
       toolbar: { show: false },
     },
     labels: displayLabels.length > 0 ? displayLabels : ["Loading..."],
@@ -107,8 +119,26 @@ const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataS
       enabled: false,
     },
     tooltip: {
+      theme: 'dark',
+      fillSeriesColor: false,
       y: {
-        formatter: (val: number) => val.toFixed(3),
+        // ocultar cualquier valor numérico en el tooltip
+        formatter: () => '',
+        title: { formatter: () => '' },
+      },
+      custom: function ({ seriesIndex, w }: any) {
+        try {
+          const label = w?.config?.labels?.[seriesIndex] ?? '';
+          const color = w?.config?.colors?.[seriesIndex] ?? '#999';
+          return `
+            <div style="padding:6px 8px;display:flex;align-items:center;gap:6px;color:#ffffff;">
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color}"></span>
+              <span style="color:#ffffff;">${label}</span>
+            </div>
+          `;
+        } catch {
+          return '';
+        }
       },
     },
     stroke: {
@@ -118,13 +148,13 @@ const PieChartCommonVariables: React.FC<PieChartCommonVariablesProps> = ({ dataS
 
   return (
     <DashboardCard title="Major Risk Drivers" subtitle="">
-      <Box height={`${chartHeight}px`}>
+      <Box height={`${finalHeight}px`}>
         <Suspense fallback={<div>Cargando gráfico...</div>}>
           <Chart
             options={options}
             series={series.length > 0 ? series : [0, 0, 0, 0]}
             type="pie"
-            height={chartHeight}
+            height={finalHeight}
           />
         </Suspense>
       </Box>

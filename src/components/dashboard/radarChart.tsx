@@ -91,15 +91,15 @@ const RadarChart = () => {
         },
         markers: {
             size: 5,
-            colors: ["#FF4560"],
+            colors: ["#255C82"],
         },
         stroke: {
             width: 2,
-            colors: ["#FF4560"],
+            colors: ["#255C82"],
         },
         fill: {
             opacity: 0.1,
-            colors: ["#FF4560"],
+            colors: ["#255C82"],
         },
         yaxis: {
             show: false,
