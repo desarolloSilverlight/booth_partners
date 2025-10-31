@@ -85,11 +85,9 @@ const SalesOverview: React.FC = () => {
     const today = new Date();
     const currentYear = today.getFullYear();
     const prevYear = currentYear - 1;
+    const prevPrevYear = prevYear - 1;
 
-    const allCustomers = Array.from(new Set(employees.map((e) => e.customer || "Unknown Client"))).sort();
-
-    const seriesPrev: number[] = [];
-    const seriesCurr: number[] = [];
+    const allCustomers = Array.from(new Set(employees.map((e) => e.customer || "Unknown Client")));
 
     const startFields = ["start_date", "hire_date", "created_at", "active_since", "fecha_ingreso"];
     const endFields = ["active_until", "end_date", "terminacion_date", "fecha_salida"];
@@ -131,31 +129,23 @@ const SalesOverview: React.FC = () => {
       return leaverKeys.size;
     };
 
-    for (const customer of allCustomers) {
+    const endOfYear = (year: number) => new Date(year, 11, 31, 23, 59, 59, 999);
+
+    // Construir datos por cliente con valores "reales" y de "plot" (para clics)
+    const rows = allCustomers.map((customer) => {
       const clientEmployees = employees.filter((e) => (e.customer || "Unknown Client") === customer);
 
-      // Año anterior: 1 enero → 31 diciembre
-      const startPrev = new Date(prevYear, 0, 1);
-      const endPrev = new Date(prevYear, 11, 31, 23, 59, 59, 999);
-
-      // Año actual: 1 enero → hoy
-      const startCurr = new Date(currentYear, 0, 1);
-      const endCurr = today; // hasta hoy
-
-      // empleados al inicio y final
-      const empJan1Prev = countActiveAtDate(clientEmployees, startPrev);
-      const empEndPrev = countActiveAtDate(clientEmployees, endPrev);
-
-      const empJan1Curr = countActiveAtDate(clientEmployees, startCurr);
-      const empEndCurr = countActiveAtDate(clientEmployees, endCurr);
+      // Empleados al final de los años relevantes
+      const empEndPrevPrev = countActiveAtDate(clientEmployees, endOfYear(prevPrevYear));
+      const empEndPrev = countActiveAtDate(clientEmployees, endOfYear(prevYear));
+      const empEndCurr = countActiveAtDate(clientEmployees, today); // activos hoy
 
       const leaversPrev = countLeaversInYear(clientEmployees, prevYear);
       const leaversCurr = countLeaversInYear(clientEmployees, currentYear);
 
-      // promedio simple
-      const avgPrev = (empJan1Prev + empEndPrev) / 2;
-      const avgCurr = (empJan1Curr + empEndCurr) / 2;
-
+      // Fórmula solicitada:
+      //   Año actual: attrCurr = leaversCurr / AVERAGE(empEndPrev, empEndCurr) * 100
+      //   Año anterior: attrPrev = leaversPrev / AVERAGE(empEndPrevPrev, empEndPrev) * 100
       const calcAttritionPercent = (leavers: number, avgWorkforce: number) => {
         if (avgWorkforce > 0) {
           const raw = (leavers / avgWorkforce) * 100;
@@ -167,19 +157,68 @@ const SalesOverview: React.FC = () => {
         }
       };
 
-      const attrPrev = calcAttritionPercent(leaversPrev, avgPrev);
-      const attrCurr = calcAttritionPercent(leaversCurr, avgCurr);
+      const avgCurr = (empEndPrev + empEndCurr) / 2;
+      const avgPrev = (empEndPrevPrev + empEndPrev) / 2;
 
-      // 🔹 segundo ajuste → fuerza una barra visible aunque sea 0%
-      seriesPrev.push(attrPrev > 0 ? attrPrev : 0.1);
-      seriesCurr.push(attrCurr > 0 ? attrCurr : 0.1);
-    }
+      const attrCurrReal = calcAttritionPercent(leaversCurr, avgCurr);
+      const attrPrevReal = calcAttritionPercent(leaversPrev, avgPrev);
 
-    setCategories(allCustomers);
+      const epsilon = 0.1; // mantiene región clickable, pero la haremos invisible con color
+      const attrCurrPlot = attrCurrReal > 0 ? attrCurrReal : epsilon;
+      const attrPrevPlot = attrPrevReal > 0 ? attrPrevReal : epsilon;
+
+      return {
+        customer,
+        prevReal: attrPrevReal,
+        currReal: attrCurrReal,
+        prevPlot: attrPrevPlot,
+        currPlot: attrCurrPlot,
+      };
+    });
+
+    rows.sort((a, b) => {
+      const aHas100 = a.currReal === 100 || a.prevReal === 100;
+      const bHas100 = b.currReal === 100 || b.prevReal === 100;
+      const aBothZero = a.currReal === 0 && a.prevReal === 0;
+      const bBothZero = b.currReal === 0 && b.prevReal === 0;
+      const aBothPos = a.currReal > 0 && a.prevReal > 0;
+      const bBothPos = b.currReal > 0 && b.prevReal > 0;
+
+      const aRank = (aBothPos && !aHas100) ? 0 : (aHas100 ? 1 : (aBothZero ? 2 : 1));
+      const bRank = (bBothPos && !bHas100) ? 0 : (bHas100 ? 1 : (bBothZero ? 2 : 1));
+
+      if (aRank !== bRank) return aRank - bRank;
+      // Dentro del mismo grupo, ordenar por % año actual desc, luego anterior desc, luego nombre
+      return (b.currReal - a.currReal) || (b.prevReal - a.prevReal) || a.customer.localeCompare(b.customer);
+    });
+
+    const sortedCategories = rows.map((r) => r.customer);
+
+    // Series como objetos de punto para controlar el color por datapoint
+    const basePrev = "#EDD9ED";
+    const baseCurr = "#CD9ACD";
+
+    const seriesPrevReal = rows.map((r) => r.prevReal);
+    const seriesCurrReal = rows.map((r) => r.currReal);
+
+    const seriesPrevPlot = rows.map((r) => ({
+      x: r.customer,
+      y: r.prevPlot,
+      real: r.prevReal,
+      fillColor: r.prevReal === 0 ? "rgba(0,0,0,0)" : basePrev,
+    }));
+    const seriesCurrPlot = rows.map((r) => ({
+      x: r.customer,
+      y: r.currPlot,
+      real: r.currReal,
+      fillColor: r.currReal === 0 ? "rgba(0,0,0,0)" : baseCurr,
+    }));
+
+    setCategories(sortedCategories);
     setSeriesData([
-      { name: `${prevYear}`, data: seriesPrev },
-      { name: `${currentYear}`, data: seriesCurr },
-    ]);
+      { name: `${prevYear}`, data: seriesPrevPlot, _real: seriesPrevReal },
+      { name: `${currentYear}`, data: seriesCurrPlot, _real: seriesCurrReal },
+    ] as any);
   };
 
   const optionscolumnchart: any = {
@@ -197,12 +236,15 @@ const SalesOverview: React.FC = () => {
         },
       },
     },
+    // Colores por serie (los datapoints usan fillColor personalizado si son 0%)
     colors: ["#EDD9ED", "#CD9ACD"],
     plotOptions: {
       bar: {
         horizontal: false,
         borderRadius: 6,
         columnWidth: "60%",
+        // stacked mantiene una "sombra" clickeable si fuese necesario en futuras mejoras
+        // stacked: true,
       },
     },
     grid: { show: true, strokeDashArray: 3, borderColor: "rgba(0,0,0,.08)" },
@@ -218,7 +260,20 @@ const SalesOverview: React.FC = () => {
     },
     stroke: { show: true, width: 2, colors: ["transparent"] },
     dataLabels: { enabled: false },
-    tooltip: { y: { formatter: (val: number) => `${val}%` } },
+    tooltip: {
+      y: {
+        formatter: (val: number, opts: any) => {
+          try {
+            const dp = opts?.w?.config?.series?.[opts.seriesIndex]?.data?.[opts.dataPointIndex];
+            const real = typeof dp?.real === 'number' ? dp.real : undefined;
+            const n = typeof real === 'number' ? real : val;
+            return `${Number(n).toFixed(1)}%`;
+          } catch {
+            return `${val.toFixed?.(1) ?? val}%`;
+          }
+        },
+      },
+    },
     legend: { position: "top" },
   };
 

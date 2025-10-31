@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import PieCharReasonDeparture from "src/components/dashboard/pieCharReasonDeparture";
 import PieChartCommonVariables from "src/components/dashboard/pieChartCommonVariables";
+import JobSatisfactionCustomer from "src/components/dashboard/jobSatifationCustomer";
 import BaseCard from "src/components/BaseCard/BaseCard";
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -52,6 +53,9 @@ const CustomerProfile = () => {
   const [attritionData, setAttritionData] = useState<any[]>([]);
   const [shapData, setShapData] = useState<{ variable: string; score: number }[]>([]);
   const [alertQueue, setAlertQueue] = useState<{ msg: string; severity: "info" | "success" | "error" }[]>([]);
+  // Job Satisfaction aggregation for table
+  const [jobSatCounts, setJobSatCounts] = useState({ Positive: 0, Negative: 0, Neutral: 0, NoComment: 0 });
+  const jobSatTotal = jobSatCounts.Positive + jobSatCounts.Negative + jobSatCounts.Neutral + jobSatCounts.NoComment;
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(8);
@@ -210,7 +214,60 @@ const CustomerProfile = () => {
         setLoading(false);
       });
 
+    // Fetch Job Satisfaction by customer for the right-side table (best effort)
+    fetch(`${config.rutaApi}show_satisfaction_job`, requestOptions)
+      .then((response) => {
+        if (response.status === 401) return handleUnauthorized();
+        return response.json();
+      })
+      .then((res) => {
+        const counts = { Positive: 0, Negative: 0, Neutral: 0, NoComment: 0 } as typeof jobSatCounts;
+        const arr: any[] = Array.isArray(res) ? res : (res?.data ?? res?.dataEmployees ?? res?.dataSatisfaction ?? res?.list ?? []);
+        if (Array.isArray(arr)) {
+          arr.forEach((emp: any) => {
+            try {
+              const raw = emp?.calification ?? "";
+              if (!raw || typeof raw !== 'string') { counts.NoComment += 1; return; }
+              const fixed = raw.replace(/'/g, '"');
+              const obj = JSON.parse(fixed);
+              let nivel: string = obj?.Nivel ?? '';
+              if (nivel === 'Positivo') nivel = 'Positive';
+              if (nivel === 'Negativo') nivel = 'Negative';
+              if (nivel === 'Neutro') nivel = 'Neutral';
+              if (/no\s*comment/i.test(nivel) || /no\s*comments\s*to\s*analyze/i.test(nivel)) nivel = 'No comment';
+              if (nivel === 'No comment') counts.NoComment += 1;
+              else if (nivel === 'Positive') counts.Positive += 1;
+              else if (nivel === 'Negative') counts.Negative += 1;
+              else if (nivel === 'Neutral') counts.Neutral += 1;
+              else counts.NoComment += 1;
+            } catch { counts.NoComment += 1; }
+          });
+        }
+        setJobSatCounts(counts);
+      })
+      .catch((error) => {
+        console.error('Error fetching job satisfaction:', error);
+      });
+
   }, [nameCustomer, navigate]);
+
+  // Fallback: derive Job Satisfaction counts from predictive_analitics if API is empty/unavailable
+  useEffect(() => {
+    const anyFromApi = jobSatCounts.Positive + jobSatCounts.Negative + jobSatCounts.Neutral + jobSatCounts.NoComment;
+    if (anyFromApi > 0) return; // already have API counts
+    if (!predictive_analitics || predictive_analitics.length === 0) return;
+    const counts = { Positive: 0, Negative: 0, Neutral: 0, NoComment: 0 };
+    predictive_analitics.forEach((it) => {
+      let nivel = (it.calification || '').trim();
+      if (!nivel) { counts.NoComment += 1; return; }
+      if (/^positive$/i.test(nivel) || /^positivo$/i.test(nivel)) counts.Positive += 1;
+      else if (/^negative$/i.test(nivel) || /^negativo$/i.test(nivel)) counts.Negative += 1;
+      else if (/^neutral$/i.test(nivel) || /^neutro$/i.test(nivel)) counts.Neutral += 1;
+      else if (/no\s*comment/i.test(nivel) || /no\s*comments\s*to\s*analyze/i.test(nivel)) counts.NoComment += 1;
+      else counts.NoComment += 1;
+    });
+    setJobSatCounts(counts);
+  }, [predictive_analitics]);
 
   useEffect(() => {
     if (searchTerm === "") {
@@ -467,7 +524,10 @@ const CustomerProfile = () => {
       // Definición de páginas: cada sub-arreglo son elementos a ubicar en la misma página
       const pageDefs: string[][] = [
         ['pdf-shap'],
-        ['pdf-attrition-charts'],
+        ['job-satisfaction'],
+        ['pdf-attrition-chart-1'],
+        ['pdf-attrition-chart-2'],
+        ['pdf-attrition-chart-3'],
         ['pdf-attrition-table'],
         ['pdf-risk-count'],
         ['pdf-predictive-table'],
@@ -544,6 +604,23 @@ const CustomerProfile = () => {
         });
       };
 
+      // Ocultar elementos marcados para ocultarse en PDF (e.g., tablas laterales duplicadas)
+      const applyHideOnPdf = (root: HTMLElement) => {
+        const nodes = root.querySelectorAll('[data-hide-on-pdf="true"]') as NodeListOf<HTMLElement>;
+        nodes.forEach((n) => {
+          (n as any).dataset.prevDisplay = n.style.display || '';
+          n.style.display = 'none';
+        });
+      };
+      const revertHideOnPdf = (root: HTMLElement) => {
+        const nodes = root.querySelectorAll('[data-hide-on-pdf="true"]') as NodeListOf<HTMLElement>;
+        nodes.forEach((n) => {
+          const el = n as HTMLElement & { dataset: any };
+          if (el.dataset.prevDisplay !== undefined) el.style.display = el.dataset.prevDisplay;
+          delete el.dataset.prevDisplay;
+        });
+      };
+
       for (const group of pageDefs) {
         const elements = await Promise.all(
           group.map(async (id) => {
@@ -560,6 +637,8 @@ const CustomerProfile = () => {
             }
             // Mostrar bloques solo-PDF dentro del contenedor (ej. total empleados en Risk Count)
             showPdfOnlyBlocks(el);
+            // Ocultar elementos marcados para ocultar en PDF (evitar duplicados)
+            applyHideOnPdf(el);
             const canvas = await html2canvas(el as HTMLElement, {
               scale: 2,
               useCORS: true,
@@ -574,6 +653,7 @@ const CustomerProfile = () => {
               revertHideColumn(el, 6);
             }
             hidePdfOnlyBlocks(el);
+            revertHideOnPdf(el);
             return { id, canvas, img: canvas.toDataURL('image/png') };
           })
         );
@@ -689,7 +769,7 @@ const CustomerProfile = () => {
                 color: '#ffffff',
                 borderRadius: 1,
                 px: 2,
-                py: 1.5,
+                py: 1,
                 textAlign: 'left',
               }}>
                 <Typography variant="h6" sx={{ fontWeight: 800 }}>
@@ -800,6 +880,149 @@ const CustomerProfile = () => {
         </BaseCard>
       </Box>
 
+      {/* Job Satisfaction: chart + breakdown table */}
+      <Box mb={3}>
+        <BaseCard
+          title={
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+                flexWrap: "nowrap",
+                px: 2,
+              }}
+            >
+            </Box>
+          }
+        >
+
+          {/* Job Satisfaction: Chart + Table */}
+          <Box
+            id="job-satisfaction"
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'stretch',
+              gap: 2,
+            }}
+          >
+            {/* Título para pantalla y PDF */}
+            <Box sx={{
+              backgroundColor: '#0D4B3B',
+              color: '#ffffff',
+              borderRadius: 1,
+              px: 2,
+              py: 1,
+            }}>
+              <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                Customer perspective on employees - {nameCustomer}
+              </Typography>
+            </Box>
+            {/* Fila: gráfica y tabla */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', md: 'row' },
+                alignItems: 'stretch',
+                justifyContent: 'space-between',
+                gap: 3,
+              }}
+            >
+              <Box
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minHeight: 400,
+                  "& > *": {
+                    width: "100% !important",
+                    height: "100% !important",
+                  },
+                }}
+              >
+                <JobSatisfactionCustomer dataShap={nameCustomer} height={300} countsOverride={jobSatCounts} />
+              </Box>
+
+              {/* Derecha: tabla */}
+              <Box
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "flex-start",
+                  minHeight: 400, // match chart height and avoid vertical centering gap
+                }}
+              >
+                <TableContainer
+                  sx={{
+                    boxShadow: "none",
+                    border: "1px solid #eee",
+                    borderRadius: 2,
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "flex-start", // place content at top to remove top blank space
+                  }}
+                >
+                  <Table
+                    aria-label="job satisfaction table"
+                    sx={{
+                      whiteSpace: "nowrap",
+                      "& th, & td": {
+                        textAlign: "center",
+                        verticalAlign: "middle",
+                      },
+                      "& th": {
+                        fontWeight: "bold",
+                        fontSize: "0.95rem",
+                        backgroundColor: "#f9f9f9",
+                      },
+                    }}
+                  >
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>CATEGORY</TableCell>
+                        <TableCell>(%)</TableCell>
+                        <TableCell>COUNT</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {[
+                        { label: 'Positive', color: '#589992', count: jobSatCounts.Positive },
+                        { label: 'Negative', color: '#C9ADCD', count: jobSatCounts.Negative },
+                        { label: 'Neutral', color: '#8581B5', count: jobSatCounts.Neutral },
+                        { label: 'No comment', color: '#255C82', count: jobSatCounts.NoComment },
+                      ].map((row, idx) => {
+                        const pct = jobSatTotal > 0 ? ((row.count / jobSatTotal) * 100).toFixed(1) : '0.0';
+                        return (
+                          <TableRow key={idx}>
+                            <TableCell>
+                              <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 1 }}>
+                                <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: row.color }} />
+                                {row.label}
+                              </Box>
+                            </TableCell>
+                            <TableCell>{pct}%</TableCell>
+                            <TableCell>{row.count}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            </Box>
+            {/* cierre contenedor pdf-shap */}
+          </Box>
+        </BaseCard>
+      </Box>
+
       <Box mb={3}>
         <BaseCard
           title={
@@ -826,34 +1049,40 @@ const CustomerProfile = () => {
           >
             {/* Gráficas de Attrition */}
             <Box id="pdf-attrition-charts" sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <PieCharReasonDeparture
-                dataAttrition={nameCustomer}
-                fieldToAnalyzeProp="attrition_type"
-                showSelector={false}
-                height={460}
-                title="Attrition Type"
-                showTable
-                showPercentLabels={false}
-              />
-              <PieCharReasonDeparture
-                dataAttrition={nameCustomer}
-                fieldToAnalyzeProp="attrition_category"
-                showSelector={false}
-                height={460}
-                title="Attrition Category"
-                showTable
-                showPercentLabels={false}
-              />
-              <PieCharReasonDeparture
-                dataAttrition={nameCustomer}
-                fieldToAnalyzeProp="attrition_specific_reason"
-                showSelector={false}
-                height={460}
-                title="Attrition Reason"
-                showTable
-                showPercentLabels={false}
-                pdfFullTable
-              />
+              <Box id="pdf-attrition-chart-1">
+                <PieCharReasonDeparture
+                  dataAttrition={nameCustomer}
+                  fieldToAnalyzeProp="attrition_type"
+                  showSelector={false}
+                  height={460}
+                  title="Attrition Type"
+                  showTable
+                  showPercentLabels={false}
+                />
+              </Box>
+              <Box id="pdf-attrition-chart-2">
+                <PieCharReasonDeparture
+                  dataAttrition={nameCustomer}
+                  fieldToAnalyzeProp="attrition_category"
+                  showSelector={false}
+                  height={460}
+                  title="Attrition Category"
+                  showTable
+                  showPercentLabels={false}
+                />
+              </Box>
+              <Box id="pdf-attrition-chart-3">
+                <PieCharReasonDeparture
+                  dataAttrition={nameCustomer}
+                  fieldToAnalyzeProp="attrition_specific_reason"
+                  showSelector={false}
+                  height={460}
+                  title="Attrition Reason"
+                  showTable
+                  showPercentLabels={false}
+                  pdfFullTable
+                />
+              </Box>
             </Box>
 
             {/* Tabla debajo */}

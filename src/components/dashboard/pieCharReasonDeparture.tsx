@@ -230,11 +230,20 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
 
   return (
     <DashboardCard>
-      {/* Título opcional */}
+      {/* Título con banner estilo brand */}
       {title && (
-        <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-          {title}
-        </Typography>
+        <Box sx={{
+          backgroundColor: '#0D4B3B',
+          color: '#ffffff',
+          borderRadius: 1,
+          px: 2,
+          py: 1,
+          mb: 2,
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+            {title}
+          </Typography>
+        </Box>
       )}
 
       {showSelector && (
@@ -288,7 +297,7 @@ const PieCharReasonDeparture: React.FC<PieCharReasonDepartureProps> = ({
             </Suspense>
           </Box>
 
-          <TableContainer sx={{
+          <TableContainer data-hide-on-pdf={pdfFullTable ? 'true' : undefined} sx={{
             border: '1px solid #eee',
             borderRadius: 2,
             maxHeight: chartHeight,
