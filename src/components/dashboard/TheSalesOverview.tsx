@@ -96,28 +96,11 @@ const SalesOverview: React.FC = () => {
       return emp?.id ?? emp?.employee_id ?? emp?.document_number ?? `${emp?.email ?? ""}__${idx}`;
     };
 
-    // cuenta empleados activos en una fecha D (únicos por key)
-    const countActiveAtDate = (clientEmps: any[], D: Date) => {
-      const seen = new Set<string>();
-      let count = 0;
-      clientEmps.forEach((emp, idx) => {
-        const key = getEmployeeKey(emp, idx);
-        if (seen.has(key)) return;
-        const start = parseDateFromFields(emp, startFields);
-        const end = parseDateFromFields(emp, endFields);
+    // Helpers de fechas
+    const startOfYear = (year: number) => new Date(year, 0, 1, 0, 0, 0, 0);
+    const endOfYear = (year: number) => new Date(year, 11, 31, 23, 59, 59, 999);
 
-        const startedBeforeOrOn = !start || start.getTime() <= D.getTime();
-        const endedBeforeOrOn = end && end.getTime() <= D.getTime(); // si end <= D entonces ya no está activo en D
-
-        if (startedBeforeOrOn && !endedBeforeOrOn) {
-          count++;
-          seen.add(key);
-        }
-      });
-      return count;
-    };
-
-    // número de personas que terminaron dentro del año
+    // Cuenta bajas cuyo end cae en ese año
     const countLeaversInYear = (clientEmps: any[], year: number) => {
       const leaverKeys = new Set<string>();
       clientEmps.forEach((emp, idx) => {
@@ -129,96 +112,77 @@ const SalesOverview: React.FC = () => {
       return leaverKeys.size;
     };
 
-    const endOfYear = (year: number) => new Date(year, 11, 31, 23, 59, 59, 999);
+    // Nuevo denominador: personas únicas que estuvieron activas alguna vez en el periodo [ini, fin] (inclusive)
+    const uniqueActiveInPeriod = (clientEmps: any[], ini: Date, fin: Date) => {
+      const seen = new Set<string>();
+      clientEmps.forEach((emp, idx) => {
+        const key = getEmployeeKey(emp, idx);
+        if (seen.has(key)) return;
 
-    // Construir datos por cliente con valores "reales" y de "plot" (para clics)
+        const s = parseDateFromFields(emp, startFields) ?? new Date(-8640000000000000); 
+        const e = parseDateFromFields(emp, endFields) ?? new Date(8640000000000000);  
+
+        // Intersección de intervalos (inclusiva)
+        if (s.getTime() <= fin.getTime() && e.getTime() >= ini.getTime()) {
+          seen.add(key);
+        }
+      });
+      return seen.size;
+    };
+
     const rows = allCustomers.map((customer) => {
       const clientEmployees = employees.filter((e) => (e.customer || "Unknown Client") === customer);
 
-      // Empleados al final de los años relevantes
-      const empEndPrevPrev = countActiveAtDate(clientEmployees, endOfYear(prevPrevYear));
-      const empEndPrev = countActiveAtDate(clientEmployees, endOfYear(prevYear));
-      const empEndCurr = countActiveAtDate(clientEmployees, today); // activos hoy
+      // Periodos de cálculo
+      const prevIni = startOfYear(prevYear);
+      const prevFin = endOfYear(prevYear);
+      const currIni = startOfYear(currentYear);
+      const currFin = getEndOfPeriodForYear(currentYear); // hoy si es el año actual, de lo contrario 31/dic
 
+      // Numeradores
       const leaversPrev = countLeaversInYear(clientEmployees, prevYear);
       const leaversCurr = countLeaversInYear(clientEmployees, currentYear);
 
-      // Fórmula solicitada:
-      //   Año actual: attrCurr = leaversCurr / AVERAGE(empEndPrev, empEndCurr) * 100
-      //   Año anterior: attrPrev = leaversPrev / AVERAGE(empEndPrevPrev, empEndPrev) * 100
-      const calcAttritionPercent = (leavers: number, avgWorkforce: number) => {
-        if (avgWorkforce > 0) {
-          const raw = (leavers / avgWorkforce) * 100;
-          const capped = Math.min(raw, 100);
-          return parseFloat(capped.toFixed(1));
+      // Denominadores (headcount único con presencia en el periodo)
+      const denomPrev = uniqueActiveInPeriod(clientEmployees, prevIni, prevFin);
+      const denomCurr = uniqueActiveInPeriod(clientEmployees, currIni, currFin);
+
+      const calcAttritionPercent = (leavers: number, denom: number) => {
+        if (denom > 0) {
+          const raw = (leavers / denom) * 100;
+          return parseFloat(Math.min(raw, 100).toFixed(1));
         } else {
-          if (leavers > 0) return 100.0;
-          return 0.0;
+          return leavers > 0 ? 100.0 : 0.0;
         }
       };
 
-      const avgCurr = (empEndPrev + empEndCurr) / 2;
-      const avgPrev = (empEndPrevPrev + empEndPrev) / 2;
+      const attrPrevReal = calcAttritionPercent(leaversPrev, denomPrev);
+      const attrCurrReal = calcAttritionPercent(leaversCurr, denomCurr);
 
-      const attrCurrReal = calcAttritionPercent(leaversCurr, avgCurr);
-      const attrPrevReal = calcAttritionPercent(leaversPrev, avgPrev);
-
-      const epsilon = 0.1; // mantiene región clickable, pero la haremos invisible con color
-      const attrCurrPlot = attrCurrReal > 0 ? attrCurrReal : epsilon;
-      const attrPrevPlot = attrPrevReal > 0 ? attrPrevReal : epsilon;
+      const epsilon = 0.1;
+      const basePrev = "#EDD9ED";
+      const baseCurr = "#CD9ACD";
 
       return {
         customer,
         prevReal: attrPrevReal,
         currReal: attrCurrReal,
-        prevPlot: attrPrevPlot,
-        currPlot: attrCurrPlot,
+        prevPlot: attrPrevReal > 0 ? attrPrevReal : epsilon,
+        currPlot: attrCurrReal > 0 ? attrCurrReal : epsilon,
+        basePrev,
+        baseCurr,
       };
     });
 
     rows.sort((a, b) => {
-      const aHas100 = a.currReal === 100 || a.prevReal === 100;
-      const bHas100 = b.currReal === 100 || b.prevReal === 100;
-      const aBothZero = a.currReal === 0 && a.prevReal === 0;
-      const bBothZero = b.currReal === 0 && b.prevReal === 0;
-      const aBothPos = a.currReal > 0 && a.prevReal > 0;
-      const bBothPos = b.currReal > 0 && b.prevReal > 0;
-
-      const aRank = (aBothPos && !aHas100) ? 0 : (aHas100 ? 1 : (aBothZero ? 2 : 1));
-      const bRank = (bBothPos && !bHas100) ? 0 : (bHas100 ? 1 : (bBothZero ? 2 : 1));
-
-      if (aRank !== bRank) return aRank - bRank;
-      // Dentro del mismo grupo, ordenar por % año actual desc, luego anterior desc, luego nombre
       return (b.currReal - a.currReal) || (b.prevReal - a.prevReal) || a.customer.localeCompare(b.customer);
     });
 
-    const sortedCategories = rows.map((r) => r.customer);
-
-    // Series como objetos de punto para controlar el color por datapoint
-    const basePrev = "#EDD9ED";
-    const baseCurr = "#CD9ACD";
-
-    const seriesPrevReal = rows.map((r) => r.prevReal);
-    const seriesCurrReal = rows.map((r) => r.currReal);
-
-    const seriesPrevPlot = rows.map((r) => ({
-      x: r.customer,
-      y: r.prevPlot,
-      real: r.prevReal,
-      fillColor: r.prevReal === 0 ? "rgba(0,0,0,0)" : basePrev,
-    }));
-    const seriesCurrPlot = rows.map((r) => ({
-      x: r.customer,
-      y: r.currPlot,
-      real: r.currReal,
-      fillColor: r.currReal === 0 ? "rgba(0,0,0,0)" : baseCurr,
-    }));
-
-    setCategories(sortedCategories);
+    setCategories(rows.map((r) => r.customer));
     setSeriesData([
-      { name: `${prevYear}`, data: seriesPrevPlot, _real: seriesPrevReal },
-      { name: `${currentYear}`, data: seriesCurrPlot, _real: seriesCurrReal },
-    ] as any);
+      { name: `${prevYear}`, data: rows.map((r) => ({ x: r.customer, y: r.prevPlot, real: r.prevReal, fillColor: r.basePrev })) },
+      { name: `${currentYear}`, data: rows.map((r) => ({ x: r.customer, y: r.currPlot, real: r.currReal, fillColor: r.baseCurr })) },
+    ]);
   };
 
   const optionscolumnchart: any = {

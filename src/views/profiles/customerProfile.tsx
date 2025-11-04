@@ -519,6 +519,32 @@ const CustomerProfile = () => {
   const actionsUsHtml = extractActionsSection(parsed?.actions || '', /<b>\s*Controllable by\s+Us\s*:<\/b>/i);
   const actionsClientHtml = extractActionsSection(parsed?.actions || '', /<b>\s*Controllable by\s+(?:the\s+Client|Client)\s*:<\/b>/i);
 
+  // Badge de nivel salarial (Low/Competitive/High)
+  const renderSalaryBadge = (level: string | null) => {
+    const raw = (level || "").toLowerCase();
+    const isLow = /low|below/.test(raw);
+    const isCompetitive = /compet/i.test(raw);
+    const isHigh = /high|above/.test(raw);
+
+    let bgFrom = "#ECEFF1", bgTo = "#E5E9EC", text = "#455A64", border = "#CFD8DC", label = level || "N/A", icon = "";
+    if (isLow) { bgFrom = "#FDE7E9"; bgTo = "#FAD1D5"; text = "#7A0A1A"; border = "#F5B7BF"; icon = "⬇️"; }
+    else if (isCompetitive) { bgFrom = "#FFF7E0"; bgTo = "#FFE8B0"; text = "#8A5B00"; border = "#FFD777"; icon = "⚖️"; }
+    else if (isHigh) { bgFrom = "#E6F4EA"; bgTo = "#D1EFE0"; text = "#0D4B3B"; border = "#B7E1C9"; icon = "⬆️"; }
+
+    return (
+      <Box component="span" sx={{
+        display: "inline-flex", alignItems: "center", gap: 1, px: 1.25, py: 0.5,
+        borderRadius: 999, fontWeight: 800, fontSize: 13, color: text,
+        border: `1px solid ${border}`,
+        backgroundImage: `linear-gradient(135deg, ${bgFrom}, ${bgTo})`,
+        boxShadow: `0 2px 6px rgba(0,0,0,0.06) inset, 0 1px 2px rgba(0,0,0,0.04)`
+      }}>
+        {icon && <span style={{ lineHeight: 1 }}>{icon}</span>}
+        <span>{label}</span>
+      </Box>
+    );
+  };
+
   const handleDownloadPdf = async () => {
     try {
       // Definición de páginas: cada sub-arreglo son elementos a ubicar en la misma página
@@ -1370,154 +1396,98 @@ const CustomerProfile = () => {
           <>
             {/* Printable area (title + content) */}
             <Box id="modal-printable">
+              {/* Header estilo banner */}
               <DialogTitle sx={{ bgcolor: "#0D4B3B", color: "white", borderRadius: "8px 8px 0 0" }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, overflow: 'hidden', minWidth: 0 }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 800, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      ATTRITION RISK INSIGHTS - {selectedEmployee.fullName}
+                <Box sx={{ display: "flex", alignItems: { xs: "start", sm: "center" }, justifyContent: "space-between", gap: 2, flexDirection: { xs: "column", sm: "row" } }}>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 800, letterSpacing: 0.3 }}>ATTENTION: ATTRITION RISK INSIGHTS</Typography>
+                    <Typography variant="subtitle2" sx={{ opacity: 0.9 }}>
+                      {selectedEmployee.fullName}{selectedEmployee.customer ? ` - ${selectedEmployee.customer}` : ""}
                     </Typography>
-                    <Chip
-                      label={selectedEmployee.clasification}
-                      color={
-                        selectedEmployee.clasification.toLowerCase().includes("high") ? "error"
-                          : selectedEmployee.clasification.toLowerCase().includes("medium") ? "warning"
-                            : "success"
-                      }
-                      sx={{ ml: 1, flexShrink: 0 }}
-                    />
                   </Box>
+                  <Chip
+                    label={selectedEmployee.clasification}
+                    color={
+                      selectedEmployee.clasification.toLowerCase().includes("high") ? "error"
+                        : selectedEmployee.clasification.toLowerCase().includes("medium") ? "warning"
+                          : "success"
+                    }
+                    sx={{ fontWeight: 700 }}
+                  />
                 </Box>
               </DialogTitle>
               <DialogContent dividers>
-                {/* Título */}
-                <Typography variant="h6" fontWeight="bold" gutterBottom>Prioritized Risk Drivers</Typography>
+                {/* Distribución a dos columnas */}
+                <Box sx={{ display: "flex", gap: 2, mb: 2, flexDirection: { xs: "column", md: "row" } }}>
+                  {/* Izquierda: Employee Overview */}
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>Employee Overview</Typography>
 
-                {/* Contenedor en fila */}
-                <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-                  {/* Recuadro 1: Nombre */}
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column", // Cambia a columna
-                      alignItems: "center",
-                      justifyContent: "center",
-                      p: 2,
-                      bgcolor: "grey.100",
-                      borderRadius: 2,
-                      flex: 1,
-                      minWidth: 100
-                    }}
-                  >
-                    <Typography sx={{ fontSize: "2rem", mb: 1 }}>🏢</Typography>
-                    <Typography variant="body1" fontWeight="bold" align="center">
-                      {selectedEmployee.customer}
-                    </Typography>
-                    {/* Salary level (sección separada con mayor espacio arriba) */}
-                    <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                      <Typography sx={{ fontSize: "2rem", mb: 1 }}>💲</Typography>
-                      <Typography variant="body1" fontWeight="bold" align="center">
-                        {employeeSalaryLevel ?? "N/A"}
+                    {/* Card: Company */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: 2, bgcolor: "grey.100", borderRadius: 2, boxShadow: 1, mb: 2 }}>
+                      <Typography sx={{ fontSize: "2rem" }}>🏢</Typography>
+                      <Box>
+                        <Typography variant="body1" fontWeight={800}>Company: {selectedEmployee.customer}</Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Card: Sentiment */}
+                    <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, p: 2, bgcolor: "grey.100", borderRadius: 2, boxShadow: 1 }}>
+                      <Typography sx={{ fontSize: "2rem" }}>
+                        {selectedEmployee.calification === "Positive" ? "😀" : selectedEmployee.calification === "Negative" ? "😞" : selectedEmployee.calification === "Neutral" ? "😐" : "🤨"}
                       </Typography>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body1" fontWeight={800} gutterBottom>
+                          Sentiment Analysis: {selectedEmployee.calification || "No comments to analyze"}
+                        </Typography>
+                        {sentimentList.length > 0 && (
+                          <Box>
+                            {sentimentList.map((item, index) => (
+                              <Typography key={index} variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+                                {item}
+                              </Typography>
+                            ))}
+                          </Box>
+                        )}
+                      </Box>
                     </Box>
                   </Box>
 
-                  {/* Recuadro 2: Carita + Sentiment */}
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 2,
-                      p: 2,
-                      bgcolor: "grey.100",
-                      borderRadius: 2,
-                      flex: 2
-                    }}
-                  >
-                    {/* Carita */}
-                    <Typography
-                      sx={{
-                        fontSize: "2rem",
-                        flexShrink: 0,
-                        display: "flex",
-                        alignItems: "center"
-                      }}
-                    >
-                      {selectedEmployee.calification === "Positive" ? "😀" :
-                        selectedEmployee.calification === "Negative" ? "😞" :
-                          selectedEmployee.calification === "Neutral" ? "😐" :
-                            "🤨"}
-                    </Typography>
+                  {/* Derecha: Key Insights */}
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>Key Insights</Typography>
 
-                    {/* Texto: Calificación + Sentiment Analysis */}
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="body1" fontWeight="bold" gutterBottom>
-                        {selectedEmployee.calification === "Positive" ? "Positive" :
-                          selectedEmployee.calification === "Negative" ? "Negative" :
-                            selectedEmployee.calification === "Neutral" ? "Neutral" :
-                              "No comments to analyze"}
-                      </Typography>
-                      {sentimentList.length > 0 && (
-                        <Box>
-                          {sentimentList.map((item, index) => (
-                            <Typography
-                              key={index}
-                              variant="body2"
-                              sx={{ color: "text.secondary", mb: 0.5 }}
-                            >
-                              {item}
+                    {/* Card: Compensation Level */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, p: 2, bgcolor: "grey.100", borderRadius: 2, boxShadow: 1, mb: 2 }}>
+                      <Typography sx={{ fontSize: "2rem" }}>📈</Typography>
+                      <Box>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, mb: 0.5, flexWrap: "wrap" }}>
+                          <Typography variant="body1" fontWeight={800} sx={{ m: 0 }}>Compensation Level:</Typography>
+                          {renderSalaryBadge(employeeSalaryLevel)}
+                        </Box>
+                        <Typography variant="body2" sx={{ color: "text.secondary" }}>Based on current local market benchmark data</Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Card: Prioritized Risk Drivers */}
+                    {parsed && driversList.length > 0 && (
+                      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, p: 2, bgcolor: "grey.100", borderRadius: 2, boxShadow: 1 }}>
+                        <Typography sx={{ fontSize: "2rem" }}>
+                          {selectedEmployee.clasification.toLowerCase().includes("high") ? "❌" : selectedEmployee.clasification.toLowerCase().includes("medium") ? "⚠️" : selectedEmployee.clasification.toLowerCase().includes("low") ? "✅" : "⚪"}
+                        </Typography>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body1" fontWeight={800} gutterBottom>
+                            Prioritized Risk Drivers
+                          </Typography>
+                          {driversList.map((item, index) => (
+                            <Typography key={index} variant="body2" sx={{ color: "text.secondary", mb: 0.5 }}>
+                              • {item}
                             </Typography>
                           ))}
                         </Box>
-                      )}
-                    </Box>
-                  </Box>
-
-                  {/* Recuadro 3: Prioritized Risk Drivers */}
-                  {parsed && driversList.length > 0 && (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: 2,
-                        p: 2,
-                        bgcolor: "grey.100",
-                        borderRadius: 2,
-                        flex: 2,
-                        minWidth: 280
-                      }}
-                    >
-                      {/* Emoji de riesgo */}
-                      <Typography
-                        sx={{
-                          fontSize: "2rem",
-                          flexShrink: 0,
-                          display: "flex",
-                          alignItems: "center"
-                        }}
-                      >
-                        {selectedEmployee.clasification.toLowerCase().includes("high") ? "❌" :
-                          selectedEmployee.clasification.toLowerCase().includes("medium") ? "⚠️" :
-                            selectedEmployee.clasification.toLowerCase().includes("low") ? "✅" :
-                              "⚪"}
-                      </Typography>
-
-                      {/* Texto y lista de drivers */}
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="body1" fontWeight="bold" gutterBottom>
-                          Prioritized Risk Drivers
-                        </Typography>
-                        {driversList.map((item, index) => (
-                          <Typography
-                            key={index}
-                            variant="body2"
-                            sx={{ color: "text.secondary", mb: 1 }}
-                          >
-                            • {item}
-                          </Typography>
-                        ))}
                       </Box>
-                    </Box>
-                  )}
+                    )}
+                  </Box>
                 </Box>
 
                 {/* Overall Situation Assessment */}
