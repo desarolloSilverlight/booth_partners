@@ -36,7 +36,7 @@ const SalesOverview: React.FC = () => {
 
         if (res.status === 401) {
           sessionStorage.removeItem("token");
-          alert("Sesión expirada, por favor ingresa nuevamente");
+          alert("Session expired, please log in again");
           navigate("/auth/login");
           return;
         }

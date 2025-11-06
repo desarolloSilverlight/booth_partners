@@ -306,6 +306,44 @@ const PredictiveAnalytics = () => {
             .map(item => item.endsWith('.') ? item : item + '.');
     };
 
+    // Une líneas de continuación bajo la misma viñeta hasta la siguiente viñeta para "Prioritized Risk Drivers"
+    const cleanAndSplitDrivers = (text: string): string[] => {
+        if (!text) return [];
+
+        const lines = text.replace(/\r\n?/g, '\n').split('\n').map(l => l.trim());
+        const bullets: string[] = [];
+        let current = '';
+
+        const startsNewBullet = (s: string) => /^(•|\-|\*)\s+/.test(s) || /^(\d+\.|\([a-zA-Z]\))\s+/.test(s);
+
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) continue;
+
+            if (startsNewBullet(line)) {
+                if (current) {
+                    const normalized = current.replace(/\s+/g, ' ').trim();
+                    bullets.push(/\.[\)\]]?$/.test(normalized) ? normalized : normalized + '.');
+                }
+                current = line.replace(/^((•|\-|\*|\d+\.|\([a-zA-Z]\))\s+)/, '');
+            } else {
+                if (current) {
+                    const needsSpace = /[\w\)]$/.test(current);
+                    current += (needsSpace ? ' ' : '') + line;
+                } else {
+                    current = line;
+                }
+            }
+        }
+
+        if (current) {
+            const normalized = current.replace(/\s+/g, ' ').trim();
+            bullets.push(/\.[\)\]]?$/.test(normalized) ? normalized : normalized + '.');
+        }
+
+        return bullets;
+    };
+
     // Extrae un bloque HTML perteneciente a una etiqueta específica (Controllable by Us / the Client)
     const extractActionsSection = (html: string, label: string) => {
         if (!html) return "";
@@ -322,7 +360,7 @@ const PredictiveAnalytics = () => {
 
     const parsed = selectedEmployee?.text_ai ? parseTextAI(selectedEmployee.text_ai) : null;
 
-    const driversList = parsed?.drivers ? cleanAndSplitText(parsed.drivers) : [];
+    const driversList = parsed?.drivers ? cleanAndSplitDrivers(parsed.drivers) : [];
     const sentimentList = parsed?.sentiment ? cleanAndSplitText(parsed.sentiment) : [];
     const assessmentList = parsed?.assessment ? cleanAndSplitText(parsed.assessment) : [];
     const actionsList = parsed?.actions ? cleanAndSplitText(parsed.actions) : [];
