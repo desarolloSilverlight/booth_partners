@@ -7,7 +7,8 @@ import {
   Submenu,
 } from "react-mui-sidebar";
 
-import Menuitems from "./MenuItems";
+import buildMenu from "./MenuItems";
+import { useAuth } from 'src/context/AuthContext';
 import { Icon } from "@iconify/react";
 import { Upgrade } from "./Upgrade";
 
@@ -85,10 +86,13 @@ const SidebarItems = () => {
   const location = useLocation();
   const pathDirect = location.pathname;
 
+  const { profile } = useAuth();
+  const menuItems = buildMenu(profile);
+
   return (
     <Box sx={{ px: "20px", overflowX: 'hidden' }}>
       <MUI_Sidebar width={"100%"} showProfile={false} themeColor={"#0D4B3B"} themeSecondaryColor={'#1b84ff1a'}>
-        {renderMenuItems(Menuitems, pathDirect)}
+        {renderMenuItems(menuItems, pathDirect)}
       </MUI_Sidebar>
     </Box>
   );

@@ -14,52 +14,61 @@ interface MenuitemsType {
   variant?: string;
   external?: boolean;
 }
-
-const Menuitems: MenuitemsType[] = [
-  {
-    navlabel: true,
-    subheader: 'Options',
-  },
-  {
-    id: uniqueId(),
-    title: 'Home',
-    icon: 'layers-minimalistic-line-duotone',
-    href: '/dashboard',
-  },
-  /*{
-    navlabel: true,
-    subheader: 'Analysis',
-  },*/
-  {
-    id: uniqueId(),
-    title: 'Users',
-    icon: 'user-bold',
-    href: '/users/listUsers',
-  },
-  {
-    id: uniqueId(),
-    title: 'Profiles',
-    icon: 'user-id-bold',
-    href: '/profiles/listProfiles',
-  },
-  {
-    id: uniqueId(),
-    title: 'Employees',
-    icon: 'users-group-two-rounded-outline',
-    href: '/employees/listEmployes',
-  },
-  {
-    id: uniqueId(),
-    title: 'Predictive Attrition Analysis',
-    icon: 'chart-broken',
-    href: '/predictive_analysis/predictive_analysis',
-  },
-  {
-    id: uniqueId(),
-    title: 'Reports',
-    icon: 'download-square-bold-duotone',
-    href: '/reports/reportsPage',
-  },
+// Construye el menú dinámicamente en función del perfil (1 = super admin)
+const buildMenu = (profile: number): MenuitemsType[] => {
+  const items: MenuitemsType[] = [
+    {
+      navlabel: true,
+      subheader: 'Options',
+    },
+    {
+      id: uniqueId(),
+      title: 'Home',
+      icon: 'layers-minimalistic-line-duotone',
+      href: '/dashboard',
+    },
+    /*{
+      navlabel: true,
+      subheader: 'Analysis',
+    },*/
+    {
+      id: uniqueId(),
+      title: 'Users',
+      icon: 'user-bold',
+      href: '/users/listUsers',
+    },
+    // Profiles solo visible para perfil 1
+    ...(Number(profile) === 1
+      ? [
+          {
+            id: uniqueId(),
+            title: 'Profiles',
+            icon: 'user-id-bold',
+            href: '/profiles/listProfiles',
+          } as MenuitemsType,
+        ]
+      : []),
+    {
+      id: uniqueId(),
+      title: 'Employees',
+      icon: 'users-group-two-rounded-outline',
+      href: '/employees/listEmployes',
+    },
+    {
+      id: uniqueId(),
+      title: 'Predictive Attrition Analysis',
+      icon: 'chart-broken',
+      href: '/predictive_analysis/predictive_analysis',
+    },
+    {
+      id: uniqueId(),
+      title: 'Reports',
+      icon: 'download-square-bold-duotone',
+      href: '/reports/reportsPage',
+    },
+  ];
+  return items;
+};
   /*
   
   {
@@ -1210,6 +1219,4 @@ const Menuitems: MenuitemsType[] = [
   */
 
 
-];
-
-export default Menuitems;
+export default buildMenu;
