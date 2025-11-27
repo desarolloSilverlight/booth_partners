@@ -51,7 +51,7 @@ const buildMenu = (profile: number): MenuitemsType[] => {
       : []),
     {
       id: uniqueId(),
-      title: 'Customers Profiles',
+      title: 'Customer Profile',
       icon: 'buildings-2-line-duotone',
       href: '/profiles/listCustomerProfiles',
     },

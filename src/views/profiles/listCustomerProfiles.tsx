@@ -15,6 +15,7 @@ import {
 import BaseCard from '../../components/BaseCard/BaseCard';
 import { useNavigate } from 'react-router';
 import config from '../../config/config';
+import InputSearch from '../../components/forms/inputSearch/search';
 
 interface Customer {
     customer: string;
@@ -23,8 +24,10 @@ interface Customer {
 const ListCustomerProfiles = () => {
     const navigate = useNavigate();
     const [customers, setCustomers] = useState<Customer[]>([]);
+    const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const fetchCustomers = async () => {
@@ -95,6 +98,7 @@ const ListCustomerProfiles = () => {
                 uniqueCustomers.sort((a, b) => a.customer.localeCompare(b.customer));
 
                 setCustomers(uniqueCustomers);
+                setFilteredCustomers(uniqueCustomers);
             } catch (err: any) {
                 setError(err.message || 'Error loading customers');
                 console.error('Error fetching customers:', err);
@@ -106,13 +110,33 @@ const ListCustomerProfiles = () => {
         fetchCustomers();
     }, [navigate]);
 
+    useEffect(() => {
+        if (searchTerm.trim() === '') {
+            setFilteredCustomers(customers);
+        } else {
+            const filtered = customers.filter(customer =>
+                customer.customer.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            setFilteredCustomers(filtered);
+        }
+    }, [searchTerm, customers]);
+
     const handleViewProfile = (customerName: string) => {
         navigate(`/profiles/customerProfile?nameCustomer=${encodeURIComponent(customerName)}`);
     };
 
     return (
-        <BaseCard title="Customers Profiles">
+        <BaseCard title="Customer Profile">
             <Box>
+                <Box sx={{ mb: 3 }}>
+                    <InputSearch
+                        searchTerm={searchTerm}
+                        onSearchChange={(value: string) => setSearchTerm(value)}
+                        onClearSearch={() => setSearchTerm('')}
+                        placeholder="Search by customer name..."
+                        width="100%"
+                    />
+                </Box>
                 {loading ? (
                     <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
                         <CircularProgress />
@@ -121,10 +145,10 @@ const ListCustomerProfiles = () => {
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}
                     </Alert>
-                ) : customers.length === 0 ? (
+                ) : filteredCustomers.length === 0 ? (
                     <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px">
                         <Typography variant="body1" color="text.secondary">
-                            No customers found
+                            {customers.length === 0 ? 'No customers found' : 'No customers match your search'}
                         </Typography>
                     </Box>
                 ) : (
@@ -151,7 +175,7 @@ const ListCustomerProfiles = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {customers.map((customer, index) => (
+                                {filteredCustomers.map((customer, index) => (
                                     <TableRow key={index} hover>
                                         <TableCell>
                                             <Typography variant="body1" fontWeight={500}>
