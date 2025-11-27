@@ -275,7 +275,46 @@ const ShowAttritionEmployeeCustomer = () => {
         return text
             .split(/\n|\. /) // dividimos por salto de línea o punto+espacio
             .map(item => item.replace(/\*\*|^-|\d+$/g, "").trim()) // quitamos **, -, números sueltos
-            .filter(item => item.length > 0); // eliminamos vacíos
+            .filter(item => item.length > 0)
+            .map(item => item.endsWith('.') ? item : item + '.'); // aseguramos punto final
+    };
+
+    // Une líneas de continuación bajo la misma viñeta hasta la siguiente viñeta para "Prioritized Risk Drivers"
+    const cleanAndSplitDrivers = (text: string): string[] => {
+        if (!text) return [];
+
+        const lines = text.replace(/\r\n?/g, '\n').split('\n').map(l => l.trim());
+        const bullets: string[] = [];
+        let current = '';
+
+        const startsNewBullet = (s: string) => /^(•|\-|\*)\s+/.test(s) || /^(\d+\.|\([a-zA-Z]\))\s+/.test(s);
+
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) continue;
+
+            if (startsNewBullet(line)) {
+                if (current) {
+                    const normalized = current.replace(/\s+/g, ' ').trim();
+                    bullets.push(/\.[\)\]]?$/.test(normalized) ? normalized : normalized + '.');
+                }
+                current = line.replace(/^((•|\-|\*|\d+\.|\([a-zA-Z]\))\s+)/, '');
+            } else {
+                if (current) {
+                    const needsSpace = /[\w\)]$/.test(current);
+                    current += (needsSpace ? ' ' : '') + line;
+                } else {
+                    current = line;
+                }
+            }
+        }
+
+        if (current) {
+            const normalized = current.replace(/\s+/g, ' ').trim();
+            bullets.push(/\.[\)\]]?$/.test(normalized) ? normalized : normalized + '.');
+        }
+
+        return bullets;
     };
 
     // Extrae un bloque HTML perteneciente a una etiqueta específica (Controllable by Us / the Client)
@@ -292,7 +331,7 @@ const ShowAttritionEmployeeCustomer = () => {
 
     const parsed = selectedEmployee?.text_ai ? parseTextAI(selectedEmployee.text_ai) : null;
 
-    const driversList = parsed?.drivers ? cleanAndSplitText(parsed.drivers) : [];
+    const driversList = parsed?.drivers ? cleanAndSplitDrivers(parsed.drivers) : [];
     const sentimentList = parsed?.sentiment ? cleanAndSplitText(parsed.sentiment) : [];
     const assessmentList = parsed?.assessment ? cleanAndSplitText(parsed.assessment) : [];
     const actionsList = parsed?.actions ? cleanAndSplitText(parsed.actions) : [];

@@ -64,6 +64,10 @@ const CustomerProfile = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Predictive_Analysis | null>(null);
   const [employeeSalaryLevel, setEmployeeSalaryLevel] = useState<string | null>(null);
 
+  // Estado para modal de "no data available"
+  const [noDataModalOpen, setNoDataModalOpen] = useState(false);
+  const [noDataMessage, setNoDataMessage] = useState<string>("");
+
   // Helper: formatea nombres de variables (quita num__/cat__, reemplaza '_' y Title Case)
   const prettyLabel = (raw: string): string => {
     if (!raw) return raw;
@@ -84,6 +88,10 @@ const CustomerProfile = () => {
   const handleClose = () => {
     setOpen(false);
     setSelectedEmployee(null);
+  };
+
+  const handleCloseNoDataModal = () => {
+    setNoDataModalOpen(false);
   };
 
 
@@ -157,10 +165,12 @@ const CustomerProfile = () => {
         // console.log("Result fetch show_attrition_category:", res);
 
         if (res && Array.isArray(res.dataCategory)) {
+          hasAttritionData = res.dataCategory.length > 0;
           setAttritionData(res.dataCategory);
         } else {
           showAlert("Unexpected data format from API.", "error");
           setAttritionData([]);
+          hasAttritionData = false;
         }
       })
       .catch((error) => {
@@ -214,6 +224,10 @@ const CustomerProfile = () => {
         setLoading(false);
       });
 
+    // Variable temporal para verificar si hay datos al final de todas las llamadas
+    let hasAttritionData = false;
+    let hasJobSatData = false;
+
     // Fetch Job Satisfaction by customer for the right-side table (best effort)
     fetch(`${config.rutaApi}show_satisfaction_job`, requestOptions)
       .then((response) => {
@@ -223,6 +237,7 @@ const CustomerProfile = () => {
       .then((res) => {
         const counts = { Positive: 0, Negative: 0, Neutral: 0, NoComment: 0 } as typeof jobSatCounts;
         const arr: any[] = Array.isArray(res) ? res : (res?.data ?? res?.dataEmployees ?? res?.dataSatisfaction ?? res?.list ?? []);
+        hasJobSatData = Array.isArray(arr) && arr.length > 0;
         if (Array.isArray(arr)) {
           arr.forEach((emp: any) => {
             try {
@@ -247,6 +262,27 @@ const CustomerProfile = () => {
       })
       .catch((error) => {
         console.error('Error fetching job satisfaction:', error);
+      })
+      .finally(() => {
+        // Verificar si no hay datos después de todas las llamadas
+        setTimeout(() => {
+          if (!hasAttritionData && !hasJobSatData) {
+            let message = "There is no data available ";
+            const missingModules: string[] = [];
+
+            if (!hasAttritionData) missingModules.push("Attrition Details");
+            if (!hasJobSatData) missingModules.push("Employees Perspective");
+
+            if (missingModules.length > 0) {
+              message += `in ${missingModules.join(" or ")} module${missingModules.length > 1 ? 's' : ''} `;
+            }
+
+            message += "to perform an analysis.";
+
+            setNoDataMessage(message);
+            setNoDataModalOpen(true);
+          }
+        }, 500); // Pequeño delay para asegurar que todos los estados se hayan actualizado
       });
 
   }, [nameCustomer, navigate]);
@@ -497,9 +533,57 @@ const CustomerProfile = () => {
       .map(item => item.endsWith('.') ? item : item + '.');
   };
 
+  // Especial para "Prioritized Risk Drivers":
+  // Une líneas de continuación bajo la misma viñeta hasta la siguiente viñeta.
+  const cleanAndSplitDrivers = (text: string): string[] => {
+    if (!text) return [];
+
+    // Normaliza saltos de línea y quita espacios sobrantes laterales en cada línea
+    const lines = text.replace(/\r\n?/g, '\n').split('\n').map(l => l.trim());
+
+    const bullets: string[] = [];
+    let current = '';
+
+    const startsNewBullet = (s: string) => {
+      return /^(•|\-|\*)\s+/.test(s) || /^(\d+\.|\([a-zA-Z]\))\s+/.test(s);
+    };
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      if (startsNewBullet(line)) {
+        // Guarda el acumulado anterior
+        if (current) {
+          const normalized = current.replace(/\s+/g, ' ').trim();
+          bullets.push(/\.[\)\]]?$/.test(normalized) ? normalized : normalized + '.');
+        }
+        // Quita el marcador de viñeta inicial y empieza uno nuevo
+        current = line.replace(/^((•|\-|\*|\d+\.|\([a-zA-Z]\))\s+)/, '');
+      } else {
+        // Continuación del punto anterior
+        if (current) {
+          // Si la línea anterior termina con guion o coma, solo espacio; si termina sin puntuación, añade espacio
+          const needsSpace = /[\w\)]$/.test(current);
+          current += (needsSpace ? ' ' : '') + line;
+        } else {
+          // Si por alguna razón no hay viñeta activa, inicia una nueva
+          current = line;
+        }
+      }
+    }
+
+    if (current) {
+      const normalized = current.replace(/\s+/g, ' ').trim();
+      bullets.push(/\.[\)\]]?$/.test(normalized) ? normalized : normalized + '.');
+    }
+
+    return bullets;
+  };
+
   const parsed = selectedEmployee?.text_ai ? parseTextAI(selectedEmployee.text_ai) : null;
 
-  const driversList = parsed?.drivers ? cleanAndSplitText(parsed.drivers) : [];
+  const driversList = parsed?.drivers ? cleanAndSplitDrivers(parsed.drivers) : [];
   const sentimentList = parsed?.sentiment ? cleanAndSplitText(parsed.sentiment) : [];
   const assessmentList = parsed?.assessment ? cleanAndSplitText(parsed.assessment) : [];
   const actionsList = parsed?.actions ? cleanAndSplitText(parsed.actions) : [];
@@ -1605,6 +1689,40 @@ const CustomerProfile = () => {
             </DialogActions>
           </>
         )}
+      </Dialog>
+
+      {/* Modal informativo cuando no hay datos */}
+      <Dialog
+        open={noDataModalOpen}
+        onClose={handleCloseNoDataModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ bgcolor: "#0D4B3B", color: "white", display: "flex", alignItems: "center", gap: 1 }}>
+          <Typography sx={{ fontSize: "1.5rem" }}>ℹ️</Typography>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>No Data Available</Typography>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            {noDataMessage}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            This typically occurs when the customer has a 0.0% attrition rate, meaning there are no employee departures or perspective data to analyze.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={handleCloseNoDataModal}
+            variant="contained"
+            sx={{
+              backgroundColor: "#0D4B3B",
+              color: "#ffffff",
+              "&:hover": { backgroundColor: "#0a3d32" },
+            }}
+          >
+            OK
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );

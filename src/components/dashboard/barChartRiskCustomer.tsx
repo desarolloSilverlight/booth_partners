@@ -66,13 +66,17 @@ const BarChartRiskCustomer = () => {
                     else if (risk.includes("High")) grouped[client].High += 1;
                 });
 
-                // Categorías (clientes)
-                const clients = Object.keys(grouped);
+                // Ordenar clientes por total de empleados (Low + Mid + High) en orden descendente
+                const clientEntries = Object.entries(grouped).sort((a, b) => {
+                    const totalA = a[1].Low + a[1].Mid + a[1].High;
+                    const totalB = b[1].Low + b[1].Mid + b[1].High;
+                    return totalB - totalA; // descendente
+                });
 
-                // Series separadas por tipo de riesgo
-                const lowData = clients.map((c) => grouped[c].Low);
-                const midData = clients.map((c) => grouped[c].Mid);
-                const highData = clients.map((c) => grouped[c].High);
+                const clients = clientEntries.map(([client]) => client);
+                const lowData = clientEntries.map(([_, counts]) => counts.Low);
+                const midData = clientEntries.map(([_, counts]) => counts.Mid);
+                const highData = clientEntries.map(([_, counts]) => counts.High);
 
                 setCategories(clients);
                 setSeriesData([

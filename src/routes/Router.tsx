@@ -13,6 +13,7 @@ const BlankLayout = lazy(() => import('../layouts/blank/BlankLayout'));
 const Dashboard = lazy(() => import("../views/dashboard/page"));
 const ListUsers = lazy(() => import("../views/users/listUsers"));
 const ListProfiles = lazy(() => import("../views/profiles/listProfiles"));
+const ListCustomerProfiles = lazy(() => import("../views/profiles/listCustomerProfiles"));
 const ListEmployes = lazy(() => import("../views/employees/listEmployes"));
 const ShowEmploye = lazy(() => import("../views/employees/showEmploye"));
 const ShowAttritionEmployeeCustomer = lazy(() => import("../views/show_attrition_employee_customer/show_attrition_employee_customer"));
@@ -57,6 +58,7 @@ const Router = [
           { path: '/dashboard', exact: true, element: <Dashboard /> },
           { path: '/users/listUsers', exact: true, element: <ListUsers /> },
           { path: '/profiles/listProfiles', exact: true, element: <ListProfiles /> },
+          { path: '/profiles/listCustomerProfiles', exact: true, element: <ListCustomerProfiles /> },
           { path: '/employees/listEmployes', exact: true, element: <ListEmployes /> },
           { path: '/employees/showEmploye/:id', exact: true, element: <ShowEmploye /> },
           { path: '/show_attrition_employee_customer/show_attrition_employee_customer', exact: true, element: <ShowAttritionEmployeeCustomer /> },

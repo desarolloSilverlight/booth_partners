@@ -19,11 +19,14 @@ const Profile = () => {
     setAnchorEl2(null);
   };
 
-  const { setToken } = useAuth(); // Obtener la función setToken del contexto de autenticación
+  const { setToken, setProfile } = useAuth(); // Obtener funciones del contexto
   const navigate = useNavigate(); // Hook para la navegación
 
   const handleLogout = () => {
-    setToken(null); // Limpiar el token en el contexto de autenticación
+    setToken(null); // Esto también resetea el perfil dentro del contexto
+    setProfile(0); // redundante pero explícito
+    sessionStorage.removeItem('name_user');
+    sessionStorage.removeItem('username');
     navigate('/auth/login'); // Redirigir a la página de inicio de sesión
   };
 

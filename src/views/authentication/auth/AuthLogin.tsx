@@ -9,7 +9,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
-    const { setToken } = useAuth(); // Obtener la función setToken del contexto de autenticación
+    const { setToken, setProfile } = useAuth(); // Obtener funciones del contexto
     const [open, setOpen] = useState(false);
     const [alertMsg, setAlertMsg] = useState('');
 
@@ -43,6 +43,7 @@ const AuthLogin = ({ title, subtitle, subtext }: { title?: string, subtitle: any
                     setToken(data.token);
                     sessionStorage.setItem('name_user', data.name_user);
                     sessionStorage.setItem('username', username);
+                    setProfile(Number(data.system_profile) || 0); // perfil solo en contexto
                 }
 
                 setAlertMsg('Welcome, Successful Login!');
