@@ -1,1 +1,0 @@
-import{j as t,L as o}from"./index-BI0Y4PNa.js";import{s}from"./Box-BJAbsDBA.js";const e="/assets/booth_logo-CL-fKcFX.png",i=s(o)(()=>({height:"60px",width:"180px",overflow:"hidden",display:"block"})),r=()=>t.jsx(i,{to:"/",style:{display:"flex",alignItems:"center"},children:t.jsx("img",{src:e,alt:"logo",style:{width:"174px",height:"64px"}})});export{r as A,e as L};
